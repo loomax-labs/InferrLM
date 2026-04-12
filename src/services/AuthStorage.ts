@@ -1,48 +1,27 @@
-import { User as FirebaseUser } from 'firebase/auth';
 import * as SecureStore from 'expo-secure-store';
 
 export type UserData = {
-  uid: string;
-  email: string | null;
+  id: string;
+  email: string;
   emailVerified: boolean;
   displayName: string | null;
-  lastLoginAt: string;
-  createdAt?: any;
-  updatedAt?: any;
-  trustedEmail?: boolean;
-  settings?: any;
-  status?: any;
-  registrationInfo?: any;
-  lastLoginInfo?: any;
+  photoUrl: string | null;
+  authProvider: string;
+  trustedEmail: boolean;
+  createdAt: string;
+  lastLoginAt: string | null;
 };
 
 export const USER_AUTH_KEY = 'inferra_secure_user_auth_state';
 
-export const storeAuthState = async (user: FirebaseUser | null, profileData?: any): Promise<boolean> => {
+export const storeAuthState = async (user: UserData | null): Promise<boolean> => {
   try {
     if (!user) {
       await SecureStore.deleteItemAsync(USER_AUTH_KEY);
       return true;
     }
 
-    let userData: UserData = {
-      uid: user.uid,
-      email: user.email,
-      emailVerified: user.emailVerified,
-      displayName: user.displayName,
-      lastLoginAt: new Date().toISOString(),
-    };
-
-    if (profileData) {
-      userData = {
-        ...userData,
-        ...profileData,
-        emailVerified: user.emailVerified,
-        lastLoginAt: profileData.lastLoginAt || userData.lastLoginAt,
-      };
-    }
-
-    await SecureStore.setItemAsync(USER_AUTH_KEY, JSON.stringify(userData), {
+    await SecureStore.setItemAsync(USER_AUTH_KEY, JSON.stringify(user), {
       requireAuthentication: false,
       authenticationPrompt: 'Authenticate to access your account',
       keychainService: 'inferra_auth'
@@ -58,24 +37,16 @@ export const storeAuthState = async (user: FirebaseUser | null, profileData?: an
 
 export const getUserFromSecureStorage = async (): Promise<UserData | null> => {
   try {
-    const userData = await SecureStore.getItemAsync(USER_AUTH_KEY);
+    const raw = await SecureStore.getItemAsync(USER_AUTH_KEY);
+    if (!raw) return null;
 
-    if (!userData) {
-      return null;
-    }
-
-    const parsed = JSON.parse(userData);
-    if (!parsed.uid) {
+    const parsed = JSON.parse(raw);
+    if (!parsed.id) {
       await SecureStore.deleteItemAsync(USER_AUTH_KEY);
       return null;
     }
 
-    try {
-      return parsed;
-    } catch {
-      await SecureStore.deleteItemAsync(USER_AUTH_KEY);
-      return null;
-    }
+    return parsed;
   } catch {
     await SecureStore.deleteItemAsync(USER_AUTH_KEY);
     return null;
