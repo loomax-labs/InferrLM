@@ -26,7 +26,8 @@ import {
   Checkbox,
 } from 'react-native-paper';
 import Dialog from '../components/Dialog';
-import { registerWithEmail, signInWithGoogle, isEmailFromTrustedProvider, signInWithApple } from '../services/FirebaseService';
+import { registerWithEmail, signInWithGoogle, signInWithApple } from '../services/AuthService';
+import { isEmailFromTrustedProvider } from '../services/SecurityUtils';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 type RegisterScreenProps = {

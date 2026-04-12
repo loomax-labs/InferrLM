@@ -20,7 +20,7 @@ import { theme } from '../constants/theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { submitReport } from '../services/ReportService';
-import { getCurrentUser } from '../services/FirebaseService';
+import { getCurrentUser } from '../services/AuthService';
 
 type ReportScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Report'>;
@@ -147,7 +147,7 @@ export default function ReportScreen({ navigation, route }: ReportScreenProps) {
         category: selectedCategory,
         description: description.trim(),
         email: email.trim(),
-        userId: user?.uid || null,
+        userId: user?.id || null,
         timestamp: new Date().toISOString(),
         appVersion: '0.8.3',
         platform: Platform.OS,

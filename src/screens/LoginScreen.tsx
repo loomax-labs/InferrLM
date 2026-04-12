@@ -23,7 +23,7 @@ import {
   HelperText, 
   Divider,
 } from 'react-native-paper';
-import { loginWithEmail, signInWithGoogle, signInWithApple } from '../services/FirebaseService';
+import { loginWithEmail, signInWithGoogle, signInWithApple } from '../services/AuthService';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 type LoginScreenProps = {

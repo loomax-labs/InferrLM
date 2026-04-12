@@ -19,7 +19,7 @@ import { fs as FileSystem } from '../services/fs';
 import { useFocusEffect } from '@react-navigation/native';
 import { modelDownloader } from '../services/ModelDownloader';
 import AppearanceSection from '../components/settings/AppearanceSection';
-import { getCurrentUser } from '../services/FirebaseService';
+import { getCurrentUser } from '../services/AuthService';
 import SupportSection from '../components/settings/SupportSection';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import SystemInfoSection from '../components/settings/SystemInfoSection';
@@ -492,7 +492,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
     
     if (!enableRemoteModels) {
-      const user = getCurrentUser();
+      const user = await getCurrentUser();
       if (user && !user.emailVerified) {
         showDialog(
           'Email Verification Required',
