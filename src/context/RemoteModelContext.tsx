@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { isAuthenticated, getCurrentUser, isFirebaseReady, onAuthStateChange } from '../services/FirebaseAuth';
-import { getUserFromSecureStorage } from '../services/AuthStorage';
-import { User as FirebaseUser } from 'firebase/auth';
+import { isAuthenticated, getCurrentUser, isAuthReady, onAuthStateChange } from '../services/AuthService';
+import { getUserFromSecureStorage, type UserData } from '../services/AuthStorage';
 import providerKeyStorage from '../utils/ProviderKeyStorage';
 
 const REMOTE_MODELS_KEY = 'remote_models_enabled';
@@ -57,7 +56,7 @@ export const RemoteModelProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const checkLoginStatus = useCallback(async () => {
     try {
-      if (!isFirebaseReady()) {
+      if (!isAuthReady()) {
         setIsLoggedIn(false);
         return false;
       }
@@ -92,12 +91,12 @@ export const RemoteModelProvider: React.FC<{ children: React.ReactNode }> = ({ c
     loadPref();
     checkLoginStatus();
 
-    if (!isFirebaseReady()) {
+    if (!isAuthReady()) {
       return;
     }
 
     try {
-      const unsubscribe = onAuthStateChange(async (user: FirebaseUser | null) => {
+      const unsubscribe = onAuthStateChange(async (user: UserData | null) => {
         const logged = !!user;
         setIsLoggedIn(logged);
 
@@ -122,7 +121,7 @@ export const RemoteModelProvider: React.FC<{ children: React.ReactNode }> = ({ c
         return { success: false, requiresLogin: true };
       }
 
-      const user = getCurrentUser();
+      const user = await getCurrentUser();
       if (user && !user.emailVerified) {
         return { success: false, emailNotVerified: true };
       }
