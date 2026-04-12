@@ -7,12 +7,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { getCurrentUser, logoutUser, waitForAuthReady, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeFirebase } from '../services/FirebaseAuth';
+import { getCurrentUser, logoutUser, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeAuth, type UserData } from '../services/AuthService';
 import { getUserFromSecureStorage } from '../services/AuthStorage';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialog } from '../context/DialogContext';
-import { User as FirebaseUser } from 'firebase/auth';
 import * as WebBrowser from 'expo-web-browser';
 
 type ProfileScreenProps = {
@@ -52,25 +51,12 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     };
   }, []);
   
-  const formatFirestoreDate = (timestamp: any): string => {
-    if (!timestamp) return '';
-    
+  const toDateStr = (val: any): string => {
+    if (!val) return '';
     try {
-      if (timestamp.toDate) {
-        return timestamp.toDate().toISOString();
-      }
-      
-      if (timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000).toISOString();
-      }
-      
-      if (typeof timestamp === 'string') {
-        return timestamp;
-      }
-      
-      return new Date(timestamp).toISOString();
-    } catch (error) {
-
+      if (typeof val === 'string') return val;
+      return new Date(val).toISOString();
+    } catch {
       return '';
     }
   };
@@ -82,27 +68,18 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         setIsLoading(true);
       }
       
-      await waitForAuthReady();
-      
-      const user = getCurrentUser();
-      const profile = user ? await getUserProfile(user.uid) : null;
+      const profile = await getUserProfile();
       
       if (profile) {
         setUserData({
-          displayName: profile.displayName || user?.displayName || 'User',
-          email: profile.email || user?.email || '',
-          emailVerified: user?.emailVerified ?? false,
-          creationTime: formatFirestoreDate(profile.createdAt),
-          lastSignInTime: formatFirestoreDate(profile.lastLoginAt || (user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toISOString() : profile.updatedAt))
+          displayName: profile.displayName || 'User',
+          email: profile.email || '',
+          emailVerified: profile.emailVerified ?? false,
+          creationTime: toDateStr(profile.createdAt),
+          lastSignInTime: toDateStr(profile.lastLoginAt)
         });
-      } else if (user) {
-        setUserData({
-          displayName: user.displayName || 'User',
-          email: user.email || '',
-          emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || '',
-          lastSignInTime: user.metadata.lastSignInTime || ''
-        });
+      } else {
+        await loadUserData(false);
       }
     } catch (error) {
       await loadUserData(false);
@@ -117,7 +94,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        await initializeFirebase();
+        await initializeAuth();
         await refreshUserData(false);
       }
       appStateRef.current = nextAppState;
@@ -139,34 +116,26 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   
   useEffect(() => {
     const initializeAndLoad = async () => {
-      await initializeFirebase();
+      await initializeAuth();
       await loadUserData(true);
     };
     
     initializeAndLoad();
     
-    const unsubscribe = onAuthStateChange(async (user: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChange(async (user: UserData | null) => {
       if (user && !loadingRef.current) {
         try {
         } catch (error) {
         }
         
-        const updatedProfile = user ? await getUserProfile(user.uid) : null;
+        const updatedProfile = await getUserProfile();
         if (updatedProfile) {
           setUserData({
-            displayName: updatedProfile.displayName || user.displayName || 'User',
-            email: updatedProfile.email || user.email || '',
-            emailVerified: user.emailVerified,
-            creationTime: formatFirestoreDate(updatedProfile.createdAt),
-            lastSignInTime: formatFirestoreDate(updatedProfile.lastLoginAt || updatedProfile.updatedAt)
-          });
-        } else {
-          setUserData({
-            displayName: user.displayName || 'User',
-            email: user.email || '',
-            emailVerified: user.emailVerified,
-            creationTime: user.metadata.creationTime || '',
-            lastSignInTime: user.metadata.lastSignInTime || ''
+            displayName: updatedProfile.displayName || 'User',
+            email: updatedProfile.email || '',
+            emailVerified: updatedProfile.emailVerified,
+            creationTime: toDateStr(updatedProfile.createdAt),
+            lastSignInTime: toDateStr(updatedProfile.lastLoginAt)
           });
         }
       }
@@ -190,11 +159,13 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       refreshUserData(false);
       
       verificationCheckIntervalRef.current = setInterval(async () => {
-        const user = getCurrentUser();
+        const user = await getCurrentUser();
         if (user && !user.emailVerified) {
           try {
-            await user.reload();
-            refreshUserData(false);
+            const fresh = await getUserProfile();
+            if (fresh) {
+              refreshUserData(false);
+            }
           } catch (error) {
             refreshUserData(false);
           }
@@ -222,44 +193,26 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         setIsLoading(true);
       }
       
-      await waitForAuthReady();
-      
       const profile = await getUserFromSecureStorage();
-      const user = getCurrentUser();
-      
-      if (user) {
-        try {
-          await user.reload();
-        } catch (error) {
-        }
-      }
       
       if (profile) {
         setUserData({
-          displayName: profile.displayName || user?.displayName || 'User',
-          email: profile.email || user?.email || '',
-          emailVerified: user?.emailVerified ?? profile.emailVerified ?? false,
-          creationTime: formatFirestoreDate(profile.createdAt),
-          lastSignInTime: formatFirestoreDate(profile.lastLoginAt || (user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toISOString() : profile.updatedAt))
-        });
-      } else if (user) {
-        setUserData({
-          displayName: user.displayName || 'User',
-          email: user.email || '',
-          emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || '',
-          lastSignInTime: user.metadata.lastSignInTime || ''
+          displayName: profile.displayName || 'User',
+          email: profile.email || '',
+          emailVerified: profile.emailVerified ?? false,
+          creationTime: toDateStr(profile.createdAt),
+          lastSignInTime: toDateStr(profile.lastLoginAt)
         });
       }
     } catch (error) {
-      const user = getCurrentUser();
-      if (user) {
+      const stored = await getUserFromSecureStorage();
+      if (stored) {
         setUserData({
-          displayName: user.displayName || 'User',
-          email: user.email || '',
-          emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || '',
-          lastSignInTime: user.metadata.lastSignInTime || ''
+          displayName: stored.displayName || 'User',
+          email: stored.email || '',
+          emailVerified: stored.emailVerified ?? false,
+          creationTime: toDateStr(stored.createdAt),
+          lastSignInTime: toDateStr(stored.lastLoginAt)
         });
       }
     } finally {
@@ -290,7 +243,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     if (isResendingEmail) return;
     
     try {
-      const user = getCurrentUser();
+      const user = await getCurrentUser();
       if (!user) {
         showDialog({
           title: 'Error',
