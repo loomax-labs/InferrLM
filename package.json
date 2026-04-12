@@ -64,7 +64,6 @@
     "expo-task-manager": "~14.0.9",
     "expo-updates": "~29.0.16",
     "expo-web-browser": "~15.0.10",
-    "firebase": "^12.2.1",
     "install": "^0.13.0",
     "jest-expo": "~54.0.17",
     "llama.rn": "0.11.5",
@@ -119,7 +118,6 @@
           "@react-native-rag/op-sqlite",
           "@vercel/oidc",
           "eas",
-          "firebase",
           "react-syntax-highlighter",
           "@react-native-ml-kit/text-recognition",
           "react-native-tcp-socket"

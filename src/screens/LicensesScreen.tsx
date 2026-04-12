@@ -26,13 +26,6 @@ interface License {
 
 const licenses: License[] = [
   {
-    name: 'firebase',
-    description: 'Google Firebase SDK for JavaScript',
-    licenseType: 'Apache License 2.0',
-    licenseUrl: 'https://github.com/firebase/firebase-js-sdk/blob/master/LICENSE',
-    repositoryUrl: 'https://github.com/firebase/firebase-js-sdk'
-  },
-  {
     name: 'react-native-paper',
     description: 'Material Design for React Native',
     licenseType: 'MIT License',
