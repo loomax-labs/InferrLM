@@ -1,7 +1,7 @@
 export {
-  initializeFirebase,
-  isFirebaseReady,
-  waitForAuthReady,
+  initializeAuth as initializeFirebase,
+  isAuthReady as isFirebaseReady,
+  getCurrentUser as waitForAuthReady,
   registerWithEmail,
   loginWithEmail,
   signInWithGoogle,
@@ -11,8 +11,9 @@ export {
   isAuthenticated,
   getUserProfile,
   onAuthStateChange,
+  sendVerificationEmail,
   type UserData
-} from './FirebaseAuth';
+} from './AuthService';
 
 export {
   getUserFromSecureStorage,
@@ -30,9 +31,5 @@ export {
   checkRateLimiting,
   incrementAuthAttempts,
   resetAuthAttempts,
-  getIpAddress,
-  getGeoLocationFromIp,
-  getDeviceInfo,
-  storeUserSecurityInfo,
   isEmailFromTrustedProvider
 } from './SecurityUtils';
