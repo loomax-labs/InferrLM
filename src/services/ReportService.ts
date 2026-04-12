@@ -1,11 +1,7 @@
 import { Platform } from 'react-native';
 import { fs as FileSystem } from './fs';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { firestore } from '../config/firebase';
-import { 
-  collection, 
-  addDoc
-} from 'firebase/firestore';
+import { apiRequest } from './adapters/ApiClient';
 
 interface ReportData {
   messageContent: string;
@@ -24,15 +20,6 @@ interface ReportData {
     fileName: string;
     fileSize: number;
   }>;
-}
-
-interface FirebaseAttachment {
-  fileName: string;
-  fileSize: number;
-  fileType: string;
-  type: 'image';
-  url: string; // Contains the full data:image/jpeg;base64,... URL
-  uploadedAt: string;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB maximum input size
@@ -119,89 +106,40 @@ const compressImage = async (uri: string): Promise<{ uri: string; base64: string
   }
 };
 
-const convertFileToBase64 = async (uri: string): Promise<string> => {
-  try {
-    const base64String = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    return base64String;
-  } catch (error) {
-    throw new Error('Failed to convert file to base64');
-  }
-};
-
-const processImageAttachment = async (
-  uri: string, 
-  fileName: string
-): Promise<{ url: string; base64Data: string; finalSize: number }> => {
-  try {
-    const compressed = await compressImage(uri);
-    const base64WithPrefix = `data:image/jpeg;base64,${compressed.base64}`;
-    
-    return {
-      url: base64WithPrefix,
-      base64Data: base64WithPrefix,
-      finalSize: compressed.size
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    throw new Error(`Failed to process image: ${fileName} - ${errorMessage}`);
-  }
-};
-
 export const submitReport = async (reportData: ReportData): Promise<void> => {
   try {
-    const firestoreRef = firestore;
-    
-    const processedAttachments: FirebaseAttachment[] = [];
-    
+    const form = new FormData();
+
+    form.append('messageContent', String(reportData.messageContent));
+    form.append('provider', String(reportData.provider));
+    form.append('modelName', reportData.modelName ? String(reportData.modelName) : '');
+    form.append('category', String(reportData.category));
+    form.append('description', String(reportData.description || ''));
+    form.append('email', String(reportData.email));
+    form.append('appVersion', String(reportData.appVersion || ''));
+    form.append('platform', String(reportData.platform || Platform.OS));
+
     if (reportData.attachments && reportData.attachments.length > 0) {
       for (const attachment of reportData.attachments) {
         const fileType = getFileType(attachment.fileName);
         validateFile(attachment.fileSize, fileType);
-        
-        const { url, base64Data, finalSize } = await processImageAttachment(
-          attachment.uri,
-          attachment.fileName
-        );
-        
-        const processedAttachment: FirebaseAttachment = {
-          fileName: attachment.fileName || 'unknown.jpg',
-          fileSize: Math.round(finalSize),
-          fileType: 'image/jpeg',
-          type: 'image',
-          url,
-          uploadedAt: new Date().toISOString()
-        };
-        
-        processedAttachments.push(processedAttachment);
+
+        const compressed = await compressImage(attachment.uri);
+
+        form.append('files', {
+          uri: compressed.uri,
+          name: attachment.fileName || 'photo.jpg',
+          type: 'image/jpeg',
+        } as any);
       }
     }
-    
-    const reportDocument: any = {
-      messageContent: String(reportData.messageContent),
-      provider: String(reportData.provider),
-      category: String(reportData.category),
-      email: String(reportData.email),
-      submittedAt: new Date().toISOString(),
-      status: 'pending',
-      description: String(reportData.description || ''),
-      modelName: reportData.modelName ? String(reportData.modelName) : '',
-      userId: reportData.userId ? String(reportData.userId) : '',
-      appVersion: String(reportData.appVersion || ''),
-      platform: String(reportData.platform || Platform.OS),
-      timestamp: String(reportData.timestamp || new Date().toISOString()),
-      attachmentCount: processedAttachments.length,
-      hasAttachments: processedAttachments.length > 0,
-      source: 'mobile-app',
-      clientVersion: '1.0'
-    };
-    
-    if (processedAttachments.length > 0) {
-      reportDocument.attachments = processedAttachments;
-    }
 
-    await addDoc(collection(firestoreRef, 'reports'), reportDocument);
+    await apiRequest('/reports', {
+      method: 'POST',
+      body: form,
+      formData: true,
+      auth: true,
+    });
   } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : 'Failed to submit report';
     throw new Error(errorMessage);
