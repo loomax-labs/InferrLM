@@ -25,6 +25,7 @@ import {
 } from 'react-native-paper';
 import { loginWithEmail, signInWithGoogle, signInWithApple } from '../services/AuthService';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { logger } from '../utils/logger';
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -97,29 +98,46 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
 
   const handleLogin = async () => {
     if (!email.trim()) {
+      logger.warn('ui_login_email', 'auth');
       setError('Email is required');
       return;
     }
 
     if (!password.trim()) {
+      logger.warn('ui_login_password', 'auth');
       setError('Password is required');
       return;
     }
 
     try {
+      logger.info('ui_login_start', 'auth', {
+        params: {
+          email: `${email.trim().toLowerCase().slice(0, 2)}***`,
+          redirect: redirectAfterLogin,
+        },
+      });
       setIsLoading(true);
       setError(null);
 
       const result = await loginWithEmail(email.trim().toLowerCase(), password.trim());
       
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_login_state', 'auth', {
+          params: { logged, redirect: redirectAfterLogin },
+        });
 
         navigateAfterAuth();
       } else {
+        logger.warn('ui_login_fail', 'auth', {
+          params: { message: result.error },
+        });
         setError(result.error || 'Login failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_login_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -128,19 +146,31 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
 
   const handleGoogleSignIn = async () => {
     try {
+      logger.info('ui_google_start', 'auth', {
+        params: { redirect: redirectAfterLogin },
+      });
       setIsLoading(true);
       setError(null);
       
       const result = await signInWithGoogle();
       
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_google_state', 'auth', {
+          params: { logged, redirect: redirectAfterLogin },
+        });
 
         navigateAfterAuth();
       } else {
+        logger.warn('ui_google_fail', 'auth', {
+          params: { message: result.error },
+        });
         setError(result.error || 'Google sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_google_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Google sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -152,19 +182,31 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
       if (isLoading) {
         return;
       }
+      logger.info('ui_apple_start', 'auth', {
+        params: { redirect: redirectAfterLogin },
+      });
       setIsLoading(true);
       setError(null);
 
       const result = await signInWithApple();
 
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_apple_state', 'auth', {
+          params: { logged, redirect: redirectAfterLogin },
+        });
 
         navigateAfterAuth();
       } else {
+        logger.warn('ui_apple_fail', 'auth', {
+          params: { message: result.error },
+        });
         setError(result.error || 'Apple sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_apple_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Apple sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);

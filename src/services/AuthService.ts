@@ -3,6 +3,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { api, storeTokens, clearTokens } from './adapters/ApiClient';
 import { storeAuthState, getUserFromSecureStorage, type UserData } from './AuthStorage';
+import { logger } from '../utils/logger';
 
 type AuthResult = { success: boolean; error?: string };
 
@@ -29,10 +30,26 @@ const mapError = (error: any, fallback: string): string => {
   return fallback;
 };
 
+const maskEmail = (email?: string): string | undefined => {
+  if (!email || !email.includes('@')) {
+    return undefined;
+  }
+  const [name, domain] = email.split('@');
+  return `${name.slice(0, 2)}***@${domain}`;
+};
+
 let initialized = false;
 
 export const initializeAuth = async (): Promise<void> => {
   if (initialized) return;
+
+  logger.info('auth_init_start', 'auth', {
+    params: {
+      hasWebClientId: !!process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_WEB_CLIENT_ID,
+      hasIosClientId: !!process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_IOS_CLIENT_ID,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
+    },
+  });
 
   GoogleSignin.configure({
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_WEB_CLIENT_ID!,
@@ -43,6 +60,7 @@ export const initializeAuth = async (): Promise<void> => {
   });
 
   initialized = true;
+  logger.info('auth_init_done', 'auth');
 };
 
 export const isAuthReady = (): boolean => initialized;
@@ -66,6 +84,15 @@ export const onAuthStateChange = (cb: AuthListenerFn): (() => void) => {
   and notifies listeners.
 */
 async function handleAuthSuccess(data: { accessToken: string; refreshToken: string; user: any }) {
+  logger.info('auth_store_start', 'auth', {
+    params: {
+      userId: data.user?.id,
+      provider: data.user?.authProvider,
+      emailVerified: data.user?.emailVerified,
+      hasAccessToken: typeof data.accessToken === 'string' && data.accessToken.length > 0,
+      hasRefreshToken: typeof data.refreshToken === 'string' && data.refreshToken.length > 0,
+    },
+  });
   await storeTokens(data.accessToken, data.refreshToken);
   const user: UserData = {
     id: data.user.id,
@@ -80,6 +107,13 @@ async function handleAuthSuccess(data: { accessToken: string; refreshToken: stri
   };
   await storeAuthState(user);
   notifyListeners(user);
+  logger.info('auth_store_done', 'auth', {
+    params: {
+      userId: user.id,
+      provider: user.authProvider,
+      emailVerified: user.emailVerified,
+    },
+  });
 }
 
 export const registerWithEmail = async (
@@ -88,6 +122,15 @@ export const registerWithEmail = async (
   password: string
 ): Promise<AuthResult> => {
   try {
+    logger.info('auth_register_start', 'auth', {
+      endpoint: '/auth/register',
+      params: {
+        email: maskEmail(email),
+        hasName: !!name,
+        passwordLength: password.length,
+      },
+    });
+
     const data = await api.post('/auth/register', {
       email,
       password,
@@ -95,8 +138,20 @@ export const registerWithEmail = async (
     }, { auth: false });
 
     await handleAuthSuccess(data);
+    logger.info('auth_register_ok', 'auth', {
+      endpoint: '/auth/register',
+      params: { userId: data.user?.id },
+    });
     return { success: true };
   } catch (error: any) {
+    logger.error('auth_register_fail', 'auth', {
+      endpoint: '/auth/register',
+      status: error?.status,
+      params: {
+        email: maskEmail(email),
+        message: error?.body?.message || error?.message,
+      },
+    });
     return { success: false, error: mapError(error, 'Registration failed. Please try again.') };
   }
 };
@@ -106,16 +161,37 @@ export const loginWithEmail = async (
   password: string
 ): Promise<AuthResult> => {
   try {
+    logger.info('auth_login_start', 'auth', {
+      endpoint: '/auth/login',
+      params: {
+        email: maskEmail(email),
+        passwordLength: password.length,
+      },
+    });
+
     const data = await api.post('/auth/login', { email, password }, { auth: false });
     await handleAuthSuccess(data);
+    logger.info('auth_login_ok', 'auth', {
+      endpoint: '/auth/login',
+      params: { userId: data.user?.id },
+    });
     return { success: true };
   } catch (error: any) {
+    logger.error('auth_login_fail', 'auth', {
+      endpoint: '/auth/login',
+      status: error?.status,
+      params: {
+        email: maskEmail(email),
+        message: error?.body?.message || error?.message,
+      },
+    });
     return { success: false, error: mapError(error, 'Login failed. Please try again.') };
   }
 };
 
 export const signInWithGoogle = async (): Promise<AuthResult> => {
   try {
+    logger.info('auth_google_start', 'auth');
     await GoogleSignin.hasPlayServices();
 
     const userInfo = await GoogleSignin.signIn();
@@ -127,13 +203,25 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
     }
 
     if (!idToken) {
+      logger.warn('auth_google_missing', 'auth');
       return { success: false, error: 'Google sign-in failed. Please try again.' };
     }
 
     const data = await api.post('/auth/google', { idToken }, { auth: false });
     await handleAuthSuccess(data);
+    logger.info('auth_google_ok', 'auth', {
+      endpoint: '/auth/google',
+      params: { userId: data.user?.id },
+    });
     return { success: true };
   } catch (error: any) {
+    logger.error('auth_google_fail', 'auth', {
+      endpoint: '/auth/google',
+      params: {
+        code: error?.code,
+        message: error?.message,
+      },
+    });
     let msg = 'Google sign-in failed. Please try again.';
     if (error.code === 'SIGN_IN_CANCELLED') msg = 'Sign-in was cancelled';
     else if (error.code === 'IN_PROGRESS') msg = 'Sign-in already in progress';
@@ -144,8 +232,10 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
 
 export const signInWithApple = async (): Promise<AuthResult> => {
   try {
+    logger.info('auth_apple_start', 'auth');
     const available = await AppleAuthentication.isAvailableAsync();
     if (!available) {
+      logger.warn('auth_apple_unavailable', 'auth');
       return { success: false, error: 'Apple Sign-In is not available on this device' };
     }
 
@@ -164,6 +254,7 @@ export const signInWithApple = async (): Promise<AuthResult> => {
     });
 
     if (!cred.identityToken) {
+      logger.warn('auth_apple_missing', 'auth');
       return { success: false, error: 'Apple sign-in failed. Please try again.' };
     }
 
@@ -181,8 +272,19 @@ export const signInWithApple = async (): Promise<AuthResult> => {
     }, { auth: false });
 
     await handleAuthSuccess(data);
+    logger.info('auth_apple_ok', 'auth', {
+      endpoint: '/auth/apple',
+      params: { userId: data.user?.id },
+    });
     return { success: true };
   } catch (error: any) {
+    logger.error('auth_apple_fail', 'auth', {
+      endpoint: '/auth/apple',
+      params: {
+        code: error?.code,
+        message: error?.message,
+      },
+    });
     let msg = 'Apple sign-in failed. Please try again.';
     if (error?.code === 'ERR_REQUEST_CANCELED' || error?.code === 'ERR_CANCELED') {
       msg = 'Sign-in was cancelled';
@@ -231,8 +333,22 @@ export const getUserProfile = async (): Promise<UserData | null> => {
       lastLoginAt: profile.lastLoginAt,
     };
     await storeAuthState(user);
+    logger.info('auth_profile_ok', 'auth', {
+      endpoint: '/me',
+      params: {
+        userId: user.id,
+        emailVerified: user.emailVerified,
+      },
+    });
     return user;
-  } catch {
+  } catch (error: any) {
+    logger.error('auth_profile_fail', 'auth', {
+      endpoint: '/me',
+      status: error?.status,
+      params: {
+        message: error?.body?.message || error?.message,
+      },
+    });
     return null;
   }
 };

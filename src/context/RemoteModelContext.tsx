@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { isAuthenticated, getCurrentUser, isAuthReady, onAuthStateChange } from '../services/AuthService';
 import { getUserFromSecureStorage, type UserData } from '../services/AuthStorage';
 import providerKeyStorage from '../utils/ProviderKeyStorage';
+import { logger } from '../utils/logger';
 
 const REMOTE_MODELS_KEY = 'remote_models_enabled';
 
@@ -57,16 +58,27 @@ export const RemoteModelProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const checkLoginStatus = useCallback(async () => {
     try {
       if (!isAuthReady()) {
+        logger.warn('auth_state_unready', 'auth');
         setIsLoggedIn(false);
         return false;
       }
 
       const authenticated = await isAuthenticated();
+      logger.info('auth_state_check', 'auth', {
+        params: { authenticated },
+      });
       setIsLoggedIn(authenticated);
 
       if (!authenticated) {
         const storedUser = await getUserFromSecureStorage();
         const logged = !!storedUser;
+        logger.info('auth_state_cache', 'auth', {
+          params: {
+            logged,
+            userId: storedUser?.id,
+            emailVerified: storedUser?.emailVerified,
+          },
+        });
         setIsLoggedIn(logged);
 
         if (!logged) {
@@ -79,8 +91,12 @@ export const RemoteModelProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
 
       await loadPref();
+      logger.info('auth_state_ok', 'auth');
       return true;
-    } catch {
+    } catch (error: any) {
+      logger.error('auth_state_fail', 'auth', {
+        params: { message: error?.message },
+      });
       setIsLoggedIn(false);
       await disableRemoteModels(false);
       return false;
@@ -98,6 +114,13 @@ export const RemoteModelProvider: React.FC<{ children: React.ReactNode }> = ({ c
     try {
       const unsubscribe = onAuthStateChange(async (user: UserData | null) => {
         const logged = !!user;
+        logger.info('auth_state_change', 'auth', {
+          params: {
+            logged,
+            userId: user?.id,
+            emailVerified: user?.emailVerified,
+          },
+        });
         setIsLoggedIn(logged);
 
         if (!logged) {

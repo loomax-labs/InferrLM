@@ -29,6 +29,7 @@ import Dialog from '../components/Dialog';
 import { registerWithEmail, signInWithGoogle, signInWithApple } from '../services/AuthService';
 import { isEmailFromTrustedProvider } from '../services/SecurityUtils';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { logger } from '../utils/logger';
 
 type RegisterScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -132,31 +133,37 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
 
   const handleRegister = async () => {
     if (!name.trim()) {
+      logger.warn('ui_register_name', 'auth');
       setError('Full name is required');
       return;
     }
 
     if (!email.trim()) {
+      logger.warn('ui_register_email', 'auth');
       setError('Email is required');
       return;
     }
 
     if (!validateEmail(email.trim().toLowerCase())) {
+      logger.warn('ui_register_format', 'auth');
       setError('Please enter a valid email address');
       return;
     }
 
     if (!password.trim()) {
+      logger.warn('ui_register_password', 'auth');
       setError('Password is required');
       return;
     }
 
     if (password.trim() !== confirmPassword.trim()) {
+      logger.warn('ui_register_match', 'auth');
       setError('Passwords do not match');
       return;
     }
 
     if (!termsAccepted) {
+      logger.warn('ui_register_terms', 'auth');
       setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
@@ -167,15 +174,30 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
     setTermsError(null);
 
     try {
+      logger.info('ui_register_start', 'auth', {
+        params: {
+          email: `${email.trim().toLowerCase().slice(0, 2)}***`,
+          redirect: redirectAfterRegister,
+        },
+      });
       const result = await registerWithEmail(name.trim(), email.trim().toLowerCase(), password.trim());
       
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_register_state', 'auth', {
+          params: { logged, redirect: redirectAfterRegister },
+        });
         setDialogVisible(true);
       } else {
+        logger.warn('ui_register_fail', 'auth', {
+          params: { message: result.error },
+        });
         setError(result.error || 'Registration failed');
       }
     } catch (error: any) {
+      logger.error('ui_register_error', 'auth', {
+        params: { message: error?.message },
+      });
       setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -185,10 +207,14 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   const handleGoogleSignIn = async () => {
     try {
       if (!termsAccepted) {
+        logger.warn('ui_google_terms', 'auth');
         setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
         return;
       }
 
+      logger.info('ui_google_start', 'auth', {
+        params: { redirect: redirectAfterRegister },
+      });
       setIsLoading(true);
       setError(null);
       setTermsError(null);
@@ -196,13 +222,22 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
       const result = await signInWithGoogle();
       
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_google_state', 'auth', {
+          params: { logged, redirect: redirectAfterRegister },
+        });
 
         navigateAfterAuth();
       } else {
+        logger.warn('ui_google_fail', 'auth', {
+          params: { message: result.error },
+        });
         setError(result.error || 'Google sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_google_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Google sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -212,12 +247,16 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   const handleAppleSignIn = async () => {
     try {
       if (!termsAccepted) {
+        logger.warn('ui_apple_terms', 'auth');
         setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
         return;
       }
       if (isLoading) {
         return;
       }
+      logger.info('ui_apple_start', 'auth', {
+        params: { redirect: redirectAfterRegister },
+      });
       setIsLoading(true);
       setError(null);
       setTermsError(null);
@@ -225,13 +264,22 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
       const result = await signInWithApple();
 
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_apple_state', 'auth', {
+          params: { logged, redirect: redirectAfterRegister },
+        });
 
         navigateAfterAuth();
       } else {
+        logger.warn('ui_apple_fail', 'auth', {
+          params: { message: result.error },
+        });
         setError(result.error || 'Apple sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_apple_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Apple sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
