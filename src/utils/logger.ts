@@ -45,7 +45,11 @@ class ServerLogger {
     if (__DEV__) {
       const timestamp = new Date().toLocaleTimeString();
       const prefix = `[${timestamp}] [${level.toUpperCase()}] [${category}]`;
-      console.log(`${prefix} ${message}`);
+      if (metadata) {
+        console.log(`${prefix} ${message}`, metadata);
+      } else {
+        console.log(`${prefix} ${message}`);
+      }
     }
   }
 
