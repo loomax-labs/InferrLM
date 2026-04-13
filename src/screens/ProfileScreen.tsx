@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Linking } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Modal, TextInput } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
@@ -7,22 +7,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { getCurrentUser, logoutUser, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeAuth, type UserData } from '../services/AuthService';
+import { getCurrentUser, logoutUser, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeAuth, deleteAccount, type UserData } from '../services/AuthService';
 import { getUserFromSecureStorage } from '../services/AuthStorage';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialog } from '../context/DialogContext';
-import * as WebBrowser from 'expo-web-browser';
 
 type ProfileScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
 };
-
-const IN_APP_BROWSER_URLS = new Set([
-  'https://inferrlm.app/delete-account',
-]);
-
-const normalizeLink = (url: string) => url.replace(/\/+$/, '');
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { theme: currentTheme } = useTheme();
@@ -44,13 +37,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const verificationCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
-  useEffect(() => {
-    WebBrowser.warmUpAsync();
-    return () => {
-      WebBrowser.coolDownAsync();
-    };
-  }, []);
-  
   const toDateStr = (val: any): string => {
     if (!val) return '';
     try {
@@ -299,24 +285,52 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     }
   };
 
-  const openLink = async (url: string) => {
-    try {
-      const normalizedUrl = normalizeLink(url);
-      if (IN_APP_BROWSER_URLS.has(normalizedUrl)) {
-        await WebBrowser.openBrowserAsync(normalizedUrl);
-        return;
-      }
-      await Linking.openURL(normalizedUrl);
-    } catch (error) {
-      showDialog({
-        title: 'Error',
-        message: 'Failed to open browser'
-      });
-    }
-  };
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteKeyword, setDeleteKeyword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteAccount = () => {
-    openLink('https://inferrlm.app/delete-account');
+    setDeleteKeyword('');
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteKeyword !== 'DELETE' || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteAccount(deleteKeyword);
+      setDeleteModalVisible(false);
+      if (result.success) {
+        await checkLoginStatus();
+        showDialog({
+          title: 'Account Deactivated',
+          message: 'Your account has been deactivated and will be permanently deleted in 30 days. Contact support to restore it before then.',
+          confirmText: 'OK',
+          cancelText: null,
+          onConfirm: () => {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs', params: { screen: 'SettingsTab' } }],
+              })
+            );
+          },
+        });
+      } else {
+        showDialog({
+          title: 'Error',
+          message: result.error || 'Account deletion failed. Please try again.',
+        });
+      }
+    } catch {
+      setDeleteModalVisible(false);
+      showDialog({
+        title: 'Error',
+        message: 'Account deletion failed. Please try again.',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -466,6 +480,64 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !isDeleting && setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: themeColors.background }]}>
+            <MaterialCommunityIcons name="alert-circle" size={48} color="#FF5252" style={styles.modalIcon} />
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Delete Account
+            </Text>
+            <Text style={[styles.modalMessage, { color: themeColors.secondaryText }]}>
+              This action cannot be undone. Your account will be deactivated immediately and permanently deleted after 30 days.
+            </Text>
+            <Text style={[styles.modalMessage, { color: themeColors.secondaryText, marginTop: 8 }]}>
+              Type <Text style={{ fontWeight: 'bold', color: '#FF5252' }}>DELETE</Text> to confirm:
+            </Text>
+            <TextInput
+              style={[styles.keywordInput, {
+                color: themeColors.text,
+                borderColor: deleteKeyword === 'DELETE' ? '#FF5252' : themeColors.secondaryText + '40',
+                backgroundColor: themeColors.background,
+              }]}
+              value={deleteKeyword}
+              onChangeText={setDeleteKeyword}
+              placeholder="Type DELETE"
+              placeholderTextColor={themeColors.secondaryText + '80'}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!isDeleting}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalCancel, { borderColor: themeColors.secondaryText + '30' }]}
+                onPress={() => setDeleteModalVisible(false)}
+                disabled={isDeleting}
+              >
+                <Text style={[styles.modalCancelText, { color: themeColors.text }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirm, {
+                  backgroundColor: deleteKeyword === 'DELETE' ? '#FF5252' : '#FF5252' + '40',
+                }]}
+                onPress={confirmDelete}
+                disabled={deleteKeyword !== 'DELETE' || isDeleting}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -601,5 +673,76 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  modalIcon: {
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  keywordInput: {
+    width: '100%',
+    borderWidth: 1.5,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 12,
+    letterSpacing: 2,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+    width: '100%',
+  },
+  modalCancel: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalConfirm: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
