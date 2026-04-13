@@ -29,14 +29,6 @@ expo-env.d.ts
 *.env.js
 *.env.ts
 
-# Firebase & Google Services - CRITICAL SECURITY
-google-services.json
-GoogleService-Info.plist
-firebase-debug.log
-firebase-debug.*.log
-.firebase/
-firebaserc
-
 # iOS Certificates & Keys - CRITICAL SECURITY
 *.ipa
 *.dSYM.zip
