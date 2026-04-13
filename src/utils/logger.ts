@@ -49,20 +49,20 @@ class ServerLogger {
     }
   }
 
-  debug(message: string, category?: string) {
-    this.addLogEntry('debug', message, category);
+  debug(message: string, category?: string, metadata?: LogMetadata) {
+    this.addLogEntry('debug', message, category, metadata);
   }
 
-  info(message: string, category?: string) {
-    this.addLogEntry('info', message, category);
+  info(message: string, category?: string, metadata?: LogMetadata) {
+    this.addLogEntry('info', message, category, metadata);
   }
 
-  warn(message: string, category?: string) {
-    this.addLogEntry('warn', message, category);
+  warn(message: string, category?: string, metadata?: LogMetadata) {
+    this.addLogEntry('warn', message, category, metadata);
   }
 
-  error(message: string, category?: string) {
-    this.addLogEntry('error', message, category);
+  error(message: string, category?: string, metadata?: LogMetadata) {
+    this.addLogEntry('error', message, category, metadata);
   }
 
   async getLogs(): Promise<LogEntry[]> {
