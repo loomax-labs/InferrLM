@@ -22,6 +22,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'account_disabled': 'This account is disabled. Contact support for help.',
   'oauth_account_no_password': 'This account uses social login. Please sign in with Google or Apple.',
   'password_too_weak': 'Your password is too weak. Use at least eight characters with mixed case and a number.',
+  'invalid_keyword': 'Incorrect confirmation keyword. Please type DELETE to confirm.',
+  'already_pending_deletion': 'Account deletion is already in progress.',
 };
 
 const mapError = (error: any, fallback: string): string => {
@@ -306,6 +308,19 @@ export const logoutUser = async (): Promise<AuthResult> => {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: 'Logout failed.' };
+  }
+};
+
+export const deleteAccount = async (keyword: string): Promise<AuthResult> => {
+  try {
+    await api.post('/me/delete', { keyword });
+    try { await GoogleSignin.signOut(); } catch {}
+    await clearTokens();
+    await storeAuthState(null);
+    notifyListeners(null);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: mapError(error, 'Account deletion failed. Please try again.') };
   }
 };
 
