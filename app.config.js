@@ -63,7 +63,6 @@ export default {
       },
       package: "com.gorai.ragionare",
       runtimeVersion: "0.8.7",
-      googleServicesFile: "./google-services.json",
       edgeToEdgeEnabled: true,
       resizeableActivity: true,
       supportsFreeform: true,
@@ -113,6 +112,7 @@ export default {
       },
     },
     plugins: [
+      "@inferrlm/react-native-litert-lm",
       "expo-font",
       "expo-web-browser",
       "expo-asset",

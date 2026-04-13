@@ -87,7 +87,7 @@ If you want to contribute or just try to run it locally, follow the guide below.
    ```
 
 3. **Set up environment variables**
-   Configure your API keys and Firebase settings. The list of variables is available in the [app.config.json](app.config.js)
+  Configure your API keys and backend settings. The list of variables is available in the [app.config.json](app.config.js)
 
 4. **Run on device or emulator**
    ```bash
