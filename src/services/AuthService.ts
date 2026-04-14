@@ -48,12 +48,19 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 };
 
 const mapError = (error: any, fallback: string): string => {
+  const code = error?.body?.error;
   const msg = error?.body?.message || error?.message || '';
+  if (typeof code === 'string' && AUTH_ERROR_MESSAGES[code]) return AUTH_ERROR_MESSAGES[code];
   if (AUTH_ERROR_MESSAGES[msg]) return AUTH_ERROR_MESSAGES[msg];
   return fallback;
 };
 
 const getErrorCode = (error: any): string | undefined => {
+  const code = error?.body?.error;
+  if (typeof code === 'string') {
+    return code;
+  }
+
   const msg = error?.body?.message || error?.message;
   return typeof msg === 'string' ? msg : undefined;
 };

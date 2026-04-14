@@ -22,7 +22,8 @@ export default function DeleteAccountScreen({ navigation }: Props) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
 
-  const isReady = keyword === 'DELETE';
+  const normalizedKeyword = keyword.trim();
+  const isReady = normalizedKeyword === 'DELETE';
 
   const formatRetryAt = (value?: string | null) => {
     if (!value) {
@@ -50,9 +51,12 @@ export default function DeleteAccountScreen({ navigation }: Props) {
     setError('');
 
     try {
-      const result = await deleteAccount(keyword);
+      const result = await deleteAccount(normalizedKeyword);
       if (!result.success) {
-        if (result.code === 'deletion_restore_cooldown') {
+        if (
+          result.code === 'deletion_restore_cooldown' ||
+          result.error?.includes('48-hour grace period')
+        ) {
           setError(formatRetryAt(result.deletionCooldown?.retryAt));
           return;
         }
@@ -130,6 +134,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
               placeholderTextColor={themeColors.secondaryText + '80'}
               autoCapitalize="characters"
               autoCorrect={false}
+              caretHidden={true}
               editable={!isDeleting}
             />
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
