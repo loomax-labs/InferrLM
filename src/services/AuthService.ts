@@ -5,7 +5,17 @@ import { api, storeTokens, clearTokens } from './adapters/ApiClient';
 import { storeAuthState, getUserFromSecureStorage, type UserData } from './AuthStorage';
 import { logger } from '../utils/logger';
 
-type AuthResult = { success: boolean; error?: string };
+type PendingDeletionInfo = {
+  restoreToken?: string;
+  scheduledDeletionAt?: string | null;
+};
+
+export type AuthResult = {
+  success: boolean;
+  error?: string;
+  code?: string;
+  pendingDeletion?: PendingDeletionInfo;
+};
 
 type AuthListenerFn = (user: UserData | null) => void;
 const listeners: Set<AuthListenerFn> = new Set();
@@ -20,10 +30,15 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'email_already_registered': 'This email is already registered. Try signing in instead.',
   'invalid_credentials': 'Incorrect email or password. Please try again.',
   'account_disabled': 'This account is disabled. Contact support for help.',
+  'account_pending_deletion': 'This account is scheduled for deletion.',
+  'account_pending_deletion_registration_blocked': 'This account is scheduled for deletion. Please try again after 30 days.',
   'oauth_account_no_password': 'This account uses social login. Please sign in with Google or Apple.',
   'password_too_weak': 'Your password is too weak. Use at least eight characters with mixed case and a number.',
   'invalid_keyword': 'Incorrect confirmation keyword. Please type DELETE to confirm.',
   'already_pending_deletion': 'Account deletion is already in progress.',
+  'restore_token_invalid': 'Restore session expired. Please sign in again to continue.',
+  'restore_window_expired': 'This account can no longer be restored.',
+  'not_pending_deletion': 'This account is no longer scheduled for deletion.',
 };
 
 const mapError = (error: any, fallback: string): string => {
@@ -31,6 +46,30 @@ const mapError = (error: any, fallback: string): string => {
   if (AUTH_ERROR_MESSAGES[msg]) return AUTH_ERROR_MESSAGES[msg];
   return fallback;
 };
+
+const getErrorCode = (error: any): string | undefined => {
+  const msg = error?.body?.message || error?.message;
+  return typeof msg === 'string' ? msg : undefined;
+};
+
+const getPendingDeletionInfo = (error: any): PendingDeletionInfo | undefined => {
+  const details = error?.body?.details;
+  if (!details || typeof details !== 'object' || Array.isArray(details)) {
+    return undefined;
+  }
+
+  return {
+    restoreToken: typeof details.restoreToken === 'string' ? details.restoreToken : undefined,
+    scheduledDeletionAt: typeof details.scheduledDeletionAt === 'string' ? details.scheduledDeletionAt : null,
+  };
+};
+
+const buildFailure = (error: any, fallback: string): AuthResult => ({
+  success: false,
+  error: mapError(error, fallback),
+  code: getErrorCode(error),
+  pendingDeletion: getPendingDeletionInfo(error),
+});
 
 const maskEmail = (email?: string): string | undefined => {
   if (!email || !email.includes('@')) {
@@ -154,7 +193,7 @@ export const registerWithEmail = async (
         message: error?.body?.message || error?.message,
       },
     });
-    return { success: false, error: mapError(error, 'Registration failed. Please try again.') };
+    return buildFailure(error, 'Registration failed. Please try again.');
   }
 };
 
@@ -187,7 +226,7 @@ export const loginWithEmail = async (
         message: error?.body?.message || error?.message,
       },
     });
-    return { success: false, error: mapError(error, 'Login failed. Please try again.') };
+    return buildFailure(error, 'Login failed. Please try again.');
   }
 };
 
@@ -224,11 +263,21 @@ export const signInWithGoogle = async (): Promise<AuthResult> => {
         message: error?.message,
       },
     });
+    const pendingDeletion = getPendingDeletionInfo(error);
+    const errorCode = getErrorCode(error);
+    if (errorCode === 'account_pending_deletion') {
+      return {
+        success: false,
+        error: mapError(error, 'Google sign-in failed. Please try again.'),
+        code: errorCode,
+        pendingDeletion,
+      };
+    }
     let msg = 'Google sign-in failed. Please try again.';
     if (error.code === 'SIGN_IN_CANCELLED') msg = 'Sign-in was cancelled';
     else if (error.code === 'IN_PROGRESS') msg = 'Sign-in already in progress';
     else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') msg = 'Google Play Services not available';
-    return { success: false, error: msg };
+    return { success: false, error: msg, code: errorCode, pendingDeletion };
   }
 };
 
@@ -287,11 +336,31 @@ export const signInWithApple = async (): Promise<AuthResult> => {
         message: error?.message,
       },
     });
+    const pendingDeletion = getPendingDeletionInfo(error);
+    const errorCode = getErrorCode(error);
+    if (errorCode === 'account_pending_deletion') {
+      return {
+        success: false,
+        error: mapError(error, 'Apple sign-in failed. Please try again.'),
+        code: errorCode,
+        pendingDeletion,
+      };
+    }
     let msg = 'Apple sign-in failed. Please try again.';
     if (error?.code === 'ERR_REQUEST_CANCELED' || error?.code === 'ERR_CANCELED') {
       msg = 'Sign-in was cancelled';
     }
-    return { success: false, error: msg };
+    return { success: false, error: msg, code: errorCode, pendingDeletion };
+  }
+};
+
+export const restorePendingAccount = async (restoreToken: string): Promise<AuthResult> => {
+  try {
+    const data = await api.post('/auth/restore-account', { restoreToken }, { auth: false });
+    await handleAuthSuccess(data);
+    return { success: true };
+  } catch (error: any) {
+    return buildFailure(error, 'Account restore failed. Please try again.');
   }
 };
 
@@ -320,7 +389,7 @@ export const deleteAccount = async (keyword: string): Promise<AuthResult> => {
     notifyListeners(null);
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: mapError(error, 'Account deletion failed. Please try again.') };
+    return buildFailure(error, 'Account deletion failed. Please try again.');
   }
 };
 
@@ -329,7 +398,7 @@ export const sendVerificationEmail = async (): Promise<AuthResult> => {
     await api.post('/auth/resend-verification');
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: mapError(error, 'Failed to send verification email.') };
+    return buildFailure(error, 'Failed to send verification email.');
   }
 };
 
