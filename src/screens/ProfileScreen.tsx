@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
@@ -223,6 +223,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
   const [emailSentTimestamp, setEmailSentTimestamp] = useState<number | null>(null);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const EMAIL_COOLDOWN_PERIOD = 60000;
 
   const resendVerificationEmail = async () => {
@@ -286,7 +287,12 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   };
 
   const handleDeleteAccount = () => {
+    setMenuVisible(false);
     navigation.navigate('DeleteAccount');
+  };
+
+  const toggleMenu = () => {
+    setMenuVisible((value) => !value);
   };
 
   const handleSignOut = async () => {
@@ -298,6 +304,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       onConfirm: async () => {
         const result = await logoutUser();
         if (result.success) {
+          setMenuVisible(false);
           await checkLoginStatus();
           navigation.dispatch(
             CommonActions.reset({
@@ -345,8 +352,35 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         title="My Profile"
         showBackButton={true}
         showLogo={false}
-        rightButtons={[]}
+        rightButtons={
+          <TouchableOpacity
+            style={styles.headerMenuButton}
+            onPress={toggleMenu}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialCommunityIcons name="dots-vertical" size={22} color={themeColors.headerText} />
+          </TouchableOpacity>
+        }
       />
+      {menuVisible && (
+        <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
+          <View
+            style={[
+              styles.menuCard,
+              {
+                backgroundColor: themeColors.background,
+                borderColor: themeColors.borderColor,
+                top: insets.top + 52,
+              },
+            ]}
+          >
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteAccount}>
+              <MaterialCommunityIcons name="account-remove" size={18} color="#FF5252" />
+              <Text style={styles.menuItemText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      )}
       <ScrollView contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}>
         <View style={[styles.profileHeader, { backgroundColor: themeColors.background }]}>
           <View style={[styles.avatarContainer, { backgroundColor: themeColors.primary + '20' }]}>
@@ -423,16 +457,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <MaterialCommunityIcons name="logout" size={20} color="#FF5252" />
           <Text style={[styles.signOutText, { color: '#FF5252' }]}>
             Sign Out
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.deleteAccountButton, { backgroundColor: '#FF5252' + '15', borderColor: '#FF5252' + '30', borderWidth: 1 }]}
-          onPress={handleDeleteAccount}
-        >
-          <MaterialCommunityIcons name="account-remove" size={20} color="#FF5252" />
-          <Text style={[styles.deleteAccountText, { color: '#FF5252' }]}>
-            Delete Account
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -523,16 +547,45 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  deleteAccountButton: {
+  headerMenuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 20,
+  },
+  menuCard: {
+    position: 'absolute',
+    right: 16,
+    minWidth: 180,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 8,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 8,
   },
-  deleteAccountText: {
-    fontSize: 16,
+  menuItemText: {
+    color: '#FF5252',
+    fontSize: 15,
     fontWeight: '600',
   },
   signOutButton: {
