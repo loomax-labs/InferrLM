@@ -66,7 +66,9 @@ export default function DeleteAccountScreen({ navigation }: Props) {
         return;
       }
 
-      await checkLoginStatus();
+      try {
+        await checkLoginStatus();
+      } catch {}
       setSuccessVisible(true);
     } catch {
       setError('Account deletion failed. Please try again.');
@@ -127,31 +129,36 @@ export default function DeleteAccountScreen({ navigation }: Props) {
               </View>
             </View>
 
-            <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
-              <Text style={[styles.label, { color: themeColors.text }]}>Type DELETE to confirm</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: themeColors.text,
-                    backgroundColor: themeColors.background,
-                    borderColor: error ? '#FF5252' : isReady ? '#FF5252' : themeColors.borderColor,
-                  },
-                ]}
-                value={keyword}
-                onChangeText={(value) => {
-                  setKeyword(value);
-                  if (error) setError('');
-                }}
-                placeholder="Type DELETE"
-                placeholderTextColor={themeColors.secondaryText + '80'}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                caretHidden={true}
-                editable={!isDeleting}
-              />
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            </View>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={insets.top + 24}
+            >
+              <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
+                <Text style={[styles.label, { color: themeColors.text }]}>Type DELETE to confirm</Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      color: themeColors.text,
+                      backgroundColor: themeColors.background,
+                      borderColor: error ? '#FF5252' : isReady ? '#FF5252' : themeColors.borderColor,
+                    },
+                  ]}
+                  value={keyword}
+                  onChangeText={(value) => {
+                    setKeyword(value);
+                    if (error) setError('');
+                  }}
+                  placeholder="Type DELETE"
+                  placeholderTextColor={themeColors.secondaryText + '80'}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  caretHidden={true}
+                  editable={!isDeleting}
+                />
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              </View>
+            </KeyboardAvoidingView>
 
             <View style={styles.actions}>
               <TouchableOpacity
