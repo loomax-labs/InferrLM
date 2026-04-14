@@ -79,6 +79,23 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
     });
   };
 
+  const pendingDeletionMessage = (value?: string | null) => {
+    if (!value) {
+      return 'This account is scheduled for deletion. Please try again after 30 days.';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'This account is scheduled for deletion. Please try again after 30 days.';
+    }
+
+    return `This account is scheduled for deletion. Please try again after ${date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })}.`;
+  };
+
   const handleOpenTerms = async () => {
     try {
       await WebBrowser.openBrowserAsync('https://inferrlm.app/terms-conditions');
@@ -188,9 +205,17 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
           params: { logged, redirect: redirectAfterRegister },
         });
         setDialogVisible(true);
+      } else if (
+        result.code === 'account_pending_deletion' ||
+        result.code === 'account_pending_deletion_registration_blocked'
+      ) {
+        logger.warn('ui_register_pending', 'auth', {
+          params: { code: result.code, scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt },
+        });
+        setError(pendingDeletionMessage(result.pendingDeletion?.scheduledDeletionAt));
       } else {
         logger.warn('ui_register_fail', 'auth', {
-          params: { message: result.error },
+          params: { message: result.error, code: result.code },
         });
         setError(result.error || 'Registration failed');
       }
@@ -228,9 +253,14 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
         });
 
         navigateAfterAuth();
+      } else if (result.code === 'account_pending_deletion') {
+        logger.warn('ui_google_pending', 'auth', {
+          params: { scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt },
+        });
+        setError(pendingDeletionMessage(result.pendingDeletion?.scheduledDeletionAt));
       } else {
         logger.warn('ui_google_fail', 'auth', {
-          params: { message: result.error },
+          params: { message: result.error, code: result.code },
         });
         setError(result.error || 'Google sign-in failed. Please try again.');
       }
@@ -270,9 +300,14 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
         });
 
         navigateAfterAuth();
+      } else if (result.code === 'account_pending_deletion') {
+        logger.warn('ui_apple_pending', 'auth', {
+          params: { scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt },
+        });
+        setError(pendingDeletionMessage(result.pendingDeletion?.scheduledDeletionAt));
       } else {
         logger.warn('ui_apple_fail', 'auth', {
-          params: { message: result.error },
+          params: { message: result.error, code: result.code },
         });
         setError(result.error || 'Apple sign-in failed. Please try again.');
       }

@@ -23,7 +23,8 @@ import {
   HelperText, 
   Divider,
 } from 'react-native-paper';
-import { loginWithEmail, signInWithGoogle, signInWithApple } from '../services/AuthService';
+import Dialog from '../components/Dialog';
+import { loginWithEmail, restorePendingAccount, signInWithGoogle, signInWithApple, type AuthResult } from '../services/AuthService';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { logger } from '../utils/logger';
 
@@ -40,9 +41,14 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
+  const [restoreDialogVisible, setRestoreDialogVisible] = useState(false);
+  const [restoreToken, setRestoreToken] = useState<string | null>(null);
+  const [scheduledDeletionAt, setScheduledDeletionAt] = useState<string | null>(null);
+  const [restoreProvider, setRestoreProvider] = useState<'email' | 'google' | 'apple'>('email');
 
   const redirectAfterLogin = route.params?.redirectTo || 'MainTabs';
   const redirectParams = route.params?.redirectParams || { screen: 'HomeTab' };
@@ -70,6 +76,100 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
       redirectTo: route.params?.redirectTo,
       redirectParams: route.params?.redirectParams
     });
+  };
+
+  const formatDeletionDate = (value?: string | null) => {
+    if (!value) {
+      return 'within the 30-day recovery window';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'within the 30-day recovery window';
+    }
+
+    return `until ${date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })}`;
+  };
+
+  const resetRestoreDialog = () => {
+    setRestoreDialogVisible(false);
+    setRestoreToken(null);
+    setScheduledDeletionAt(null);
+    setRestoreProvider('email');
+  };
+
+  const closeRestoreDialog = () => {
+    if (isRestoring) {
+      return;
+    }
+
+    resetRestoreDialog();
+  };
+
+  const promptRestore = (result: AuthResult, provider: 'email' | 'google' | 'apple') => {
+    const nextRestoreToken = result.pendingDeletion?.restoreToken;
+    if (!nextRestoreToken) {
+      setError(result.error || 'This account is scheduled for deletion.');
+      return;
+    }
+
+    logger.info('ui_restore_prompt', 'auth', {
+      params: {
+        provider,
+        scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt,
+      },
+    });
+    setRestoreToken(nextRestoreToken);
+    setScheduledDeletionAt(result.pendingDeletion?.scheduledDeletionAt || null);
+    setRestoreProvider(provider);
+    setRestoreDialogVisible(true);
+  };
+
+  const completeLogin = async (provider: 'email' | 'google' | 'apple') => {
+    const logged = await checkLoginStatus();
+    logger.info(`ui_${provider}_state`, 'auth', {
+      params: { logged, redirect: redirectAfterLogin },
+    });
+    navigateAfterAuth();
+  };
+
+  const handleRestoreAccount = async () => {
+    if (!restoreToken || isRestoring) {
+      return;
+    }
+
+    try {
+      setIsRestoring(true);
+      setError(null);
+
+      const result = await restorePendingAccount(restoreToken);
+      if (result.success) {
+        resetRestoreDialog();
+        logger.info('ui_restore_done', 'auth', {
+          params: { redirect: redirectAfterLogin, provider: restoreProvider },
+        });
+        await completeLogin(restoreProvider);
+        return;
+      }
+
+      logger.warn('ui_restore_fail', 'auth', {
+        params: { message: result.error, code: result.code },
+      });
+      resetRestoreDialog();
+      setError(result.error || 'Account restore failed. Please try again.');
+    } catch (err: any) {
+      logger.error('ui_restore_error', 'auth', {
+        params: { message: err?.message },
+      });
+      resetRestoreDialog();
+      setError('Account restore failed. Please try again.');
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   useEffect(() => {
@@ -122,15 +222,12 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
       const result = await loginWithEmail(email.trim().toLowerCase(), password.trim());
       
       if (result.success) {
-        const logged = await checkLoginStatus();
-        logger.info('ui_login_state', 'auth', {
-          params: { logged, redirect: redirectAfterLogin },
-        });
-
-        navigateAfterAuth();
+        await completeLogin('email');
+      } else if (result.code === 'account_pending_deletion') {
+        promptRestore(result, 'email');
       } else {
         logger.warn('ui_login_fail', 'auth', {
-          params: { message: result.error },
+          params: { message: result.error, code: result.code },
         });
         setError(result.error || 'Login failed. Please try again.');
       }
@@ -155,15 +252,12 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
       const result = await signInWithGoogle();
       
       if (result.success) {
-        const logged = await checkLoginStatus();
-        logger.info('ui_google_state', 'auth', {
-          params: { logged, redirect: redirectAfterLogin },
-        });
-
-        navigateAfterAuth();
+        await completeLogin('google');
+      } else if (result.code === 'account_pending_deletion') {
+        promptRestore(result, 'google');
       } else {
         logger.warn('ui_google_fail', 'auth', {
-          params: { message: result.error },
+          params: { message: result.error, code: result.code },
         });
         setError(result.error || 'Google sign-in failed. Please try again.');
       }
@@ -191,15 +285,12 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
       const result = await signInWithApple();
 
       if (result.success) {
-        const logged = await checkLoginStatus();
-        logger.info('ui_apple_state', 'auth', {
-          params: { logged, redirect: redirectAfterLogin },
-        });
-
-        navigateAfterAuth();
+        await completeLogin('apple');
+      } else if (result.code === 'account_pending_deletion') {
+        promptRestore(result, 'apple');
       } else {
         logger.warn('ui_apple_fail', 'auth', {
-          params: { message: result.error },
+          params: { message: result.error, code: result.code },
         });
         setError(result.error || 'Apple sign-in failed. Please try again.');
       }
@@ -341,6 +432,20 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Dialog
+        visible={restoreDialogVisible}
+        onDismiss={closeRestoreDialog}
+        title="Restore account?"
+        description={`This account is still scheduled for deletion ${formatDeletionDate(scheduledDeletionAt)}. Do you want to cancel the scheduled deletion and restore it now?`}
+        primaryButtonText="Restore Account"
+        primaryButtonColor="#8A2BE2"
+        primaryButtonLoading={isRestoring}
+        onPrimaryPress={handleRestoreAccount}
+        secondaryButtonText="Not Now"
+        secondaryButtonColor="#6B6B6B"
+        onSecondaryPress={closeRestoreDialog}
+      />
     </SafeAreaView>
   );
 }
