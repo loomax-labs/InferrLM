@@ -24,6 +24,25 @@ export default function DeleteAccountScreen({ navigation }: Props) {
 
   const isReady = keyword === 'DELETE';
 
+  const formatRetryAt = (value?: string | null) => {
+    if (!value) {
+      return 'You can delete this account again 48 hours after restoring it.';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'You can delete this account again 48 hours after restoring it.';
+    }
+
+    return `You can delete this account again after ${date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })}.`;
+  };
+
   const handleDelete = async () => {
     if (!isReady || isDeleting) return;
 
@@ -33,6 +52,10 @@ export default function DeleteAccountScreen({ navigation }: Props) {
     try {
       const result = await deleteAccount(keyword);
       if (!result.success) {
+        if (result.code === 'deletion_restore_cooldown') {
+          setError(formatRetryAt(result.deletionCooldown?.retryAt));
+          return;
+        }
         setError(result.error || 'Account deletion failed. Please try again.');
         return;
       }
@@ -64,7 +87,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
               <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#FF5252" />
             </View>
             <Text style={[styles.title, { color: themeColors.text }]}>Delete your account</Text>
-            <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>This will sign you out immediately, disable your account now, and permanently remove your data after 30 days.</Text>
+              <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>This will sign you out immediately, deactivate your account now, and permanently remove your data after 30 days.</Text>
           </View>
 
           <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
@@ -75,11 +98,15 @@ export default function DeleteAccountScreen({ navigation }: Props) {
             </View>
             <View style={styles.pointRow}>
               <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
-              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>Your account can only be restored by support during the 30-day hold period.</Text>
+              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>You can restore the account by signing in again during the 30-day hold period.</Text>
             </View>
             <View style={styles.pointRow}>
               <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
               <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>After 30 days, the deletion becomes permanent.</Text>
+            </View>
+            <View style={styles.pointRow}>
+              <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
+              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>If you restore the account, you must wait 48 hours before deleting it again.</Text>
             </View>
           </View>
 

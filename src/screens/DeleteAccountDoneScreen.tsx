@@ -40,7 +40,7 @@ export default function DeleteAccountDoneScreen({ navigation }: Props) {
           </View>
           <Text style={[styles.title, { color: themeColors.text }]}>Your account is now deactivated</Text>
           <Text style={[styles.message, { color: themeColors.secondaryText }]}>You have been signed out. Your account will stay in a recovery window for 30 days and will be permanently deleted after that.</Text>
-          <Text style={[styles.note, { color: themeColors.secondaryText }]}>If you need to restore the account before the deadline, contact support during the hold period.</Text>
+          <Text style={[styles.note, { color: themeColors.secondaryText }]}>You can restore the account by signing in again before the deadline. After a restore, there is a 48-hour wait before you can delete it again.</Text>
         </View>
 
         <TouchableOpacity style={styles.doneButton} onPress={handleDone}>

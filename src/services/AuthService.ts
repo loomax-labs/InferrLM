@@ -10,11 +10,16 @@ type PendingDeletionInfo = {
   scheduledDeletionAt?: string | null;
 };
 
+type DeletionCooldownInfo = {
+  retryAt?: string | null;
+};
+
 export type AuthResult = {
   success: boolean;
   error?: string;
   code?: string;
   pendingDeletion?: PendingDeletionInfo;
+  deletionCooldown?: DeletionCooldownInfo;
 };
 
 type AuthListenerFn = (user: UserData | null) => void;
@@ -36,6 +41,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'password_too_weak': 'Your password is too weak. Use at least eight characters with mixed case and a number.',
   'invalid_keyword': 'Incorrect confirmation keyword. Please type DELETE to confirm.',
   'already_pending_deletion': 'Account deletion is already in progress.',
+  'deletion_restore_cooldown': 'This account was restored recently. You can delete it again after the 48-hour grace period ends.',
   'restore_token_invalid': 'Restore session expired. Please sign in again to continue.',
   'restore_window_expired': 'This account can no longer be restored.',
   'not_pending_deletion': 'This account is no longer scheduled for deletion.',
@@ -64,11 +70,23 @@ const getPendingDeletionInfo = (error: any): PendingDeletionInfo | undefined => 
   };
 };
 
+const getDeletionCooldownInfo = (error: any): DeletionCooldownInfo | undefined => {
+  const details = error?.body?.details;
+  if (!details || typeof details !== 'object' || Array.isArray(details)) {
+    return undefined;
+  }
+
+  return {
+    retryAt: typeof details.retryAt === 'string' ? details.retryAt : null,
+  };
+};
+
 const buildFailure = (error: any, fallback: string): AuthResult => ({
   success: false,
   error: mapError(error, fallback),
   code: getErrorCode(error),
   pendingDeletion: getPendingDeletionInfo(error),
+  deletionCooldown: getDeletionCooldownInfo(error),
 });
 
 const maskEmail = (email?: string): string | undefined => {
