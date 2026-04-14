@@ -23,7 +23,6 @@ export type RootStackParamList = {
   Downloads: undefined;
   Profile: undefined;
   DeleteAccount: undefined;
-  DeleteAccountDone: undefined;
   Licenses: undefined;
   ContentTerms: undefined;
   Report: {

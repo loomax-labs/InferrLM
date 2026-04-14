@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppHeader from '../components/AppHeader';
+import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { useRemoteModel } from '../context/RemoteModelContext';
@@ -21,6 +22,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
   const [keyword, setKeyword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [successVisible, setSuccessVisible] = useState(false);
 
   const normalizedKeyword = keyword.trim();
   const isReady = normalizedKeyword === 'DELETE';
@@ -65,7 +67,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
       }
 
       await checkLoginStatus();
-      navigation.replace('DeleteAccountDone');
+      setSuccessVisible(true);
     } catch {
       setError('Account deletion failed. Please try again.');
     } finally {
@@ -73,104 +75,132 @@ export default function DeleteAccountScreen({ navigation }: Props) {
     }
   };
 
+  const handleDone = () => {
+    setSuccessVisible(false);
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs', params: { screen: 'SettingsTab' } }],
+      })
+    );
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}> 
-      <AppHeader
-        title="Delete Account"
-        showBackButton={true}
-        showLogo={false}
-        rightButtons={[]}
+    <>
+      <View style={[styles.container, { backgroundColor: themeColors.background }]}> 
+        <AppHeader
+          title="Delete Account"
+          showBackButton={true}
+          showLogo={false}
+          rightButtons={[]}
+        />
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}> 
+            <View style={[styles.heroCard, { backgroundColor: themeColors.background }]}> 
+              <View style={styles.iconWrap}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#FF5252" />
+              </View>
+              <Text style={[styles.title, { color: themeColors.text }]}>Delete your account</Text>
+                <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>This will sign you out immediately, deactivate your account now, and permanently remove your data after 30 days.</Text>
+            </View>
+
+            <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Before you continue</Text>
+              <View style={styles.pointRow}>
+                <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
+                <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>You will lose access to your account immediately.</Text>
+              </View>
+              <View style={styles.pointRow}>
+                <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
+                <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>You can restore the account by signing in again during the 30-day hold period.</Text>
+              </View>
+              <View style={styles.pointRow}>
+                <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
+                <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>After 30 days, the deletion becomes permanent.</Text>
+              </View>
+              <View style={styles.pointRow}>
+                <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
+                <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>If you restore the account, you must wait 48 hours before deleting it again.</Text>
+              </View>
+            </View>
+
+            <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
+              <Text style={[styles.label, { color: themeColors.text }]}>Type DELETE to confirm</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    color: themeColors.text,
+                    backgroundColor: themeColors.background,
+                    borderColor: error ? '#FF5252' : isReady ? '#FF5252' : themeColors.borderColor,
+                  },
+                ]}
+                value={keyword}
+                onChangeText={(value) => {
+                  setKeyword(value);
+                  if (error) setError('');
+                }}
+                placeholder="Type DELETE"
+                placeholderTextColor={themeColors.secondaryText + '80'}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                caretHidden={true}
+                editable={!isDeleting}
+              />
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            </View>
+
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.outlineActionButton]}
+                onPress={() => navigation.goBack()}
+                disabled={isDeleting}
+              >
+                <MaterialCommunityIcons name="arrow-left" size={20} color="#FF5252" />
+                <Text style={styles.actionButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  styles.filledActionButton,
+                  (!isReady || isDeleting) && styles.actionButtonDisabled,
+                ]}
+                onPress={handleDelete}
+                disabled={!isReady || isDeleting}
+              >
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#FF5252" />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="account-remove" size={20} color="#FF5252" />
+                    <Text style={styles.actionButtonText}>Delete Account</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
+
+      <Dialog
+        visible={successVisible}
+        iconName="shield-check-outline"
+        iconColor="#FF5252"
+        title="Account Deactivated"
+        description="You have been signed out. Your account will stay in a recovery window for 30 days and will be permanently deleted after that."
+        points={[
+          'You can restore the account by signing in again before the deadline.',
+          'After a restore, there is a 48-hour wait before you can delete it again.',
+        ]}
+        primaryButtonText="Done"
+        primaryButtonColor="#FF525220"
+        primaryButtonTextColor="#FF5252"
+        onPrimaryPress={handleDone}
       />
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
-          <View style={[styles.heroCard, { backgroundColor: themeColors.background }]}> 
-            <View style={styles.iconWrap}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={36} color="#FF5252" />
-            </View>
-            <Text style={[styles.title, { color: themeColors.text }]}>Delete your account</Text>
-              <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>This will sign you out immediately, deactivate your account now, and permanently remove your data after 30 days.</Text>
-          </View>
-
-          <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Before you continue</Text>
-            <View style={styles.pointRow}>
-              <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
-              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>You will lose access to your account immediately.</Text>
-            </View>
-            <View style={styles.pointRow}>
-              <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
-              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>You can restore the account by signing in again during the 30-day hold period.</Text>
-            </View>
-            <View style={styles.pointRow}>
-              <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
-              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>After 30 days, the deletion becomes permanent.</Text>
-            </View>
-            <View style={styles.pointRow}>
-              <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
-              <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>If you restore the account, you must wait 48 hours before deleting it again.</Text>
-            </View>
-          </View>
-
-          <View style={[styles.section, { backgroundColor: themeColors.background }]}> 
-            <Text style={[styles.label, { color: themeColors.text }]}>Type DELETE to confirm</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: themeColors.text,
-                  backgroundColor: themeColors.background,
-                  borderColor: error ? '#FF5252' : isReady ? '#FF5252' : themeColors.borderColor,
-                },
-              ]}
-              value={keyword}
-              onChangeText={(value) => {
-                setKeyword(value);
-                if (error) setError('');
-              }}
-              placeholder="Type DELETE"
-              placeholderTextColor={themeColors.secondaryText + '80'}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              caretHidden={true}
-              editable={!isDeleting}
-            />
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          </View>
-
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.outlineActionButton]}
-              onPress={() => navigation.goBack()}
-              disabled={isDeleting}
-            >
-              <MaterialCommunityIcons name="arrow-left" size={20} color="#FF5252" />
-              <Text style={styles.actionButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                styles.filledActionButton,
-                (!isReady || isDeleting) && styles.actionButtonDisabled,
-              ]}
-              onPress={handleDelete}
-              disabled={!isReady || isDeleting}
-            >
-              {isDeleting ? (
-                <ActivityIndicator size="small" color="#FF5252" />
-              ) : (
-                <>
-                  <MaterialCommunityIcons name="account-remove" size={20} color="#FF5252" />
-                  <Text style={styles.actionButtonText}>Delete Account</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+    </>
   );
 }
 
