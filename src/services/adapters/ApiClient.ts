@@ -1,16 +1,14 @@
 import * as SecureStore from 'expo-secure-store';
 import { logger } from '../../utils/logger';
+import { AUTH_SECURE_STORE_OPTIONS } from '../AuthStorage';
 
 const ACCESS_KEY = 'inferra_access_token';
 const REFRESH_KEY = 'inferra_refresh_token';
 
-const RAW_API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.inferrlm.app';
+const RAW_API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 function normalizeApiUrl(value: string): string {
   const trimmed = value.trim().replace(/\/+$/, '');
-  if (!trimmed) {
-    return 'https://api.inferrlm.app/api';
-  }
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
 }
 
@@ -73,7 +71,7 @@ type RequestOpts = {
 
 async function getAccessToken(): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(ACCESS_KEY);
+    return await SecureStore.getItemAsync(ACCESS_KEY, AUTH_SECURE_STORE_OPTIONS);
   } catch {
     return null;
   }
@@ -81,20 +79,20 @@ async function getAccessToken(): Promise<string | null> {
 
 async function getRefreshToken(): Promise<string | null> {
   try {
-    return await SecureStore.getItemAsync(REFRESH_KEY);
+    return await SecureStore.getItemAsync(REFRESH_KEY, AUTH_SECURE_STORE_OPTIONS);
   } catch {
     return null;
   }
 }
 
 export async function storeTokens(access: string, refresh: string): Promise<void> {
-  await SecureStore.setItemAsync(ACCESS_KEY, access, { keychainService: 'inferra_auth' });
-  await SecureStore.setItemAsync(REFRESH_KEY, refresh, { keychainService: 'inferra_auth' });
+  await SecureStore.setItemAsync(ACCESS_KEY, access, AUTH_SECURE_STORE_OPTIONS);
+  await SecureStore.setItemAsync(REFRESH_KEY, refresh, AUTH_SECURE_STORE_OPTIONS);
 }
 
 export async function clearTokens(): Promise<void> {
-  await SecureStore.deleteItemAsync(ACCESS_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_KEY);
+  await SecureStore.deleteItemAsync(ACCESS_KEY, AUTH_SECURE_STORE_OPTIONS);
+  await SecureStore.deleteItemAsync(REFRESH_KEY, AUTH_SECURE_STORE_OPTIONS);
 }
 
 async function refreshAccessToken(): Promise<string | null> {

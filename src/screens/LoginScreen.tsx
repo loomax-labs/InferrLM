@@ -442,7 +442,7 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
         primaryButtonColor="#8A2BE2"
         primaryButtonLoading={isRestoring}
         onPrimaryPress={handleRestoreAccount}
-        secondaryButtonText="Not Now"
+        secondaryButtonText="No"
         secondaryButtonColor="#6B6B6B"
         onSecondaryPress={closeRestoreDialog}
       />

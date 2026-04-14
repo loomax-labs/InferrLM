@@ -409,20 +409,8 @@ export const deleteAccount = async (keyword: string): Promise<AuthResult> => {
   try {
     await api.post('/me/delete', { keyword });
     try { await GoogleSignin.signOut(); } catch {}
-    try { await clearTokens(); } catch (error: any) {
-      logger.error('auth_delete_clear_tokens_fail', 'auth', {
-        endpoint: '/me/delete',
-        params: { message: error?.message },
-      });
-    }
-    try {
-      await storeAuthState(null);
-    } catch (error: any) {
-      logger.error('auth_delete_store_state_fail', 'auth', {
-        endpoint: '/me/delete',
-        params: { message: error?.message },
-      });
-    }
+    await clearTokens();
+    await storeAuthState(null);
     notifyListeners(null);
     return { success: true };
   } catch (error: any) {

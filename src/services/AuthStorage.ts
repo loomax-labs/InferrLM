@@ -14,18 +14,20 @@ export type UserData = {
 
 export const USER_AUTH_KEY = 'inferra_secure_user_auth_state';
 
+export const AUTH_SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
+  requireAuthentication: false,
+  authenticationPrompt: 'Authenticate to access your account',
+  keychainService: 'inferra_auth',
+};
+
 export const storeAuthState = async (user: UserData | null): Promise<boolean> => {
   try {
     if (!user) {
-      await SecureStore.deleteItemAsync(USER_AUTH_KEY);
+      await SecureStore.deleteItemAsync(USER_AUTH_KEY, AUTH_SECURE_STORE_OPTIONS);
       return true;
     }
 
-    await SecureStore.setItemAsync(USER_AUTH_KEY, JSON.stringify(user), {
-      requireAuthentication: false,
-      authenticationPrompt: 'Authenticate to access your account',
-      keychainService: 'inferra_auth'
-    });
+    await SecureStore.setItemAsync(USER_AUTH_KEY, JSON.stringify(user), AUTH_SECURE_STORE_OPTIONS);
     return true;
   } catch (error) {
     if (__DEV__) {
@@ -37,18 +39,18 @@ export const storeAuthState = async (user: UserData | null): Promise<boolean> =>
 
 export const getUserFromSecureStorage = async (): Promise<UserData | null> => {
   try {
-    const raw = await SecureStore.getItemAsync(USER_AUTH_KEY);
+    const raw = await SecureStore.getItemAsync(USER_AUTH_KEY, AUTH_SECURE_STORE_OPTIONS);
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
     if (!parsed.id) {
-      await SecureStore.deleteItemAsync(USER_AUTH_KEY);
+      await SecureStore.deleteItemAsync(USER_AUTH_KEY, AUTH_SECURE_STORE_OPTIONS);
       return null;
     }
 
     return parsed;
   } catch {
-    await SecureStore.deleteItemAsync(USER_AUTH_KEY);
+    await SecureStore.deleteItemAsync(USER_AUTH_KEY, AUTH_SECURE_STORE_OPTIONS);
     return null;
   }
 }; 

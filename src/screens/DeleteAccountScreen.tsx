@@ -66,9 +66,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
         return;
       }
 
-      try {
-        await checkLoginStatus();
-      } catch {}
+      await checkLoginStatus();
       setSuccessVisible(true);
     } catch {
       setError('Account deletion failed. Please try again.');
@@ -122,10 +120,6 @@ export default function DeleteAccountScreen({ navigation }: Props) {
               <View style={styles.pointRow}>
                 <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
                 <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>After 30 days, the deletion becomes permanent.</Text>
-              </View>
-              <View style={styles.pointRow}>
-                <MaterialCommunityIcons name="check-circle-outline" size={18} color="#FF5252" />
-                <Text style={[styles.pointText, { color: themeColors.secondaryText }]}>If you restore the account, you must wait 48 hours before deleting it again.</Text>
               </View>
             </View>
 
@@ -195,16 +189,9 @@ export default function DeleteAccountScreen({ navigation }: Props) {
       <Dialog
         visible={successVisible}
         iconName="shield-check-outline"
-        iconColor="#FF5252"
         title="Account Deactivated"
-        description="You have been signed out. Your account will stay in a recovery window for 30 days and will be permanently deleted after that."
-        points={[
-          'You can restore the account by signing in again before the deadline.',
-          'After a restore, there is a 48-hour wait before you can delete it again.',
-        ]}
+        description="You have been signed out. Your account will be permanently deleted after the grace period of 30 days."
         primaryButtonText="Done"
-        primaryButtonColor="#FF525220"
-        primaryButtonTextColor="#FF5252"
         onPrimaryPress={handleDone}
       />
     </>
