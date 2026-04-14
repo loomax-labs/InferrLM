@@ -44,6 +44,7 @@ export default function DeleteAccountDoneScreen({ navigation }: Props) {
         </View>
 
         <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
+          <MaterialCommunityIcons name="check-circle-outline" size={20} color="#FF5252" />
           <Text style={styles.doneButtonText}>Done</Text>
         </TouchableOpacity>
       </View>
@@ -97,15 +98,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   doneButton: {
-    backgroundColor: '#FF5252',
+    backgroundColor: '#FF525220',
     borderRadius: 12,
     minHeight: 54,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    padding: 16,
   },
   doneButtonText: {
-    color: '#fff',
+    color: '#FF5252',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

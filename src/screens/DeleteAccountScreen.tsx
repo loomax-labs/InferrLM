@@ -137,18 +137,30 @@ export default function DeleteAccountScreen({ navigation }: Props) {
 
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.secondaryButton, { borderColor: themeColors.borderColor }]}
+              style={[styles.actionButton, styles.outlineActionButton]}
               onPress={() => navigation.goBack()}
               disabled={isDeleting}
             >
-              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Cancel</Text>
+              <MaterialCommunityIcons name="arrow-left" size={20} color="#FF5252" />
+              <Text style={styles.actionButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: isReady ? '#FF5252' : '#FFB4B4' }]}
+              style={[
+                styles.actionButton,
+                styles.filledActionButton,
+                (!isReady || isDeleting) && styles.actionButtonDisabled,
+              ]}
               onPress={handleDelete}
               disabled={!isReady || isDeleting}
             >
-              {isDeleting ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryButtonText}>Delete Account</Text>}
+              {isDeleting ? (
+                <ActivityIndicator size="small" color="#FF5252" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="account-remove" size={20} color="#FF5252" />
+                  <Text style={styles.actionButtonText}>Delete Account</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -244,26 +256,28 @@ const styles = StyleSheet.create({
   actions: {
     gap: 12,
   },
-  secondaryButton: {
-    paddingVertical: 15,
-    borderRadius: 12,
-    borderWidth: 1,
+  actionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
   },
-  secondaryButtonText: {
+  outlineActionButton: {
+    backgroundColor: '#FF525215',
+    borderColor: '#FF525230',
+    borderWidth: 1,
+  },
+  filledActionButton: {
+    backgroundColor: '#FF525220',
+  },
+  actionButtonDisabled: {
+    opacity: 0.45,
+  },
+  actionButtonText: {
+    color: '#FF5252',
     fontSize: 16,
     fontWeight: '600',
-  },
-  primaryButton: {
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    minHeight: 54,
-    justifyContent: 'center',
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
   },
 });
