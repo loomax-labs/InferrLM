@@ -22,6 +22,8 @@ export type RootStackParamList = {
   ChatHistory: undefined;
   Downloads: undefined;
   Profile: undefined;
+  DeleteAccount: undefined;
+  DeleteAccountDone: undefined;
   Licenses: undefined;
   ContentTerms: undefined;
   Report: {
