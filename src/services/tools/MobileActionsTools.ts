@@ -90,6 +90,62 @@ const OPEN_SETTINGS_TOOL: ToolSchema = {
 
 const isSafeUrl = (value: string): boolean => /^https?:\/\//i.test(value.trim());
 
+const normalizeRecord = (value: unknown): Record<string, any> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  return value as Record<string, any>;
+};
+
+export const executeMobileActionIntent = async (
+  intent: string,
+  parameters: Record<string, any> = {},
+  onAction?: (entry: MobileActionLog) => void,
+): Promise<string> => {
+  const name = String(intent || '').trim().toLowerCase();
+  const params = normalizeRecord(parameters);
+
+  if (name === 'open_url') {
+    const value = String(params.url || '').trim();
+    if (!isSafeUrl(value)) {
+      throw new Error('unsafe_url');
+    }
+    await Linking.openURL(value);
+    onAction?.({ tool: 'open_url', summary: value, createdAt: Date.now() });
+    return `Opened ${value}`;
+  }
+
+  if (name === 'send_email') {
+    const recipient = String(params.to || '').trim();
+    if (!recipient || !recipient.includes('@')) {
+      throw new Error('invalid_email');
+    }
+    const emailUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(String(params.subject || ''))}&body=${encodeURIComponent(String(params.body || ''))}`;
+    await Linking.openURL(emailUrl);
+    onAction?.({ tool: 'send_email', summary: recipient, createdAt: Date.now() });
+    return `Drafted email to ${recipient}`;
+  }
+
+  if (name === 'open_map') {
+    const query = String(params.location || '').trim();
+    if (!query) {
+      throw new Error('invalid_location');
+    }
+    const mapUrl = `https://maps.apple.com/?q=${encodeURIComponent(query)}`;
+    await Linking.openURL(mapUrl);
+    onAction?.({ tool: 'open_map', summary: query, createdAt: Date.now() });
+    return `Opened maps for ${query}`;
+  }
+
+  if (name === 'open_settings') {
+    await Linking.openSettings();
+    onAction?.({ tool: 'open_settings', summary: 'Device settings', createdAt: Date.now() });
+    return 'Opened device settings';
+  }
+
+  throw new Error('unsupported_intent');
+};
+
 export const unregisterMobileActionTools = () => {
   for (const name of TOOL_NAMES) {
     toolRegistry.unregister(name);
@@ -100,40 +156,18 @@ export const registerMobileActionTools = ({ onAction }: MobileActionsOptions = {
   unregisterMobileActionTools();
 
   toolRegistry.register('open_url', OPEN_URL_TOOL, async ({ url }) => {
-    const value = String(url || '').trim();
-    if (!isSafeUrl(value)) {
-      throw new Error('unsafe_url');
-    }
-    await Linking.openURL(value);
-    onAction?.({ tool: 'open_url', summary: value, createdAt: Date.now() });
-    return `Opened ${value}`;
+    return executeMobileActionIntent('open_url', { url }, onAction);
   });
 
   toolRegistry.register('send_email', SEND_EMAIL_TOOL, async ({ to, subject, body }) => {
-    const recipient = String(to || '').trim();
-    if (!recipient || !recipient.includes('@')) {
-      throw new Error('invalid_email');
-    }
-    const emailUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(String(subject || ''))}&body=${encodeURIComponent(String(body || ''))}`;
-    await Linking.openURL(emailUrl);
-    onAction?.({ tool: 'send_email', summary: recipient, createdAt: Date.now() });
-    return `Drafted email to ${recipient}`;
+    return executeMobileActionIntent('send_email', { to, subject, body }, onAction);
   });
 
   toolRegistry.register('open_map', OPEN_MAP_TOOL, async ({ location }) => {
-    const query = String(location || '').trim();
-    if (!query) {
-      throw new Error('invalid_location');
-    }
-    const mapUrl = `https://maps.apple.com/?q=${encodeURIComponent(query)}`;
-    await Linking.openURL(mapUrl);
-    onAction?.({ tool: 'open_map', summary: query, createdAt: Date.now() });
-    return `Opened maps for ${query}`;
+    return executeMobileActionIntent('open_map', { location }, onAction);
   });
 
   toolRegistry.register('open_settings', OPEN_SETTINGS_TOOL, async () => {
-    await Linking.openSettings();
-    onAction?.({ tool: 'open_settings', summary: 'Device settings', createdAt: Date.now() });
-    return 'Opened device settings';
+    return executeMobileActionIntent('open_settings', {}, onAction);
   });
 };

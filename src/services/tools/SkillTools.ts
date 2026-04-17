@@ -2,19 +2,7 @@ import { skillExecutor } from '../SkillExecutor';
 import { skillManager } from '../SkillManager';
 import { toolRegistry, type ToolSchema } from './ToolRegistry';
 
-const SKILL_TOOL_NAMES = ['list_skills', 'load_skill', 'run_skill'] as const;
-
-const LIST_SKILLS_TOOL: ToolSchema = {
-  type: 'function',
-  function: {
-    name: 'list_skills',
-    description: 'List the enabled skills available to the assistant.',
-    parameters: {
-      type: 'object',
-      properties: {},
-    },
-  },
-};
+const SKILL_TOOL_NAMES = ['list_skills', 'load_skill', 'run_skill', 'run_js', 'run_intent'] as const;
 
 const LOAD_SKILL_TOOL: ToolSchema = {
   type: 'function',
@@ -24,34 +12,60 @@ const LOAD_SKILL_TOOL: ToolSchema = {
     parameters: {
       type: 'object',
       properties: {
-        skill: {
+        skillName: {
           type: 'string',
           description: 'The skill id or display name to load.',
         },
       },
-      required: ['skill'],
+      required: ['skillName'],
     },
   },
 };
 
-const RUN_SKILL_TOOL: ToolSchema = {
+const RUN_JS_TOOL: ToolSchema = {
   type: 'function',
   function: {
-    name: 'run_skill',
-    description: 'Run a skill against an input payload.',
+    name: 'run_js',
+    description: 'Run a JavaScript skill against an input payload.',
     parameters: {
       type: 'object',
       properties: {
-        skill: {
+        skillName: {
           type: 'string',
           description: 'The skill id or display name to run.',
         },
-        input: {
+        scriptName: {
+          type: 'string',
+          description: 'The script entry point to run inside the skill.',
+        },
+        data: {
           type: 'string',
           description: 'The raw input for the skill.',
         },
       },
-      required: ['skill'],
+      required: ['skillName'],
+    },
+  },
+};
+
+const RUN_INTENT_TOOL: ToolSchema = {
+  type: 'function',
+  function: {
+    name: 'run_intent',
+    description: 'Execute a supported native intent with structured parameters.',
+    parameters: {
+      type: 'object',
+      properties: {
+        intent: {
+          type: 'string',
+          description: 'The native intent name, such as open_map or send_email.',
+        },
+        parameters: {
+          type: 'object',
+          description: 'A JSON object of parameters for the intent.',
+        },
+      },
+      required: ['intent'],
     },
   },
 };
@@ -75,29 +89,33 @@ export const registerSkillTools = async () => {
     return;
   }
 
-  toolRegistry.register('list_skills', LIST_SKILLS_TOOL, async () => {
-    const skills = await skillManager.getEnabled();
-    if (skills.length === 0) {
-      return 'No skills are enabled.';
-    }
-    return skills.map(skill => `${skill.name}: ${skill.description}`).join('\n');
-  });
-
-  toolRegistry.register('load_skill', LOAD_SKILL_TOOL, async ({ skill }) => {
-    const match = await resolveSkill(String(skill || ''));
+  toolRegistry.register('load_skill', LOAD_SKILL_TOOL, async ({ skillName }) => {
+    const match = await resolveSkill(String(skillName || ''));
     if (!match) {
       throw new Error('skill_not_found');
     }
     return match.instructions;
   });
 
-  toolRegistry.register('run_skill', RUN_SKILL_TOOL, async ({ skill, input }) => {
-    const match = await resolveSkill(String(skill || ''));
+  toolRegistry.register('run_js', RUN_JS_TOOL, async ({ skillName, scriptName, data }) => {
+    const match = await resolveSkill(String(skillName || ''));
     if (!match) {
       throw new Error('skill_not_found');
     }
-    return skillExecutor.run(match, {
-      input: input || '',
+    const result = await skillExecutor.runJs(match, {
+      scriptName: String(scriptName || match.metadata?.scriptName || 'main'),
+      data: data || '',
     });
+    return JSON.stringify(result);
+  });
+
+  toolRegistry.register('run_intent', RUN_INTENT_TOOL, async ({ intent, parameters }) => {
+    const result = await skillExecutor.runIntent(
+      String(intent || ''),
+      parameters && typeof parameters === 'object' && !Array.isArray(parameters)
+        ? parameters as Record<string, any>
+        : {},
+    );
+    return JSON.stringify(result);
   });
 };

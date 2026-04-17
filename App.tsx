@@ -29,6 +29,7 @@ import { DialogProvider } from './src/context/DialogContext';
 import { ShowDialog } from './src/components/ShowDialog';
 import { initializeBindings } from './src/utils/llamaBinding';
 import UpdateDialog from './src/components/UpdateDialog';
+import SkillRuntimeHost from './src/components/skills/SkillRuntimeHost';
 import { updateService } from './src/services/UpdateService';
 
 SplashScreen.preventAutoHideAsync();
@@ -327,6 +328,7 @@ export default function App() {
                   <DialogProvider>
                     <Navigation />
                   </DialogProvider>
+                  <SkillRuntimeHost />
                   <UpdateDialog />
                 </GestureHandlerRootView>
               </RemoteModelProvider>
