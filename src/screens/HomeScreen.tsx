@@ -49,6 +49,7 @@ import { ModelManagementService } from '../services/ModelManagementService';
 import type { ProviderType } from '../services/ModelManagementService';
 import { ChatLifecycleService } from '../services/ChatLifecycleService';
 import { appleFoundationService } from '../services/AppleFoundationService';
+import { skillManager } from '../services/SkillManager';
 import { homeScreenStyles } from './homeScreenStyles';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
@@ -589,9 +590,15 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
 
     try {
       await stopGenerationIfRunning();
-      const settings = providerOverride
+      let settings = providerOverride
         ? await ChatLifecycleService.getEffectiveSettings(providerOverride)
         : await getEffectiveSettings();
+
+      await skillManager.syncTools();
+      settings = {
+        ...settings,
+        systemPrompt: await skillManager.buildSystemPrompt(settings.systemPrompt),
+      };
 
       await messageProcessingService.processMessage(
         provider,
