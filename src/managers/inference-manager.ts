@@ -1,4 +1,10 @@
-export type EngineId = 'llama' | 'mlx';
+export type EngineId = 'llama' | 'mlx' | 'litert';
+
+export const engineLabels: Record<EngineId, string> = {
+  llama: 'Llama.cpp',
+  mlx: 'MLX',
+  litert: 'LiteRT-LM',
+};
 
 export type Msg = {
   role: string;

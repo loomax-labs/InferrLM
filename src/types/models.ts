@@ -7,6 +7,7 @@ export enum ModelType {
 export enum ModelFormat {
   GGUF = 'gguf',
   MLX = 'mlx',
+  LITERT = 'litert',
   UNKNOWN = 'unknown',
 }
 

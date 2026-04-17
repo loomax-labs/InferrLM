@@ -1144,7 +1144,7 @@ export class MessageProcessingService {
 
   private getLocalModelName(path: string): string {
     const file = path.split('/').pop() || path;
-    return file.replace(/\.(gguf|mlx)$/i, '');
+    return file.replace(/\.(gguf|mlx|litertlm|task)$/i, '');
   }
 
   private shouldSkipRag(messages: Array<{ role: string; content: string }>): boolean {
