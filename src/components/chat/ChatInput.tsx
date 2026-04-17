@@ -11,6 +11,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import { fs as FileSystem } from '../../services/fs';
 import { useTheme } from '../../context/ThemeContext';
@@ -144,9 +151,12 @@ export default function ChatInput({
   } | null>(null);
   const [ragStatusLoading, setRagStatusLoading] = useState(false);
   const [ragClearing, setRagClearing] = useState(false);
+  const [isAudioRecordingBusy, setIsAudioRecordingBusy] = useState(false);
 
   const isGenerating = isLoading || isRegenerating;
   const hasText = text.trim().length > 0;
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const audioRecorderState = useAudioRecorderState(audioRecorder, 250);
 
   useEffect(() => {
     loadTermsAcceptance();
@@ -946,6 +956,77 @@ export default function ChatInput({
     }
   }, [selectedModelPath, showDialog, supportsAudioUpload]);
 
+  const startAudioRecording = useCallback(async () => {
+    if (!selectedModelPath) {
+      showDialog('No Model Selected', 'Please select a model before recording audio.');
+      return;
+    }
+
+    if (!supportsAudioUpload()) {
+      showDialog('Audio Not Supported', 'The current chat model does not support audio input on this platform.');
+      return;
+    }
+
+    try {
+      setIsAudioRecordingBusy(true);
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        showDialog('Microphone Access Needed', 'Allow microphone access to record audio inside chat.');
+        return;
+      }
+
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
+      setPendingAttachment(null);
+      setShowAttachmentMenu(false);
+    } catch {
+      showDialog('Recording Failed', 'Could not start audio recording. Please try again.');
+    } finally {
+      setIsAudioRecordingBusy(false);
+    }
+  }, [audioRecorder, selectedModelPath, showDialog, supportsAudioUpload]);
+
+  const stopAudioRecording = useCallback(async (discard = false) => {
+    try {
+      setIsAudioRecordingBusy(true);
+      await audioRecorder.stop();
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
+
+      const uri = audioRecorder.uri || audioRecorderState.url;
+      if (!discard && uri) {
+        const name = uri.split('/').pop() || `recording-${Date.now()}.m4a`;
+        setPendingAttachment({ uri, name, kind: 'audio' });
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    } catch {
+      if (!discard) {
+        showDialog('Recording Failed', 'Could not finish audio recording. Please try again.');
+      }
+    } finally {
+      setIsAudioRecordingBusy(false);
+    }
+  }, [audioRecorder, audioRecorderState.url, showDialog]);
+
+  const toggleAudioRecording = useCallback(async () => {
+    if (isAudioRecordingBusy) {
+      return;
+    }
+
+    if (audioRecorderState.isRecording) {
+      await stopAudioRecording(false);
+      return;
+    }
+
+    await startAudioRecording();
+  }, [audioRecorderState.isRecording, isAudioRecordingBusy, startAudioRecording, stopAudioRecording]);
+
   const closeFileModal = useCallback(() => {
     setFileModalVisible(false);
   }, []);
@@ -1101,11 +1182,64 @@ export default function ChatInput({
                   <MaterialCommunityIcons name="file-music-outline" size={20} color="#ffffff" />
                 </View>
                 <Text style={[styles.attachmentMenuText, { color: isDark ? themeColors.text : '#000000' }]}> 
-                  Audio
+                  Audio File
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.attachmentMenuItem} onPress={toggleAudioRecording}>
+                <View style={[styles.attachmentMenuIcon, { backgroundColor: audioRecorderState.isRecording ? '#c0392b' : '#8e44ad' }]}> 
+                  {isAudioRecordingBusy ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <MaterialCommunityIcons name={audioRecorderState.isRecording ? 'stop-circle-outline' : 'microphone-outline'} size={20} color="#ffffff" />
+                  )}
+                </View>
+                <Text style={[styles.attachmentMenuText, { color: isDark ? themeColors.text : '#000000' }]}> 
+                  {audioRecorderState.isRecording ? 'Stop' : 'Record'}
                 </Text>
               </TouchableOpacity>
               
             </Animated.View>
+          )}
+
+          {audioRecorderState.isRecording && (
+            <View style={styles.attachmentChip}>
+              <View style={[styles.pendingFileRow, { backgroundColor: themeColors.borderColor }]}> 
+                <View style={[styles.pendingFileIcon, { backgroundColor: '#c0392b' }]}> 
+                  <MaterialCommunityIcons name="microphone" size={18} color="#ffffff" />
+                </View>
+                <View style={styles.pendingFileInfo}>
+                  <Text style={[styles.pendingFileName, { color: themeColors.text }]} numberOfLines={1}>
+                    Recording audio
+                  </Text>
+                  <Text style={[styles.pendingFileSubtitle, { color: themeColors.secondaryText }]}>
+                    {formatDuration(audioRecorderState.durationMillis / 1000)} elapsed
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => stopAudioRecording(false)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={styles.pendingFileClose}
+                >
+                  <MaterialCommunityIcons
+                    name="stop-circle-outline"
+                    size={18}
+                    color={isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.7)'}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => stopAudioRecording(true)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={styles.pendingFileClose}
+                >
+                  <MaterialCommunityIcons
+                    name="close-circle"
+                    size={18}
+                    color={isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)'}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
 
           {pendingAttachment && (() => {
