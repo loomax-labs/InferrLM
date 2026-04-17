@@ -35,6 +35,7 @@ import { OnlineModelService } from '../../services/OnlineModelService';
 import { getMimeType, isOpenAIUploadable } from '../../services/adapters/OpenAIFileAdapter';
 import { isClaudeUploadable } from '../../services/adapters/ClaudeFileAdapter';
 import { isGeminiUploadable } from '../../services/adapters/GeminiFileAdapter';
+import { skillManager } from '../../services/SkillManager';
 
 type ChatInputProps = {
   onSend: (text: string) => void;
@@ -106,6 +107,7 @@ export default function ChatInput({
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [useRagForUpload, setUseRagForUpload] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<{uri: string, name: string} | null>(null);
+  const [skillsModeEnabled, setSkillsModeEnabled] = useState(true);
   
   const inputRef = useRef<TextInput>(null);
   const attachmentMenuAnim = useRef(new Animated.Value(0)).current;
@@ -142,6 +144,21 @@ export default function ChatInput({
 
   useEffect(() => {
     loadTermsAcceptance();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    skillManager.isModeEnabled().then(enabled => {
+      if (!cancelled) {
+        setSkillsModeEnabled(enabled);
+      }
+    }).catch(() => {
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -444,6 +461,16 @@ export default function ChatInput({
   const toggleAttachmentMenu = () => {
     setShowAttachmentMenu(!showAttachmentMenu);
   };
+
+  const toggleSkillsMode = useCallback(async () => {
+    const next = !skillsModeEnabled;
+    setSkillsModeEnabled(next);
+    try {
+      await skillManager.setModeEnabled(next);
+    } catch {
+      setSkillsModeEnabled(!next);
+    }
+  }, [skillsModeEnabled]);
 
   const handleSend = useCallback(() => {
     if (!hasText && !pendingAttachment) return;
@@ -931,6 +958,19 @@ export default function ChatInput({
     showAttachmentMenu ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
   , [showAttachmentMenu, isDark]);
 
+  const skillsButtonStyle = useMemo(() => [
+    styles.modeButton,
+    {
+      backgroundColor: skillsModeEnabled
+        ? getThemeAwareColor('#4a0660', currentTheme)
+        : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+    },
+  ], [currentTheme, isDark, skillsModeEnabled]);
+
+  const skillsIconColor = useMemo(() => 
+    skillsModeEnabled ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
+  , [isDark, skillsModeEnabled]);
+
   return (
     <View style={styles.wrapper}>
       {isProcessingWithRAG && (
@@ -1057,6 +1097,20 @@ export default function ChatInput({
                   name={showAttachmentMenu ? "close" : "plus"} 
                   size={20} 
                   color={attachmentIconColor} 
+                />
+              </TouchableOpacity>
+            )}
+
+            {!isEditing && (
+              <TouchableOpacity
+                style={skillsButtonStyle}
+                onPress={toggleSkillsMode}
+                disabled={disabled}
+              >
+                <MaterialCommunityIcons
+                  name={skillsModeEnabled ? "wand" : "wand-outline"}
+                  size={18}
+                  color={skillsIconColor}
                 />
               </TouchableOpacity>
             )}
@@ -1352,6 +1406,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },

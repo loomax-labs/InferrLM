@@ -5,10 +5,11 @@ import * as SecureStore from 'expo-secure-store';
 
 import { fs as FileSystem } from './fs';
 import type { Skill, SkillImportPayload } from '../types/skill';
-import { registerSkillTools } from './tools/SkillTools';
+import { registerSkillTools, unregisterSkillTools } from './tools/SkillTools';
 
 const CUSTOM_SKILLS_KEY = '@skills_custom_v1';
 const ENABLED_SKILLS_KEY = '@skills_enabled_v1';
+const SKILLS_MODE_KEY = '@skills_mode_enabled_v1';
 const SECRET_PREFIX = 'skill_secret_';
 
 type BuiltinSkillAsset = {
@@ -335,7 +336,32 @@ class SkillManager {
     return SecureStore.getItemAsync(`${SECRET_PREFIX}${skillId}`);
   }
 
+  async isModeEnabled(): Promise<boolean> {
+    try {
+      const raw = await AsyncStorage.getItem(SKILLS_MODE_KEY);
+      if (raw === null) {
+        return true;
+      }
+      return raw === 'true';
+    } catch {
+      return true;
+    }
+  }
+
+  async setModeEnabled(enabled: boolean): Promise<void> {
+    await AsyncStorage.setItem(SKILLS_MODE_KEY, enabled ? 'true' : 'false');
+    if (enabled) {
+      await registerSkillTools();
+      return;
+    }
+    unregisterSkillTools();
+  }
+
   async buildSystemPrompt(basePrompt?: string): Promise<string> {
+    if (!(await this.isModeEnabled())) {
+      return basePrompt || '';
+    }
+
     const enabled = await this.getEnabled();
     if (enabled.length === 0) {
       return basePrompt || '';
@@ -350,6 +376,10 @@ class SkillManager {
   }
 
   async syncTools(): Promise<void> {
+    if (!(await this.isModeEnabled())) {
+      unregisterSkillTools();
+      return;
+    }
     await registerSkillTools();
   }
 }
