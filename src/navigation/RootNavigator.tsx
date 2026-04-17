@@ -11,6 +11,11 @@ import LicensesScreen from '../screens/LicensesScreen';
 import ContentTermsScreen from '../screens/ContentTermsScreen';
 import ReportScreen from '../screens/ReportScreen';
 import BenchmarkScreen from '../screens/BenchmarkScreen';
+import PromptLabScreen from '../screens/PromptLabScreen';
+import SkillManagerScreen from '../screens/SkillManagerScreen';
+import AudioScribeScreen from '../screens/AudioScribeScreen';
+import MobileActionsScreen from '../screens/MobileActionsScreen';
+import TinyGardenScreen from '../screens/TinyGardenScreen';
 import ModelSettingsScreen from '../screens/ModelSettingsScreen';
 import ModelParametersScreen from '../screens/ModelParametersScreen';
 import ServerLogsScreen from '../screens/ServerLogsScreen';
@@ -98,6 +103,41 @@ export default function RootNavigator() {
         <Stack.Screen 
           name="Benchmark" 
           component={BenchmarkScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="PromptLab" 
+          component={PromptLabScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="SkillManager" 
+          component={SkillManagerScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="AudioScribe" 
+          component={AudioScribeScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="MobileActions" 
+          component={MobileActionsScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="TinyGarden" 
+          component={TinyGardenScreen}
           options={{
             animation: 'slide_from_right'
           }}

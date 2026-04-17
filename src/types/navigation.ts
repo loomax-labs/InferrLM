@@ -37,6 +37,11 @@ export type RootStackParamList = {
     modelName: string;
     modelPath: string;
   };
+  PromptLab: undefined;
+  SkillManager: undefined;
+  AudioScribe: undefined;
+  MobileActions: undefined;
+  TinyGarden: undefined;
   ModelParameters: {
     modelName?: string;
   } | undefined;
