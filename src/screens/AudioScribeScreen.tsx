@@ -1,4 +1,11 @@
 import * as DocumentPicker from 'expo-document-picker';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from 'expo-audio';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,6 +27,13 @@ import { useModel } from '../context/ModelContext';
 import { modelDownloader } from '../services/ModelDownloader';
 import { engineService } from '../services/inference-engine-service';
 
+type SelectedAudio = {
+  uri: string;
+  name: string;
+  source: 'file' | 'recording';
+  durationMillis?: number;
+};
+
 const buildPrompt = (mode: 'transcribe' | 'translate') => {
   if (mode === 'translate') {
     return 'Translate this audio into clear English and return only the translated text.';
@@ -27,15 +41,31 @@ const buildPrompt = (mode: 'transcribe' | 'translate') => {
   return 'Transcribe this audio faithfully and return only the transcript.';
 };
 
+const formatDuration = (value: number) => {
+  const totalSeconds = Math.max(Math.floor(value / 1000), 0);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+const getAudioName = (uri: string, fallback: string) => {
+  const cleaned = uri.replace(/^file:\/\//, '');
+  const parts = cleaned.split('/');
+  return parts[parts.length - 1] || fallback;
+};
+
 export default function AudioScribeScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const { selectedModelPath } = useModel();
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder, 250);
 
   const [mode, setMode] = useState<'transcribe' | 'translate'>('transcribe');
-  const [selectedAudio, setSelectedAudio] = useState<{ uri: string; name: string } | null>(null);
+  const [selectedAudio, setSelectedAudio] = useState<SelectedAudio | null>(null);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [isRecordingBusy, setIsRecordingBusy] = useState(false);
 
   const modelPath = engineService.getActiveModelPath() || selectedModelPath;
   const engine = useMemo(
@@ -52,11 +82,82 @@ export default function AudioScribeScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
+      setOutput('');
       setSelectedAudio({
         uri: result.assets[0].uri,
         name: result.assets[0].name || 'Audio file',
+        source: 'file',
       });
     }
+  };
+
+  const handleStartRecording = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Unsupported', 'Audio recording is not available in the web build.');
+      return;
+    }
+
+    try {
+      setIsRecordingBusy(true);
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Microphone access needed', 'Allow microphone access to record audio for Audio Scribe.');
+        return;
+      }
+
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setOutput('');
+      setSelectedAudio(null);
+    } catch (error) {
+      Alert.alert('Recording failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsRecordingBusy(false);
+    }
+  };
+
+  const handleStopRecording = async () => {
+    try {
+      setIsRecordingBusy(true);
+      await recorder.stop();
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
+
+      const uri = recorder.uri || recorderState.url;
+      if (!uri) {
+        throw new Error('recording_missing');
+      }
+
+      setSelectedAudio({
+        uri,
+        name: getAudioName(uri, `recording-${Date.now()}.m4a`),
+        source: 'recording',
+        durationMillis: recorderState.durationMillis,
+      });
+    } catch (error) {
+      Alert.alert('Stop failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setIsRecordingBusy(false);
+    }
+  };
+
+  const handleToggleRecording = async () => {
+    if (isRecordingBusy || isRunning) {
+      return;
+    }
+
+    if (recorderState.isRecording) {
+      await handleStopRecording();
+      return;
+    }
+
+    await handleStartRecording();
   };
 
   const handleCopy = () => {
@@ -68,6 +169,10 @@ export default function AudioScribeScreen() {
   };
 
   const handleRun = async () => {
+    if (recorderState.isRecording) {
+      Alert.alert('Recording in progress', 'Stop the current recording before running Audio Scribe.');
+      return;
+    }
     if (!selectedAudio) {
       Alert.alert('Audio required', 'Select an audio file before running Audio Scribe.');
       return;
@@ -148,19 +253,77 @@ export default function AudioScribeScreen() {
             })}
           </View>
 
-          <TouchableOpacity style={[styles.uploadButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handlePickAudio}>
-            <MaterialCommunityIcons name="file-music-outline" size={20} color={themeColors.text} />
-            <Text style={[styles.uploadText, { color: themeColors.text }]}>
-              {selectedAudio ? selectedAudio.name : 'Choose audio file'}
+          <View style={styles.inputRow}>
+            <TouchableOpacity
+              style={[styles.uploadButton, { borderColor: themeColors.secondaryText + '30' }]}
+              onPress={handlePickAudio}
+              disabled={isRunning || isRecordingBusy || recorderState.isRecording}
+            >
+              <MaterialCommunityIcons name="file-music-outline" size={20} color={themeColors.text} />
+              <Text style={[styles.uploadText, { color: themeColors.text }]}>Choose audio file</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.recordButton,
+                {
+                  backgroundColor: recorderState.isRecording ? '#C0392B' : themeColors.primary,
+                  opacity: isRunning || isRecordingBusy ? 0.7 : 1,
+                },
+              ]}
+              onPress={handleToggleRecording}
+              disabled={isRunning || isRecordingBusy}
+            >
+              {isRecordingBusy ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <MaterialCommunityIcons
+                  name={recorderState.isRecording ? 'stop-circle-outline' : 'microphone-outline'}
+                  size={18}
+                  color="#FFFFFF"
+                />
+              )}
+              <Text style={styles.recordButtonText}>
+                {recorderState.isRecording ? 'Stop' : 'Record'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.selectedAudioCard, { borderColor: themeColors.secondaryText + '20' }]}> 
+            <View style={styles.selectedAudioHeader}>
+              <View style={styles.selectedAudioLabelRow}>
+                <MaterialCommunityIcons
+                  name={selectedAudio?.source === 'recording' ? 'microphone' : 'file-music-outline'}
+                  size={18}
+                  color={themeColors.text}
+                />
+                <Text style={[styles.selectedAudioName, { color: themeColors.text }]} numberOfLines={1}>
+                  {selectedAudio ? selectedAudio.name : 'No audio selected yet'}
+                </Text>
+              </View>
+              {selectedAudio ? (
+                <TouchableOpacity onPress={() => setSelectedAudio(null)}>
+                  <Text style={[styles.clearText, { color: themeColors.primary }]}>Clear</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <Text style={[styles.selectedAudioMeta, { color: themeColors.secondaryText }]}>
+              {recorderState.isRecording
+                ? `Recording now · ${formatDuration(recorderState.durationMillis)}`
+                : selectedAudio
+                  ? `${selectedAudio.source === 'recording' ? 'Recorded clip' : 'Picked file'}${selectedAudio.durationMillis ? ` · ${formatDuration(selectedAudio.durationMillis)}` : ''}`
+                  : 'Record a clip or pick a file, then run Audio Scribe.'}
             </Text>
-          </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={[styles.primaryButton, { backgroundColor: themeColors.primary }]} onPress={handleRun} disabled={isRunning}>
             {isRunning ? <ActivityIndicator color="#FFFFFF" /> : <MaterialCommunityIcons name="waveform" size={18} color="#FFFFFF" />}
             <Text style={styles.primaryButtonText}>{isRunning ? 'Processing...' : 'Run Audio Scribe'}</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Upload-based workflow is available in this build. Recording is not wired yet.</Text>
+          <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Record or upload audio, then run the active local model against the selected clip.</Text>
+          <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Active engine: {engine || 'No model loaded'}{audioSupported ? '' : ' · Audio input is not supported for this engine on this platform.'}</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
@@ -213,6 +376,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   uploadButton: {
+    flex: 1,
     minHeight: 54,
     borderRadius: 14,
     borderWidth: 1,
@@ -225,6 +389,56 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     flex: 1,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  recordButton: {
+    minWidth: 112,
+    minHeight: 54,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  recordButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  selectedAudioCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 14,
+  },
+  selectedAudioHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  selectedAudioLabelRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  selectedAudioName: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  selectedAudioMeta: {
+    marginTop: 8,
+    fontSize: 13,
+  },
+  clearText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   primaryButton: {
     minHeight: 48,
