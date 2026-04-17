@@ -1,5 +1,5 @@
 import { llamaManager } from '../utils/LlamaManager';
-import { EngineCaps, GenOpts, InferenceManager, Msg } from './inference-manager';
+import { BenchmarkSample, EngineCaps, GenOpts, InferenceManager, Msg } from './inference-manager';
 
 const caps: EngineCaps = {
   embeddings: true,
@@ -24,6 +24,10 @@ class LlamaAdapter implements InferenceManager {
 
   async embed(text: string) {
     return llamaManager.generateEmbedding(text);
+  }
+
+  async benchmark(prompt: string, opts?: GenOpts): Promise<BenchmarkSample> {
+    return llamaManager.benchmark(prompt, opts?.settings as any);
   }
 
   async release() {

@@ -5,7 +5,7 @@ import {
   type LiteRTLMInstance,
 } from '@inferrlm/react-native-litert-lm';
 
-import { EngineCaps, GenOpts, GenSettings, InferenceManager, Msg } from './inference-manager';
+import { BenchmarkSample, EngineCaps, GenOpts, GenSettings, InferenceManager, Msg } from './inference-manager';
 
 type ParsedInput = {
   text: string;
@@ -335,6 +335,51 @@ class LiteRTManager implements InferenceManager {
         reject(error);
       }
     });
+  }
+
+  async benchmark(prompt: string, opts?: GenOpts): Promise<BenchmarkSample> {
+    const messages: Msg[] = [];
+    const systemPrompt = opts?.settings?.systemPrompt?.trim();
+
+    if (systemPrompt) {
+      messages.push({ role: 'system', content: systemPrompt });
+    }
+
+    messages.push({ role: 'user', content: prompt });
+
+    const startedAt = Date.now();
+    let ttftMs = 0;
+    let chunkCount = 0;
+
+    const response = await this.gen(messages, {
+      settings: opts?.settings,
+      onToken: (token) => {
+        if (token) {
+          if (!ttftMs) {
+            ttftMs = Date.now() - startedAt;
+          }
+          chunkCount += 1;
+        }
+      },
+    });
+
+    const totalTimeMs = Date.now() - startedAt;
+    const stats = this.getInstance().getStats();
+    const promptTokens = stats.promptTokens || Math.max(prompt.length / 4, 1);
+    const completionTokens = stats.completionTokens || Math.max(response.length / 4, chunkCount);
+    const decodeWindowMs = Math.max(totalTimeMs - ttftMs, 1);
+
+    return {
+      promptTokens,
+      completionTokens,
+      totalTokens: promptTokens + completionTokens,
+      ttftMs,
+      totalTimeMs,
+      prefillTokensPerSecond: ttftMs > 0 ? promptTokens / (ttftMs / 1000) : 0,
+      decodeTokensPerSecond: completionTokens > 0
+        ? completionTokens / (decodeWindowMs / 1000)
+        : stats.tokensPerSecond || 0,
+    };
   }
 
   async release() {

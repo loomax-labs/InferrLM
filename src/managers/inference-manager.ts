@@ -23,6 +23,16 @@ export type EngineCaps = {
   xtc: boolean;
 };
 
+export type BenchmarkSample = {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  ttftMs: number;
+  totalTimeMs: number;
+  prefillTokensPerSecond: number;
+  decodeTokensPerSecond: number;
+};
+
 export type GenSettings = {
   maxTokens: number;
   temperature: number;
@@ -60,6 +70,7 @@ export interface InferenceManager {
   init(modelPath: string, projectorPath?: string): Promise<void>;
   gen(messages: Msg[], opts?: GenOpts): Promise<string>;
   embed?(text: string): Promise<number[]>;
+  benchmark?(prompt: string, opts?: GenOpts): Promise<BenchmarkSample>;
   stop?(): void;
   release(): Promise<void>;
   caps(): EngineCaps;
