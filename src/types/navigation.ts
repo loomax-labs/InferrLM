@@ -33,6 +33,10 @@ export type RootStackParamList = {
     modelName: string;
     modelPath: string;
   };
+  Benchmark: {
+    modelName: string;
+    modelPath: string;
+  };
   ModelParameters: {
     modelName?: string;
   } | undefined;

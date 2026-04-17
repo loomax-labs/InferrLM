@@ -15,6 +15,8 @@ import { theme } from '../constants/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { llamaManager } from '../utils/LlamaManager';
 import { modelSettingsService, ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
+import { engineLabels } from '../managers/inference-manager';
+import { engineService } from '../services/inference-engine-service';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import ChatSettingsSection from '../components/settings/ChatSettingsSection';
 import SystemPromptDialog from '../components/SystemPromptDialog';
@@ -192,6 +194,9 @@ export default function ModelSettingsScreen() {
   }
 
   const displaySettings = getDisplaySettings();
+  const benchmarkEngine = engineService.getEngineForModel(modelPath);
+  const benchmarkSupported = benchmarkEngine !== 'mlx';
+  const displayModelName = modelName.replace(/\.(gguf|litertlm|task)$/i, '');
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
@@ -205,8 +210,40 @@ export default function ModelSettingsScreen() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.modelInfo}>
           <Text style={[styles.modelName, { color: themeColors.text }]}>
-            {modelName.replace('.gguf', '')}
+            {displayModelName}
           </Text>
+        </View>
+
+        <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}> 
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => {
+              if (!benchmarkSupported) {
+                Alert.alert('Unavailable', 'Benchmarking is currently available for GGUF and LiteRT models.');
+                return;
+              }
+              navigation.navigate('Benchmark', { modelName, modelPath });
+            }}
+          >
+            <View style={styles.settingLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : getThemeAwareColor('#1c6b4a', currentTheme) + '20' }]}> 
+                <MaterialCommunityIcons name="speedometer" size={22} color={currentTheme === 'dark' ? '#FFFFFF' : getThemeAwareColor('#1c6b4a', currentTheme)} />
+              </View>
+              <View style={styles.settingTextContainer}>
+                <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                  Benchmark Model
+                </Text>
+                <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                  Run repeatable latency and throughput tests with {engineLabels[benchmarkEngine]}
+                </Text>
+              </View>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={20}
+              color={benchmarkSupported ? themeColors.secondaryText : themeColors.secondaryText + '80'}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}>
