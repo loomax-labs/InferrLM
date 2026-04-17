@@ -7,15 +7,35 @@ export type SkillSecret = {
   required: boolean;
 };
 
+export type SkillMetadata = {
+  homepage?: string;
+  requireSecret?: boolean;
+  scriptName?: string;
+};
+
+export type SkillResult = {
+  result?: string;
+  error?: string;
+  image?: {
+    base64: string;
+    mimeType: string;
+  };
+  webview?: {
+    url: string;
+  };
+};
+
 export type Skill = {
   id: string;
   name: string;
   description: string;
   type: SkillType;
   instructions: string;
+  scriptHtml?: string;
   source: SkillSource;
   sourceUrl?: string;
   enabled: boolean;
+  metadata?: SkillMetadata;
   secret?: SkillSecret;
   handler?: string;
 };
@@ -25,6 +45,9 @@ export type SkillImportPayload = {
   description?: string;
   instructions: string;
   type?: SkillType;
+  scriptHtml?: string;
+  scriptUrl?: string;
+  metadata?: SkillMetadata;
   secret?: SkillSecret;
   handler?: string;
 };

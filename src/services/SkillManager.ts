@@ -1,3 +1,4 @@
+import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import * as SecureStore from 'expo-secure-store';
@@ -10,44 +11,31 @@ const CUSTOM_SKILLS_KEY = '@skills_custom_v1';
 const ENABLED_SKILLS_KEY = '@skills_enabled_v1';
 const SECRET_PREFIX = 'skill_secret_';
 
-const BUILTIN_SKILLS: Skill[] = [
+type BuiltinSkillAsset = {
+  id: string;
+  markdown: number;
+  html?: number;
+};
+
+const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
   {
-    id: 'web-research',
-    name: 'Web Research',
-    description: 'Structure quick research tasks before using web-enabled tools.',
-    type: 'text',
-    instructions:
-      'Break the task into search queries, collect sources, summarize evidence, and report uncertainty when sources conflict.',
-    source: 'builtin',
-    enabled: true,
+    id: 'calculate-hash',
+    markdown: require('../../assets/skills/calculate-hash/SKILL.md'),
+    html: require('../../assets/skills/calculate-hash/scripts/index.html'),
   },
   {
-    id: 'task-brief',
-    name: 'Task Brief',
-    description: 'Turn vague user asks into a concise execution brief.',
-    type: 'text',
-    instructions:
-      'Rewrite the request as a short execution brief with goal, constraints, and expected output. Ask for clarification only when the task is blocked.',
-    source: 'builtin',
-    enabled: false,
+    id: 'web-search',
+    markdown: require('../../assets/skills/web-search/SKILL.md'),
   },
   {
-    id: 'private-context',
-    name: 'Private Context',
-    description: 'Use a secure token or note as a hidden instruction source.',
-    type: 'text',
-    instructions:
-      'Use the stored secret as private context. Never expose the raw secret value in the final answer.',
-    source: 'builtin',
-    enabled: false,
-    secret: {
-      label: 'Secret note',
-      required: true,
-    },
+    id: 'route-planner',
+    markdown: require('../../assets/skills/route-planner/SKILL.md'),
   },
 ];
 
 class SkillManager {
+  private builtinsCache: Skill[] | null = null;
+
   private async getCustomSkills(): Promise<Skill[]> {
     try {
       const raw = await AsyncStorage.getItem(CUSTOM_SKILLS_KEY);
@@ -82,22 +70,37 @@ class SkillManager {
     await AsyncStorage.setItem(ENABLED_SKILLS_KEY, JSON.stringify(enabled));
   }
 
-  private normalizeImportedSkill(payload: SkillImportPayload, source: Skill['source'], sourceUrl?: string): Skill {
+  private parseFrontMatter(content: string): { body: string; meta: Record<string, string> } {
+    const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!match) {
+      return {
+        body: content.trim(),
+        meta: {},
+      };
+    }
+
+    const meta = match[1]
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .reduce<Record<string, string>>((result, line) => {
+        const separatorIndex = line.indexOf(':');
+        if (separatorIndex === -1) {
+          return result;
+        }
+        const key = line.slice(0, separatorIndex).trim();
+        const value = line.slice(separatorIndex + 1).trim();
+        result[key] = value;
+        return result;
+      }, {});
+
     return {
-      id: `${payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
-      name: payload.name.trim(),
-      description: payload.description?.trim() || 'Imported custom skill',
-      type: payload.type === 'js' ? 'js' : 'text',
-      instructions: payload.instructions.trim(),
-      source,
-      sourceUrl,
-      enabled: true,
-      secret: payload.secret,
-      handler: payload.handler,
+      body: match[2].trim(),
+      meta,
     };
   }
 
-  private parseImportedText(content: string, fallbackName: string): SkillImportPayload {
+  private parseSkillContent(content: string, fallbackName: string): SkillImportPayload {
     try {
       const parsed = JSON.parse(content) as SkillImportPayload;
       if (parsed && parsed.name && parsed.instructions) {
@@ -106,21 +109,120 @@ class SkillManager {
     } catch {
     }
 
+    const { body, meta } = this.parseFrontMatter(content);
+    const secretLabel = meta.secretLabel?.trim();
+    const secretRequired = meta.secretRequired?.toLowerCase() === 'true';
+
     return {
-      name: fallbackName,
-      instructions: content.trim(),
-      description: 'Imported text skill',
-      type: 'text',
+      name: meta.name?.trim() || fallbackName,
+      description: meta.description?.trim() || 'Imported skill',
+      instructions: body || content.trim(),
+      type: meta.type?.trim() === 'js' ? 'js' : 'text',
+      metadata: {
+        homepage: meta.homepage?.trim() || undefined,
+        requireSecret: secretRequired,
+        scriptName: meta.scriptName?.trim() || undefined,
+      },
+      secret: secretLabel || secretRequired
+        ? {
+            label: secretLabel || 'Secret',
+            required: secretRequired,
+          }
+        : undefined,
+      handler: meta.handler?.trim() || undefined,
     };
   }
 
+  private normalizeImportedSkill(
+    payload: SkillImportPayload,
+    source: Skill['source'],
+    sourceUrl?: string,
+    stableId?: string,
+  ): Skill {
+    const nameSlug = payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return {
+      id: stableId || `${nameSlug}-${Date.now()}`,
+      name: payload.name.trim(),
+      description: payload.description?.trim() || 'Imported custom skill',
+      type: payload.type === 'js' ? 'js' : 'text',
+      instructions: payload.instructions.trim(),
+      scriptHtml: payload.scriptHtml?.trim() || undefined,
+      source,
+      sourceUrl,
+      enabled: true,
+      metadata: payload.metadata,
+      secret: payload.secret,
+      handler: payload.handler,
+    };
+  }
+
+  private async readAssetText(moduleId: number): Promise<string> {
+    const [asset] = await Asset.loadAsync(moduleId);
+    const assetUri = asset.localUri || asset.uri;
+    return FileSystem.readAsStringAsync(assetUri);
+  }
+
+  private async maybeLoadRemoteScript(payload: SkillImportPayload, url: string): Promise<string | undefined> {
+    if (payload.scriptHtml?.trim()) {
+      return payload.scriptHtml.trim();
+    }
+
+    if (payload.type !== 'js') {
+      return undefined;
+    }
+
+    const candidateUrl = payload.scriptUrl
+      ? payload.scriptUrl
+      : new URL('scripts/index.html', url).toString();
+
+    try {
+      const response = await fetch(candidateUrl);
+      if (!response.ok) {
+        return undefined;
+      }
+      return (await response.text()).trim() || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async loadBuiltins(): Promise<Skill[]> {
+    if (this.builtinsCache) {
+      return this.builtinsCache;
+    }
+
+    const skills = await Promise.all(
+      BUILTIN_SKILL_ASSETS.map(async asset => {
+        const [markdown, html] = await Promise.all([
+          this.readAssetText(asset.markdown),
+          asset.html ? this.readAssetText(asset.html) : Promise.resolve(undefined),
+        ]);
+
+        const payload = this.parseSkillContent(markdown, asset.id);
+        return this.normalizeImportedSkill(
+          {
+            ...payload,
+            scriptHtml: html || payload.scriptHtml,
+          },
+          'builtin',
+          undefined,
+          asset.id,
+        );
+      }),
+    );
+
+    this.builtinsCache = skills;
+    return skills;
+  }
+
   async getAll(): Promise<Skill[]> {
-    const [customSkills, enabledMap] = await Promise.all([
+    const [builtinSkills, customSkills, enabledMap] = await Promise.all([
+      this.loadBuiltins(),
       this.getCustomSkills(),
       this.getEnabledMap(),
     ]);
 
-    const builtins = BUILTIN_SKILLS.map(skill => ({
+    const builtins = builtinSkills.map(skill => ({
       ...skill,
       enabled: enabledMap[skill.id] ?? skill.enabled,
     }));
@@ -176,8 +278,15 @@ class SkillManager {
 
     const text = await response.text();
     const fallbackName = url.split('/').pop()?.replace(/\.[^.]+$/, '') || 'Imported Skill';
-    const payload = this.parseImportedText(text, fallbackName);
-    const skill = this.normalizeImportedSkill(payload, 'url', url);
+    const payload = this.parseSkillContent(text, fallbackName);
+    const skill = this.normalizeImportedSkill(
+      {
+        ...payload,
+        scriptHtml: await this.maybeLoadRemoteScript(payload, url),
+      },
+      'url',
+      url,
+    );
 
     const customSkills = await this.getCustomSkills();
     customSkills.unshift(skill);
@@ -204,7 +313,7 @@ class SkillManager {
     const asset = result.assets[0];
     const text = await FileSystem.readAsStringAsync(asset.uri);
     const fallbackName = asset.name?.replace(/\.[^.]+$/, '') || 'Imported Skill';
-    const payload = this.parseImportedText(text, fallbackName);
+    const payload = this.parseSkillContent(text, fallbackName);
     const skill = this.normalizeImportedSkill(payload, 'local');
 
     const customSkills = await this.getCustomSkills();
@@ -236,7 +345,7 @@ class SkillManager {
       .map(skill => `- ${skill.name}: ${skill.description}`)
       .join('\n');
 
-    const skillPrompt = `You can use these enabled skills when they help:\n${skillList}\nLoad a skill before relying on its instructions.`;
+    const skillPrompt = `You have access to the following skills:\n${skillList}\nUse load_skill to read a skill's instructions before using it.`;
     return [basePrompt?.trim(), skillPrompt].filter(Boolean).join('\n\n');
   }
 

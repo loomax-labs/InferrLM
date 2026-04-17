@@ -14,6 +14,8 @@ defaultConfig.resolver.extraNodeModules = {
 defaultConfig.resolver.assetExts.push(
   'woff',
   'woff2',
+  'md',
+  'html',
   'obj',
   'mtl',
   'JPG',
