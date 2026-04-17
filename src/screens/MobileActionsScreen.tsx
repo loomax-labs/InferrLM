@@ -25,6 +25,10 @@ const QUICK_PROMPTS = [
   'Draft an email to support@inferrlm.app asking for help with LiteRT models.',
   'Open maps for coffee near Salt Lake, Kolkata.',
   'Open https://inferrlm.app/privacy-policy.',
+  'Create a contact for Ada Lovelace with email ada@example.com and phone +1 415 555 0100.',
+  'Create a calendar event titled Team Sync tomorrow at 10:00 AM for 45 minutes with notes Bring the benchmark report.',
+  'Draft an SMS to +1 415 555 0100 saying I will be there in 10 minutes.',
+  'Open the dialer for +1 415 555 0100.',
 ];
 
 export default function MobileActionsScreen() {
@@ -74,6 +78,7 @@ export default function MobileActionsScreen() {
       await skillManager.syncTools();
       const systemPrompt = await skillManager.buildSystemPrompt(
         'You are a device assistant. Use the available action tools whenever the user asks to open settings, visit a site, draft an email, or open maps. Keep the final answer short and confirm what happened.',
+        'You are a device assistant. Use the available action tools whenever the user asks to open settings, visit a site, draft an email, open maps, prepare a call or SMS, create a contact, or create a calendar event. Prefer the matching tool over plain text instructions. Keep the final answer short and confirm what happened.',
       );
       const result = await toolAgentService.run(
         provider,
@@ -118,7 +123,7 @@ export default function MobileActionsScreen() {
             value={prompt}
             onChangeText={setPrompt}
             multiline
-            placeholder="Ask the assistant to open settings, draft an email, or open a site."
+            placeholder="Ask for a site, map, email, SMS, dialer, contact, or calendar action."
             placeholderTextColor={themeColors.secondaryText}
             style={[styles.input, { color: themeColors.text, borderColor: themeColors.secondaryText + '30' }]}
           />
@@ -137,6 +142,7 @@ export default function MobileActionsScreen() {
           </TouchableOpacity>
           <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Current provider: {provider || 'Not a remote tool-capable model'}</Text>
           <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Status: {status}</Text>
+          <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Supported actions: browser, maps, email, settings, dialer, SMS, contact form, calendar event form.</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
