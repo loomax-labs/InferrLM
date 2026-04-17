@@ -25,6 +25,10 @@ import { skillManager } from '../services/SkillManager';
 
 const HISTORY_KEY = '@prompt_lab_history_v1';
 const DEFAULT_PROMPT = 'Explain how retrieval-augmented generation differs from a standard chat completion.';
+const DEFAULT_TEMPERATURE = 0.7;
+const DEFAULT_MAX_TOKENS = 256;
+const DEFAULT_TOP_K = 40;
+const DEFAULT_TOP_P = 0.95;
 
 type PromptHistoryEntry = {
   id: string;
@@ -36,6 +40,10 @@ type PromptHistoryEntry = {
   durationMs: number;
   firstTokenMs: number;
   tokens: number;
+  temperature: number;
+  maxTokens: number;
+  topK: number;
+  topP: number;
 };
 
 const remoteProviders = new Set(['gemini', 'chatgpt', 'claude']);
@@ -90,8 +98,10 @@ export default function PromptLabScreen() {
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [output, setOutput] = useState('');
-  const [temperature, setTemperature] = useState(0.7);
-  const [maxTokens, setMaxTokens] = useState(256);
+  const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
+  const [maxTokens, setMaxTokens] = useState(DEFAULT_MAX_TOKENS);
+  const [topK, setTopK] = useState(DEFAULT_TOP_K);
+  const [topP, setTopP] = useState(DEFAULT_TOP_P);
   const [history, setHistory] = useState<PromptHistoryEntry[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [stats, setStats] = useState({ durationMs: 0, firstTokenMs: 0, tokens: 0 });
@@ -132,6 +142,21 @@ export default function PromptLabScreen() {
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next));
   };
 
+  const handleClearOutput = () => {
+    setOutput('');
+    setStats({ durationMs: 0, firstTokenMs: 0, tokens: 0 });
+  };
+
+  const handleResetLab = () => {
+    setPrompt(DEFAULT_PROMPT);
+    setSystemPrompt('');
+    setTemperature(DEFAULT_TEMPERATURE);
+    setMaxTokens(DEFAULT_MAX_TOKENS);
+    setTopK(DEFAULT_TOP_K);
+    setTopP(DEFAULT_TOP_P);
+    handleClearOutput();
+  };
+
   const handleCopy = () => {
     if (!output) {
       return;
@@ -165,6 +190,8 @@ export default function PromptLabScreen() {
         systemPrompt: mergedSystemPrompt,
         temperature,
         maxTokens,
+        topK,
+        topP,
       },
       onToken: (token) => {
         if (token && !firstTokenMs) {
@@ -197,6 +224,10 @@ export default function PromptLabScreen() {
       systemPrompt,
       output: finalOutput,
       ...finalStats,
+      temperature,
+      maxTokens,
+      topK,
+      topP,
     });
   };
 
@@ -218,6 +249,7 @@ export default function PromptLabScreen() {
       {
         temperature,
         maxTokens,
+        topP,
         stream: true,
         streamTokens: true,
       },
@@ -253,6 +285,10 @@ export default function PromptLabScreen() {
       systemPrompt,
       output: finalOutput,
       ...finalStats,
+      temperature,
+      maxTokens,
+      topK,
+      topP,
     });
   };
 
@@ -293,7 +329,7 @@ export default function PromptLabScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={[styles.heroCard, { backgroundColor: themeColors.borderColor }]}> 
           <Text style={[styles.heroTitle, { color: themeColors.text }]}>{displayModelName}</Text>
-          <Text style={[styles.heroSubtitle, { color: themeColors.secondaryText }]}>Single-turn prompt testing with no retained chat history.</Text>
+          <Text style={[styles.heroSubtitle, { color: themeColors.secondaryText }]}>Single-turn prompt testing with isolated runs, live timing, and replayable lab settings.</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
@@ -334,16 +370,40 @@ export default function PromptLabScreen() {
               accentColor={accentColor}
               labelColor={themeColors.secondaryText}
             />
+            <CounterField
+              label="Top K"
+              value={String(topK)}
+              onDecrease={() => setTopK(value => Math.max(1, value - 5))}
+              onIncrease={() => setTopK(value => Math.min(200, value + 5))}
+              valueColor={valueColor}
+              accentColor={accentColor}
+              labelColor={themeColors.secondaryText}
+            />
+            <CounterField
+              label="Top P"
+              value={topP.toFixed(2)}
+              onDecrease={() => setTopP(value => Math.max(0.1, Number((value - 0.05).toFixed(2))))}
+              onIncrease={() => setTopP(value => Math.min(1, Number((value + 0.05).toFixed(2))))}
+              valueColor={valueColor}
+              accentColor={accentColor}
+              labelColor={themeColors.secondaryText}
+            />
           </View>
+
+          <Text style={[styles.helperText, { color: themeColors.secondaryText }]}>Top-k is applied to local engines. Remote providers in this screen use temperature, max tokens, and top-p.</Text>
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={[styles.primaryButton, { backgroundColor: themeColors.primary }]} onPress={handleRun} disabled={isRunning}>
               {isRunning ? <ActivityIndicator color="#FFFFFF" /> : <MaterialCommunityIcons name="flask-outline" size={18} color="#FFFFFF" />}
               <Text style={styles.primaryButtonText}>{isRunning ? 'Running...' : 'Run Prompt'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={() => setOutput('')}>
+            <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleClearOutput}>
               <MaterialCommunityIcons name="eraser-variant" size={18} color={themeColors.text} />
               <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Clear</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleResetLab}>
+              <MaterialCommunityIcons name="restore" size={18} color={themeColors.text} />
+              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Reset</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleCopy}>
               <MaterialCommunityIcons name="content-copy" size={18} color={themeColors.text} />
@@ -373,6 +433,10 @@ export default function PromptLabScreen() {
                   setPrompt(entry.prompt);
                   setSystemPrompt(entry.systemPrompt);
                   setOutput(entry.output);
+                  setTemperature(entry.temperature);
+                  setMaxTokens(entry.maxTokens);
+                  setTopK(entry.topK);
+                  setTopP(entry.topP);
                   setStats({ durationMs: entry.durationMs, firstTokenMs: entry.firstTokenMs, tokens: entry.tokens });
                 }}
               >
@@ -466,6 +530,7 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginTop: 18,
   },
@@ -496,6 +561,11 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  helperText: {
+    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 18,
   },
   outputText: {
     fontSize: 15,
