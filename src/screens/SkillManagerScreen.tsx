@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Linking } from 'react-native';
 import {
   ActivityIndicator,
   Alert,
@@ -13,10 +14,12 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
+import SkillResultRenderer from '../components/chat/SkillResultRenderer';
 import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import { skillExecutor } from '../services/SkillExecutor';
 import { skillManager } from '../services/SkillManager';
-import type { Skill } from '../types/skill';
+import type { Skill, SkillResult } from '../types/skill';
 
 export default function SkillManagerScreen() {
   const { theme: currentTheme } = useTheme();
@@ -27,6 +30,8 @@ export default function SkillManagerScreen() {
   const [importUrl, setImportUrl] = useState('');
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
   const [secretValue, setSecretValue] = useState('');
+  const [previewInput, setPreviewInput] = useState('hello world');
+  const [previewResult, setPreviewResult] = useState<SkillResult | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
 
   const loadSkills = async () => {
@@ -58,6 +63,11 @@ export default function SkillManagerScreen() {
 
     loadSecret();
   }, [selectedSkill?.id, selectedSkill?.secret]);
+
+  useEffect(() => {
+    setPreviewResult(null);
+    setPreviewInput('hello world');
+  }, [selectedSkill?.id]);
 
   const handleToggle = async (skillId: string) => {
     try {
@@ -129,6 +139,41 @@ export default function SkillManagerScreen() {
     }
   };
 
+  const handleOpenHomepage = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert('Open failed', 'Could not open the skill homepage.');
+    }
+  };
+
+  const handlePreview = async () => {
+    if (!selectedSkill) {
+      return;
+    }
+
+    try {
+      setBusyAction(`preview-${selectedSkill.id}`);
+      if (selectedSkill.type === 'js') {
+        setPreviewResult(await skillExecutor.runJs(selectedSkill, {
+          scriptName: selectedSkill.metadata?.scriptName,
+          data: previewInput,
+        }));
+        return;
+      }
+
+      setPreviewResult(await skillExecutor.run(selectedSkill, {
+        input: previewInput,
+      }));
+    } catch (error) {
+      setPreviewResult({
+        error: error instanceof Error ? error.message : 'Preview failed',
+      });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <AppHeader title="Skills" showBackButton showLogo={false} rightButtons={[]} />
@@ -180,7 +225,47 @@ export default function SkillManagerScreen() {
                   {selected && (
                     <View style={styles.skillBody}>
                       <Text style={[styles.skillDetail, { color: themeColors.secondaryText }]}>Source: {skill.source}</Text>
+                      <View style={styles.badgeRow}>
+                        <View style={[styles.badge, { backgroundColor: themeColors.primary + '18' }]}>
+                          <Text style={[styles.badgeText, { color: themeColors.primary }]}>{skill.type.toUpperCase()}</Text>
+                        </View>
+                        {skill.metadata?.homepage ? (
+                          <TouchableOpacity style={[styles.badge, { backgroundColor: themeColors.secondaryText + '18' }]} onPress={() => handleOpenHomepage(skill.metadata!.homepage!)}>
+                            <Text style={[styles.badgeText, { color: themeColors.text }]}>Homepage</Text>
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
                       <Text style={[styles.instructions, { color: themeColors.text }]}>{skill.instructions}</Text>
+
+                      <View style={[styles.previewCard, { borderColor: themeColors.secondaryText + '20', backgroundColor: themeColors.background }]}>
+                        <Text style={[styles.previewTitle, { color: themeColors.text }]}>{skill.type === 'js' ? 'Skill Preview' : 'Prompt Preview'}</Text>
+                        <TextInput
+                          value={previewInput}
+                          onChangeText={setPreviewInput}
+                          placeholder={skill.type === 'js' ? 'Preview input for the skill' : 'Input passed into the skill context'}
+                          placeholderTextColor={themeColors.secondaryText}
+                          multiline
+                          style={[
+                            styles.previewInput,
+                            {
+                              color: themeColors.text,
+                              borderColor: themeColors.secondaryText + '30',
+                            },
+                          ]}
+                        />
+                        <TouchableOpacity
+                          style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]}
+                          onPress={handlePreview}
+                          disabled={busyAction === `preview-${skill.id}`}
+                        >
+                          <MaterialCommunityIcons name="play-outline" size={18} color={themeColors.text} />
+                          <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Run Preview</Text>
+                        </TouchableOpacity>
+                        {busyAction === `preview-${skill.id}` ? (
+                          <ActivityIndicator size="small" color={themeColors.primary} />
+                        ) : null}
+                        {previewResult ? <SkillResultRenderer result={previewResult} /> : null}
+                      </View>
 
                       {skill.secret && (
                         <View style={styles.secretWrap}>
@@ -310,6 +395,20 @@ const styles = StyleSheet.create({
     marginTop: 12,
     gap: 10,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  badge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   skillDetail: {
     fontSize: 12,
     fontWeight: '600',
@@ -322,6 +421,25 @@ const styles = StyleSheet.create({
   },
   secretWrap: {
     gap: 10,
+  },
+  previewCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    gap: 10,
+  },
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  previewInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 14,
+    minHeight: 96,
+    textAlignVertical: 'top',
   },
   secretLabel: {
     fontSize: 14,
