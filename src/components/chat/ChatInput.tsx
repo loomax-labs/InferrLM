@@ -60,6 +60,12 @@ interface StoredModel {
   modified: string;
 }
 
+type PendingAttachment = {
+  uri: string;
+  name: string;
+  kind: 'file' | 'audio';
+};
+
 const remoteProviders: ProviderType[] = ['gemini', 'chatgpt', 'claude'];
 
 const isRemoteProvider = (provider: string | null): boolean => {
@@ -106,7 +112,7 @@ export default function ChatInput({
   const [pendingFileForMultimodal, setPendingFileForMultimodal] = useState<{uri: string, name?: string} | null>(null);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [useRagForUpload, setUseRagForUpload] = useState(false);
-  const [pendingAttachment, setPendingAttachment] = useState<{uri: string, name: string} | null>(null);
+  const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
   const [skillsModeEnabled, setSkillsModeEnabled] = useState(true);
   
   const inputRef = useRef<TextInput>(null);
@@ -462,6 +468,15 @@ export default function ChatInput({
     setShowAttachmentMenu(!showAttachmentMenu);
   };
 
+  const supportsAudioUpload = useCallback(() => {
+    if (!selectedModelPath || isOnlineProvider(selectedModelPath)) {
+      return false;
+    }
+
+    const engine = engineService.getEngineForModel(selectedModelPath);
+    return engine === 'llama' || (engine === 'litert' && Platform.OS !== 'ios');
+  }, [selectedModelPath]);
+
   const toggleSkillsMode = useCallback(async () => {
     const next = !skillsModeEnabled;
     setSkillsModeEnabled(next);
@@ -508,6 +523,17 @@ export default function ChatInput({
       setInputHeight(52);
       setShowAttachmentMenu(false);
       setPendingAttachment(null);
+
+      if (attachment.kind === 'audio') {
+        onSend(JSON.stringify({
+          type: 'audio_upload',
+          internalInstruction: `Audio URI: ${attachment.uri}`,
+          userContent: prompt || 'Please transcribe or describe this audio file.',
+          fileName: attachment.name,
+        }));
+        return;
+      }
+
       handleRemoteUpload(attachment.uri, attachment.name, prompt);
       return;
     }
@@ -873,7 +899,7 @@ export default function ChatInput({
         }
 
         if (isRemoteModel && !isImageFile(fileName)) {
-          setPendingAttachment({ uri: file.uri, name: fileName });
+          setPendingAttachment({ uri: file.uri, name: fileName, kind: 'file' });
           setShowAttachmentMenu(false);
           setTimeout(() => inputRef.current?.focus(), 100);
           return;
@@ -890,6 +916,35 @@ export default function ChatInput({
       showDialog('Error', 'Could not pick the document. Please try again.');
     }
   }, [selectedModelPath, isMultimodalEnabled, isRemoteModel, getRemoteFileSupport, showDialog]);
+
+  const pickAudio = useCallback(async () => {
+    if (!selectedModelPath) {
+      showDialog('No Model Selected', 'Please select a model before attaching audio.');
+      return;
+    }
+
+    if (!supportsAudioUpload()) {
+      showDialog('Audio Not Supported', 'The current chat model does not support audio input on this platform.');
+      return;
+    }
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['audio/*'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        const fileName = file.name || 'audio-file';
+        setPendingAttachment({ uri: file.uri, name: fileName, kind: 'audio' });
+        setShowAttachmentMenu(false);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    } catch {
+      showDialog('Error', 'Could not pick the audio file. Please try again.');
+    }
+  }, [selectedModelPath, showDialog, supportsAudioUpload]);
 
   const closeFileModal = useCallback(() => {
     setFileModalVisible(false);
@@ -1040,6 +1095,15 @@ export default function ChatInput({
                   Camera
                 </Text>
               </TouchableOpacity>
+
+              <TouchableOpacity style={styles.attachmentMenuItem} onPress={pickAudio}>
+                <View style={[styles.attachmentMenuIcon, { backgroundColor: '#f39c12' }]}> 
+                  <MaterialCommunityIcons name="file-music-outline" size={20} color="#ffffff" />
+                </View>
+                <Text style={[styles.attachmentMenuText, { color: isDark ? themeColors.text : '#000000' }]}> 
+                  Audio
+                </Text>
+              </TouchableOpacity>
               
             </Animated.View>
           )}
@@ -1050,6 +1114,7 @@ export default function ChatInput({
               pdf: '#FF5252', doc: '#2196F3', docx: '#2196F3',
               xls: '#4CAF50', xlsx: '#4CAF50', ppt: '#FF9800', pptx: '#FF9800',
               jpg: '#9C27B0', jpeg: '#9C27B0', png: '#9C27B0', gif: '#9C27B0',
+              mp3: '#f39c12', wav: '#f39c12', m4a: '#f39c12', aac: '#f39c12',
               zip: '#795548', rar: '#795548', '7z': '#795548',
               js: '#FFC107', ts: '#FFC107', py: '#3F51B5',
               html: '#FF5722', css: '#FF5722',
@@ -1067,7 +1132,7 @@ export default function ChatInput({
                       {pendingAttachment.name}
                     </Text>
                     <Text style={[styles.pendingFileSubtitle, { color: themeColors.secondaryText }]}>
-                      File attachment
+                      {pendingAttachment.kind === 'audio' ? 'Audio attachment' : 'File attachment'}
                     </Text>
                   </View>
                   <TouchableOpacity
