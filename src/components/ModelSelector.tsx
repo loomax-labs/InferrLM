@@ -20,6 +20,7 @@ import { useModel } from '../context/ModelContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { onlineModelService } from '../services/OnlineModelService';
+import { engineLabels } from '../managers/inference-manager';
 import { engineService } from '../services/inference-engine-service';
 import { llamaManager } from '../utils/LlamaManager';
 import { Portal, Text } from 'react-native-paper';
@@ -519,7 +520,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
           if (!enabled[engine]) {
             showDialog(
               'Engine Disabled',
-              `${engine === 'llama' ? 'Llama.cpp' : 'MLX'} is disabled. Enable it in Settings to load this model.`
+              `${engineLabels[engine]} is disabled. Enable it in Settings to load this model.`
             );
             return;
           }
@@ -528,7 +529,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
                               nameLower.includes('vision') ||
                               nameLower.includes('minicpm');
 
-          if (isVisionModel) {
+          if (isVisionModel && engine === 'llama') {
             showMultimodalDialog(storedModel);
           } else {
             await startLocalLoad(modelPath, undefined, 'default', undefined, undefined, storedModel.modelFormat);

@@ -38,6 +38,14 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
       requiresMLX: true,
       beta: true,
     },
+    {
+      id: 'litert' as const,
+      name: 'LiteRT-LM',
+      description: 'Optimized LiteRT-LM runtime for .litertlm and .task models',
+      icon: 'lightning-bolt-outline',
+      enabled: true,
+      beta: true,
+    },
   ], []);
 
   const renderEngineItem = (engine: (typeof engines)[number]) => {
@@ -132,7 +140,7 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: themeColors.background }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable inferences</Text>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable inference engines</Text>
               <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
                 <MaterialCommunityIcons name="close" size={24} color={themeColors.text} />
               </TouchableOpacity>

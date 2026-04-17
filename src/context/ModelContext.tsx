@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { fs as FileSystem } from '../services/fs';
+import { engineLabels } from '../managers/inference-manager';
 import { llamaManager } from '../utils/LlamaManager';
 import { engineService } from '../services/inference-engine-service';
 import { Snackbar, Text } from 'react-native-paper';
@@ -60,7 +61,7 @@ export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const enabled = engineService.getEnabled();
 
       if (!enabled[engine]) {
-        showSnackbar(`${engine === 'llama' ? 'Llama.cpp' : 'MLX'} engine is disabled`, 'error');
+        showSnackbar(`${engineLabels[engine]} engine is disabled`, 'error');
         setIsModelLoading(false);
         return false;
       }
@@ -86,7 +87,7 @@ export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
       
-      if (engine === 'mlx' && mmProjectorPath) {
+      if (engine !== 'llama' && mmProjectorPath) {
         mmProjectorPath = undefined;
       }
 
@@ -96,7 +97,7 @@ export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updateProjectorState();
       
       const modelName = isMlxModel ? modelPath : (modelPath.split('/').pop() || 'Model');
-      const engineLabel = engine === 'mlx' ? ' (MLX)' : ' (Llama.cpp)';
+      const engineLabel = ` (${engineLabels[engine]})`;
       const multimodalText = mmProjectorPath ? ' (Multimodal)' : '';
 
       return true;

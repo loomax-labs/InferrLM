@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { EngineId } from '../../managers/inference-manager';
 import SettingsSection from './SettingsSection';
 import ModelSettingsCore from './ModelSettingsCore';
 
@@ -46,9 +47,9 @@ type ModelSettingsSectionProps = {
   error: string | null;
   onSettingsChange: (settings: Partial<ModelSettings>) => void;
   onDialogOpen: (config: any) => void;
-  activeEngine?: 'llama' | 'mlx';
-  engineEnabled?: Record<'llama' | 'mlx', boolean>;
-  onEngineToggle?: (engine: 'llama' | 'mlx', enabled: boolean) => void;
+  activeEngine?: EngineId;
+  engineEnabled?: Record<EngineId, boolean>;
+  onEngineToggle?: (engine: EngineId, enabled: boolean) => void;
   onOpenSystemPromptDialog?: () => void;
   enableRemoteModels?: boolean;
   onToggleRemoteModels?: (enabled: boolean) => void;

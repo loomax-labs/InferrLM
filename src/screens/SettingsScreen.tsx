@@ -27,6 +27,7 @@ import StorageSection from '../components/settings/StorageSection';
 import Dialog from '../components/Dialog';
 import * as WebBrowser from 'expo-web-browser';
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
+import { EngineId } from '../managers/inference-manager';
 import type { ModelSettings as StoredModelSettings } from '../services/ModelSettingsService';
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { appleFoundationService } from '../services/AppleFoundationService';
@@ -39,7 +40,6 @@ type SettingsScreenProps = {
 };
 
 type ThemeOption = 'system' | 'light' | 'dark';
-type InferenceEngine = 'llama' | 'mlx';
 
 type ModelSettingKey = keyof StoredModelSettings;
 
@@ -63,6 +63,16 @@ const IN_APP_BROWSER_URLS = new Set([
 
 const normalizeLink = (url: string) => url.replace(/\/+$/, '');
 
+const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
+  if (enabled.llama) {
+    return 'llama';
+  }
+  if (enabled.litert) {
+    return 'litert';
+  }
+  return 'mlx';
+};
+
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
@@ -81,10 +91,11 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [activeInferenceEngine, setActiveInferenceEngine] =
-    useState<InferenceEngine>('llama');
-  const [engineEnabled, setEngineEnabled] = useState<Record<InferenceEngine, boolean>>({
+    useState<EngineId>('llama');
+  const [engineEnabled, setEngineEnabled] = useState<Record<EngineId, boolean>>({
     llama: true,
     mlx: true,
+    litert: true,
   });
   
   const [dialogConfig, setDialogConfig] = useState<{
@@ -216,6 +227,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       const nextEnabled = {
         llama: enabled.llama,
         mlx: supportsMLX ? enabled.mlx : false,
+        litert: enabled.litert,
       };
       setEngineEnabled(nextEnabled);
 
@@ -223,7 +235,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         await engineService.setEnabled('mlx', false);
       }
 
-      const fallback = nextEnabled.llama ? 'llama' : 'mlx';
+      const fallback = pickActiveEngine(nextEnabled);
       const nextActive = nextEnabled[active] ? active : fallback;
       if (nextActive !== active) {
         await engineService.set(nextActive);
@@ -241,9 +253,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
   };
 
-  const handleInferenceEngineToggle = async (engine: InferenceEngine, enabled: boolean) => {
+  const handleInferenceEngineToggle = async (engine: EngineId, enabled: boolean) => {
     const next = { ...engineEnabled, [engine]: enabled };
-    if (!next.llama && !next.mlx) {
+    if (!next.llama && !next.mlx && !next.litert) {
       showDialog('Engine Required', 'At least one inference engine must remain enabled.');
       return;
     }
@@ -254,7 +266,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     try {
       await engineService.setEnabled(engine, enabled);
       if (!enabled && activeInferenceEngine === engine) {
-        const fallback = next.llama ? 'llama' : 'mlx';
+        const fallback = pickActiveEngine(next);
         await engineService.set(fallback);
         setActiveInferenceEngine(fallback);
       }
