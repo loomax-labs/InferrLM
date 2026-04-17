@@ -6,6 +6,8 @@ import {
 } from '@inferrlm/react-native-litert-lm';
 
 import { BenchmarkSample, EngineCaps, GenOpts, GenSettings, InferenceManager, Msg } from './inference-manager';
+import { getLiteRTRecommendedBackend, type LiteRTBackend } from '../services/LiteRTBackendService';
+import { modelSettingsService } from '../services/ModelSettingsService';
 
 type ParsedInput = {
   text: string;
@@ -34,9 +36,31 @@ class LiteRTManager implements InferenceManager {
     return path.startsWith('file://') ? path.slice(7) : path;
   }
 
-  private createConfig(): LLMConfig {
+  private getModelSettingPaths(): string[] {
+    if (!this.modelPath) {
+      return [];
+    }
+
+    const rawPath = this.modelPath;
+    const filePath = rawPath.startsWith('file://') ? rawPath : `file://${rawPath}`;
+
+    return Array.from(new Set([rawPath, filePath]));
+  }
+
+  private async resolveBackend(): Promise<LiteRTBackend> {
+    for (const path of this.getModelSettingPaths()) {
+      const config = await modelSettingsService.getModelSettings(path);
+      if (config.litertBackend) {
+        return config.litertBackend;
+      }
+    }
+
+    return getLiteRTRecommendedBackend();
+  }
+
+  private async createConfig(): Promise<LLMConfig> {
     return {
-      backend: 'cpu',
+      backend: await this.resolveBackend(),
       maxTokens: 1024,
       temperature: 0.7,
       topK: 40,
@@ -46,7 +70,7 @@ class LiteRTManager implements InferenceManager {
 
   private getConfigKey(config: LLMConfig): string {
     return JSON.stringify({
-      backend: config.backend ?? 'cpu',
+      backend: config.backend ?? getLiteRTRecommendedBackend(),
       maxTokens: config.maxTokens ?? 1024,
       temperature: config.temperature ?? 0.7,
       topK: config.topK ?? 40,
@@ -55,8 +79,8 @@ class LiteRTManager implements InferenceManager {
     });
   }
 
-  private buildConfig(messages: Msg[], settings?: Partial<GenSettings>): LLMConfig {
-    const config = this.createConfig();
+  private async buildConfig(messages: Msg[], settings?: Partial<GenSettings>): Promise<LLMConfig> {
+    const config = await this.createConfig();
     const systemPrompt = this.extractSystemPrompt(messages, settings);
 
     if (typeof settings?.maxTokens === 'number') {
@@ -283,7 +307,7 @@ class LiteRTManager implements InferenceManager {
 
   async init(modelPath: string) {
     this.modelPath = this.normalizePath(modelPath);
-    const config = this.createConfig();
+    const config = await this.createConfig();
     const instance = this.getInstance();
 
     try {
@@ -302,7 +326,7 @@ class LiteRTManager implements InferenceManager {
       return '';
     }
 
-    const instance = await this.ensureLoaded(this.buildConfig(messages, opts?.settings));
+    const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings));
     const prompt = input.text || 'Describe this input.';
 
     if (input.imagePath && caps.vision) {

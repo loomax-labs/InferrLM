@@ -17,6 +17,14 @@ import { llamaManager } from '../utils/LlamaManager';
 import { modelSettingsService, ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
 import { engineLabels } from '../managers/inference-manager';
 import { engineService } from '../services/inference-engine-service';
+import {
+  formatLiteRTBackend,
+  getLiteRTBackendWarning,
+  getLiteRTRecommendedBackend,
+  isLiteRTBackendSelectable,
+  litertBackendOptions,
+  type LiteRTBackend,
+} from '../services/LiteRTBackendService';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import ChatSettingsSection from '../components/settings/ChatSettingsSection';
 import SystemPromptDialog from '../components/SystemPromptDialog';
@@ -94,6 +102,18 @@ export default function ModelSettingsScreen() {
       await modelSettingsService.setModelSettings(modelPath, newModelSettings);
       setModelSettingsConfig(newModelSettings);
     } catch (error) {
+    }
+  };
+
+  const handleLiteRTBackendChange = async (backend: LiteRTBackend) => {
+    try {
+      const nextConfig: ModelSettingsConfig = {
+        ...modelSettingsConfig,
+        litertBackend: backend,
+      };
+      await modelSettingsService.setModelSettings(modelPath, nextConfig);
+      setModelSettingsConfig(nextConfig);
+    } catch {
     }
   };
 
@@ -197,6 +217,9 @@ export default function ModelSettingsScreen() {
   const benchmarkEngine = engineService.getEngineForModel(modelPath);
   const benchmarkSupported = benchmarkEngine !== 'mlx';
   const displayModelName = modelName.replace(/\.(gguf|litertlm|task)$/i, '');
+  const litertBackend = modelSettingsConfig.litertBackend ?? getLiteRTRecommendedBackend();
+  const recommendedLiteRTBackend = getLiteRTRecommendedBackend();
+  const litertBackendWarning = getLiteRTBackendWarning(litertBackend);
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
@@ -245,6 +268,62 @@ export default function ModelSettingsScreen() {
             />
           </TouchableOpacity>
         </View>
+
+        {benchmarkEngine === 'litert' && (
+          <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}> 
+            <View style={styles.backendHeader}>
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : getThemeAwareColor('#005b99', currentTheme) + '20' }]}> 
+                  <MaterialCommunityIcons name="memory" size={22} color={currentTheme === 'dark' ? '#FFFFFF' : getThemeAwareColor('#005b99', currentTheme)} />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                    LiteRT Backend
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                    Choose the runtime target for this LiteRT model.
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.backendRow}>
+              {litertBackendOptions.map(option => {
+                const selected = option === litertBackend;
+                const selectable = isLiteRTBackendSelectable(option);
+                const recommended = option === recommendedLiteRTBackend;
+
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.backendChip,
+                      {
+                        backgroundColor: selected ? themeColors.primary : themeColors.background,
+                        borderColor: selected ? themeColors.primary : themeColors.secondaryText + '20',
+                        opacity: selectable ? 1 : 0.45,
+                      },
+                    ]}
+                    disabled={!selectable}
+                    onPress={() => handleLiteRTBackendChange(option)}
+                  >
+                    <Text style={[styles.backendChipText, { color: selected ? '#FFFFFF' : themeColors.text }]}>
+                      {formatLiteRTBackend(option)}
+                    </Text>
+                    {recommended ? (
+                      <Text style={[styles.backendChipMeta, { color: selected ? '#FFFFFF' : themeColors.secondaryText }]}>Recommended</Text>
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.backendHint, { color: themeColors.secondaryText }]}>Recommended backend: {formatLiteRTBackend(recommendedLiteRTBackend)}</Text>
+            {litertBackendWarning ? (
+              <Text style={styles.backendWarning}>{litertBackendWarning}</Text>
+            ) : null}
+          </View>
+        )}
 
         <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}>
           <View style={styles.settingItem}>
@@ -415,6 +494,46 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 13,
+  },
+  backendHeader: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  backendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 16,
+  },
+  backendChip: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minWidth: 92,
+    alignItems: 'center',
+  },
+  backendChipText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  backendChipMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  backendHint: {
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  backendWarning: {
+    color: '#C62828',
+    fontSize: 12,
+    lineHeight: 18,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   customSettingsSection: {
     marginBottom: 20,
