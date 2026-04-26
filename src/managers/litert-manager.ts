@@ -21,14 +21,27 @@ const caps: EngineCaps = {
   audio: Platform.OS !== 'ios',
   rag: false,
   grammar: false,
-    const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings));
-    const samples = await instance.runBenchmark(prompt, 0, 1);
-    const stats = samples[0] || instance.getStats();
-    const promptTokens = stats.promptTokens || Math.max(prompt.length / 4, 1);
-    const completionTokens = stats.completionTokens || Math.max(stats.totalTokens - promptTokens, 1);
-    const ttftMs = stats.timeToFirstToken || 0;
-    const totalTimeMs = stats.totalTime || 0;
-    const decodeWindowMs = Math.max(totalTimeMs - ttftMs, 1);
+  jinja: false,
+  dry: false,
+  mirostat: false,
+  xtc: false,
+};
+
+class LiteRTManager implements InferenceManager {
+  private instance: LiteRTLMInstance | null = null;
+  private modelPath: string | null = null;
+  private configKey = '';
+
+  private normalizePath(path: string): string {
+    return path.startsWith('file://') ? path.slice(7) : path;
+  }
+
+  private getModelSettingPaths(): string[] {
+    if (!this.modelPath) {
+      return [];
+    }
+
+    const rawPath = this.modelPath;
     const filePath = rawPath.startsWith('file://') ? rawPath : `file://${rawPath}`;
 
     return Array.from(new Set([rawPath, filePath]));
@@ -358,26 +371,13 @@ const caps: EngineCaps = {
 
     messages.push({ role: 'user', content: prompt });
 
-    const startedAt = Date.now();
-    let ttftMs = 0;
-    let chunkCount = 0;
-
-    const response = await this.gen(messages, {
-      settings: opts?.settings,
-      onToken: (token) => {
-        if (token) {
-          if (!ttftMs) {
-            ttftMs = Date.now() - startedAt;
-          }
-          chunkCount += 1;
-        }
-      },
-    });
-
-    const totalTimeMs = Date.now() - startedAt;
-    const stats = this.getInstance().getStats();
+    const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings));
+    const samples = await instance.runBenchmark(prompt, 0, 1);
+    const stats = samples[0] || instance.getStats();
     const promptTokens = stats.promptTokens || Math.max(prompt.length / 4, 1);
-    const completionTokens = stats.completionTokens || Math.max(response.length / 4, chunkCount);
+    const completionTokens = stats.completionTokens || Math.max(stats.totalTokens - promptTokens, 1);
+    const ttftMs = stats.timeToFirstToken || 0;
+    const totalTimeMs = stats.totalTime || 0;
     const decodeWindowMs = Math.max(totalTimeMs - ttftMs, 1);
 
     return {
