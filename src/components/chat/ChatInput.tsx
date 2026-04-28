@@ -1307,7 +1307,7 @@ export default function ChatInput({
                 disabled={disabled}
               >
                 <MaterialCommunityIcons
-                  name={skillsModeEnabled ? "wand" : "wand-outline"}
+                  name="auto-fix"
                   size={18}
                   color={skillsIconColor}
                 />
