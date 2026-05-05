@@ -168,6 +168,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
   const isMLXModel = (model: StoredModel): boolean => {
     if (model.modelFormat === 'mlx') return true;
     if (model.modelFormat === 'gguf') return false;
+    if (model.modelFormat === 'litert') return false;
 
     const path = model.path.toLowerCase();
     const name = model.name.toLowerCase();
