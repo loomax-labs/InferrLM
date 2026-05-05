@@ -15,6 +15,7 @@ export interface FilterOptions {
   tags: string[];
   modelFamilies: string[];
   quantizations: string[];
+  inferences: string[];
 }
 
 interface ModelFilterProps {
@@ -22,6 +23,7 @@ interface ModelFilterProps {
   availableTags: string[];
   availableModelFamilies: string[];
   availableQuantizations: string[];
+  availableInferences?: string[];
   initialFilters?: FilterOptions;
   onExpandChange?: (isExpanded: boolean) => void;
 }
@@ -31,6 +33,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
   availableTags,
   availableModelFamilies,
   availableQuantizations,
+  availableInferences = [],
   initialFilters,
   onExpandChange,
 }) => {
@@ -41,6 +44,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.tags || []);
   const [selectedModelFamilies, setSelectedModelFamilies] = useState<string[]>(initialFilters?.modelFamilies || []);
   const [selectedQuantizations, setSelectedQuantizations] = useState<string[]>(initialFilters?.quantizations || []);
+  const [selectedInferences, setSelectedInferences] = useState<string[]>(initialFilters?.inferences || []);
 
 
   const toggleTag = (tag: string) => {
@@ -48,11 +52,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
       ? selectedTags.filter(t => t !== tag)
       : [...selectedTags, tag];
     setSelectedTags(newTags);
-    onFiltersChange({
-      tags: newTags,
-      modelFamilies: selectedModelFamilies,
-      quantizations: selectedQuantizations,
-    });
+    onFiltersChange({ tags: newTags, modelFamilies: selectedModelFamilies, quantizations: selectedQuantizations, inferences: selectedInferences });
   };
 
   const toggleModelFamily = (family: string) => {
@@ -60,11 +60,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
       ? selectedModelFamilies.filter(f => f !== family)
       : [...selectedModelFamilies, family];
     setSelectedModelFamilies(newFamilies);
-    onFiltersChange({
-      tags: selectedTags,
-      modelFamilies: newFamilies,
-      quantizations: selectedQuantizations,
-    });
+    onFiltersChange({ tags: selectedTags, modelFamilies: newFamilies, quantizations: selectedQuantizations, inferences: selectedInferences });
   };
 
   const toggleQuantization = (quantization: string) => {
@@ -72,25 +68,26 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
       ? selectedQuantizations.filter(q => q !== quantization)
       : [...selectedQuantizations, quantization];
     setSelectedQuantizations(newQuantizations);
-    onFiltersChange({
-      tags: selectedTags,
-      modelFamilies: selectedModelFamilies,
-      quantizations: newQuantizations,
-    });
+    onFiltersChange({ tags: selectedTags, modelFamilies: selectedModelFamilies, quantizations: newQuantizations, inferences: selectedInferences });
+  };
+
+  const toggleInference = (inference: string) => {
+    const newInferences = selectedInferences.includes(inference)
+      ? selectedInferences.filter(i => i !== inference)
+      : [...selectedInferences, inference];
+    setSelectedInferences(newInferences);
+    onFiltersChange({ tags: selectedTags, modelFamilies: selectedModelFamilies, quantizations: selectedQuantizations, inferences: newInferences });
   };
 
   const clearAllFilters = () => {
     setSelectedTags([]);
     setSelectedModelFamilies([]);
     setSelectedQuantizations([]);
-    onFiltersChange({
-      tags: [],
-      modelFamilies: [],
-      quantizations: [],
-    });
+    setSelectedInferences([]);
+    onFiltersChange({ tags: [], modelFamilies: [], quantizations: [], inferences: [] });
   };
 
-  const hasActiveFilters = selectedTags.length > 0 || selectedModelFamilies.length > 0 || selectedQuantizations.length > 0;
+  const hasActiveFilters = selectedTags.length > 0 || selectedModelFamilies.length > 0 || selectedQuantizations.length > 0 || selectedInferences.length > 0;
 
   const renderFilterChips = (
     items: string[],
@@ -152,6 +149,17 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
     return getThemeAwareColor('#2c7fb8', currentTheme);
   };
 
+  const getInferenceColor = (inference: string): string => {
+    switch (inference) {
+      case 'litert':
+        return getThemeAwareColor('#1a7340', currentTheme);
+      case 'llama.cpp':
+        return getThemeAwareColor('#7b3f00', currentTheme);
+      default:
+        return getThemeAwareColor('#666', currentTheme);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: themeColors.borderColor }]}>
       <TouchableOpacity
@@ -175,7 +183,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
           {hasActiveFilters && (
             <View style={[styles.activeIndicator, { backgroundColor: getThemeAwareColor('#4a0660', currentTheme) }]}>
               <Text style={styles.activeIndicatorText}>
-                {selectedTags.length + selectedModelFamilies.length + selectedQuantizations.length}
+                {selectedTags.length + selectedModelFamilies.length + selectedQuantizations.length + selectedInferences.length}
               </Text>
             </View>
           )}
@@ -234,6 +242,20 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
                 selectedQuantizations,
                 toggleQuantization,
                 getQuantizationColor
+              )}
+            </View>
+          )}
+
+          {availableInferences.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+                Inference Engine
+              </Text>
+              {renderFilterChips(
+                availableInferences,
+                selectedInferences,
+                toggleInference,
+                getInferenceColor
               )}
             </View>
           )}
