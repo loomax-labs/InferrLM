@@ -22,6 +22,7 @@ import { modelDownloader } from '../services/ModelDownloader';
 import { engineService } from '../services/runtime-service';
 import { onlineModelService, OnlineModelService } from '../services/OnlineModelService';
 import { skillManager } from '../services/SkillManager';
+import { OpenSansFont } from '../hooks/OpenSansFont';
 
 const HISTORY_KEY = '@prompt_lab_history_v1';
 const DEFAULT_PROMPT = 'Explain how retrieval-augmented generation differs from a standard chat completion.';
@@ -55,33 +56,37 @@ const estimateTokens = (text: string) => {
   return words > 0 ? Math.max(1, Math.round(words * 1.33)) : 0;
 };
 
-function CounterField({
+function ParamStepper({
   label,
   value,
   onDecrease,
   onIncrease,
-  valueColor,
-  accentColor,
-  labelColor,
+  themeColors,
 }: {
   label: string;
   value: string;
   onDecrease: () => void;
   onIncrease: () => void;
-  valueColor: string;
-  accentColor: string;
-  labelColor: string;
+  themeColors: typeof theme['light'];
 }) {
   return (
-    <View style={styles.counterCard}>
-      <Text style={[styles.counterLabel, { color: labelColor }]}>{label}</Text>
-      <View style={styles.counterRow}>
-        <TouchableOpacity style={[styles.counterButton, { backgroundColor: accentColor }]} onPress={onDecrease}>
-          <MaterialCommunityIcons name="minus" size={18} color="#FFFFFF" />
+    <View style={[styles.stepper, { backgroundColor: themeColors.cardBackground }]}>
+      <Text style={[styles.stepperLabel, { color: themeColors.secondaryText }]}>{label}</Text>
+      <View style={styles.stepperRow}>
+        <TouchableOpacity
+          style={[styles.stepBtn, { backgroundColor: themeColors.primary + '22' }]}
+          onPress={onDecrease}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <MaterialCommunityIcons name="minus" size={16} color={themeColors.primary} />
         </TouchableOpacity>
-        <Text style={[styles.counterValue, { color: valueColor }]}>{value}</Text>
-        <TouchableOpacity style={[styles.counterButton, { backgroundColor: accentColor }]} onPress={onIncrease}>
-          <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
+        <Text style={[styles.stepperValue, { color: themeColors.text }]}>{value}</Text>
+        <TouchableOpacity
+          style={[styles.stepBtn, { backgroundColor: themeColors.primary + '22' }]}
+          onPress={onIncrease}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <MaterialCommunityIcons name="plus" size={16} color={themeColors.primary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -92,8 +97,7 @@ export default function PromptLabScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const { selectedModelPath } = useModel();
-  const accentColor = currentTheme === 'dark' ? '#2E8B57' : '#1C6B4A';
-  const valueColor = currentTheme === 'dark' ? '#F5F2E8' : '#111111';
+  const { fonts } = OpenSansFont();
 
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [systemPrompt, setSystemPrompt] = useState('');
@@ -105,6 +109,7 @@ export default function PromptLabScreen() {
   const [history, setHistory] = useState<PromptHistoryEntry[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [stats, setStats] = useState({ durationMs: 0, firstTokenMs: 0, tokens: 0 });
+  const [tab, setTab] = useState<'output' | 'history'>('output');
 
   const localModelPath = engineService.getActiveModelPath() || (selectedModelPath && !remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)) ? selectedModelPath : null);
   const isRemoteSelection = Boolean(selectedModelPath && remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)));
@@ -122,17 +127,11 @@ export default function PromptLabScreen() {
     const loadHistory = async () => {
       try {
         const raw = await AsyncStorage.getItem(HISTORY_KEY);
-        if (!raw) {
-          return;
-        }
+        if (!raw) return;
         const parsed = JSON.parse(raw) as PromptHistoryEntry[];
-        if (Array.isArray(parsed)) {
-          setHistory(parsed);
-        }
-      } catch {
-      }
+        if (Array.isArray(parsed)) setHistory(parsed);
+      } catch {}
     };
-
     loadHistory();
   }, []);
 
@@ -158,11 +157,9 @@ export default function PromptLabScreen() {
   };
 
   const handleCopy = () => {
-    if (!output) {
-      return;
-    }
+    if (!output) return;
     Clipboard.setString(output);
-    Alert.alert('Copied', 'Prompt Lab output copied to clipboard.');
+    Alert.alert('Copied', 'Output copied to clipboard.');
   };
 
   const runLocalPrompt = async (modelPath: string) => {
@@ -176,9 +173,7 @@ export default function PromptLabScreen() {
 
     const mergedSystemPrompt = await skillManager.buildSystemPrompt(systemPrompt.trim());
     const messages = [] as Array<{ role: string; content: string }>;
-    if (mergedSystemPrompt) {
-      messages.push({ role: 'system', content: mergedSystemPrompt });
-    }
+    if (mergedSystemPrompt) messages.push({ role: 'system', content: mergedSystemPrompt });
     messages.push({ role: 'user', content: prompt.trim() });
 
     const startedAt = Date.now();
@@ -186,33 +181,17 @@ export default function PromptLabScreen() {
     let streamedOutput = '';
 
     const result = await engineService.mgr().gen(messages, {
-      settings: {
-        systemPrompt: mergedSystemPrompt,
-        temperature,
-        maxTokens,
-        topK,
-        topP,
-      },
+      settings: { systemPrompt: mergedSystemPrompt, temperature, maxTokens, topK, topP },
       onToken: (token) => {
-        if (token && !firstTokenMs) {
-          firstTokenMs = Date.now() - startedAt;
-        }
+        if (token && !firstTokenMs) firstTokenMs = Date.now() - startedAt;
         streamedOutput += token;
         setOutput(streamedOutput);
-        setStats({
-          durationMs: Date.now() - startedAt,
-          firstTokenMs,
-          tokens: estimateTokens(streamedOutput),
-        });
+        setStats({ durationMs: Date.now() - startedAt, firstTokenMs, tokens: estimateTokens(streamedOutput) });
       },
     });
 
     const finalOutput = streamedOutput || result;
-    const finalStats = {
-      durationMs: Date.now() - startedAt,
-      firstTokenMs,
-      tokens: estimateTokens(finalOutput),
-    };
+    const finalStats = { durationMs: Date.now() - startedAt, firstTokenMs, tokens: estimateTokens(finalOutput) };
 
     setOutput(finalOutput);
     setStats(finalStats);
@@ -220,23 +199,15 @@ export default function PromptLabScreen() {
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
       model: `${displayModelName} (${engineLabels[engine]})`,
-      prompt,
-      systemPrompt,
-      output: finalOutput,
-      ...finalStats,
-      temperature,
-      maxTokens,
-      topK,
-      topP,
+      prompt, systemPrompt, output: finalOutput, ...finalStats,
+      temperature, maxTokens, topK, topP,
     });
   };
 
   const runRemotePrompt = async (provider: string) => {
     const mergedSystemPrompt = await skillManager.buildSystemPrompt(systemPrompt.trim());
     const messages = [] as Array<{ id: string; role: 'system' | 'user'; content: string }>;
-    if (mergedSystemPrompt) {
-      messages.push({ id: 'system', role: 'system', content: mergedSystemPrompt });
-    }
+    if (mergedSystemPrompt) messages.push({ id: 'system', role: 'system', content: mergedSystemPrompt });
     messages.push({ id: 'user', role: 'user', content: prompt.trim() });
 
     const startedAt = Date.now();
@@ -244,356 +215,353 @@ export default function PromptLabScreen() {
     let streamedOutput = '';
 
     const result = await onlineModelService.sendMessage(
-      provider,
-      messages,
-      {
-        temperature,
-        maxTokens,
-        topP,
-        stream: true,
-        streamTokens: true,
-      },
+      provider, messages,
+      { temperature, maxTokens, topP, stream: true, streamTokens: true },
       token => {
-        if (token && !firstTokenMs) {
-          firstTokenMs = Date.now() - startedAt;
-        }
+        if (token && !firstTokenMs) firstTokenMs = Date.now() - startedAt;
         streamedOutput += token;
         setOutput(streamedOutput);
-        setStats({
-          durationMs: Date.now() - startedAt,
-          firstTokenMs,
-          tokens: estimateTokens(streamedOutput),
-        });
+        setStats({ durationMs: Date.now() - startedAt, firstTokenMs, tokens: estimateTokens(streamedOutput) });
         return true;
       },
     );
 
     const finalOutput = streamedOutput || result;
-    const finalStats = {
-      durationMs: Date.now() - startedAt,
-      firstTokenMs,
-      tokens: estimateTokens(finalOutput),
-    };
+    const finalStats = { durationMs: Date.now() - startedAt, firstTokenMs, tokens: estimateTokens(finalOutput) };
 
     setOutput(finalOutput);
     setStats(finalStats);
     await persistHistory({
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
-      model: provider,
-      prompt,
-      systemPrompt,
-      output: finalOutput,
-      ...finalStats,
-      temperature,
-      maxTokens,
-      topK,
-      topP,
+      model: provider, prompt, systemPrompt, output: finalOutput, ...finalStats,
+      temperature, maxTokens, topK, topP,
     });
   };
 
   const handleRun = async () => {
     if (!prompt.trim()) {
-      Alert.alert('Prompt required', 'Enter a prompt before running Prompt Lab.');
+      Alert.alert('Prompt required', 'Enter a prompt before running.');
       return;
     }
-
     try {
       setIsRunning(true);
       setOutput('');
       setStats({ durationMs: 0, firstTokenMs: 0, tokens: 0 });
+      setTab('output');
       await skillManager.syncTools();
 
       if (isRemoteSelection && selectedModelPath) {
         await runRemotePrompt(selectedModelPath);
         return;
       }
-
       if (!localModelPath) {
         Alert.alert('No model', 'Load a local model or select a remote provider before using Prompt Lab.');
         return;
       }
-
       await runLocalPrompt(localModelPath);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Prompt Lab failed';
-      Alert.alert('Prompt Lab failed', message);
+      Alert.alert('Run failed', error instanceof Error ? error.message : 'Prompt Lab failed');
     } finally {
       setIsRunning(false);
     }
   };
 
+  const hasStats = stats.durationMs > 0;
+
   return (
-    <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+    <View style={[styles.root, { backgroundColor: themeColors.background }]}>
       <AppHeader title="Prompt Lab" showBackButton showLogo={false} rightButtons={[]} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={[styles.heroCard, { backgroundColor: themeColors.borderColor }]}> 
-          <Text style={[styles.heroTitle, { color: themeColors.text }]}>{displayModelName}</Text>
-          <Text style={[styles.heroSubtitle, { color: themeColors.secondaryText }]}>Single-turn prompt testing with isolated runs, live timing, and replayable lab settings.</Text>
+
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+        <View style={[styles.modelChip, { backgroundColor: themeColors.primary + '18', borderColor: themeColors.primary + '35' }]}>
+          <MaterialCommunityIcons name="chip" size={14} color={themeColors.primary} />
+          <Text style={[styles.modelChipText, { color: themeColors.primary }, fonts.semibold]} numberOfLines={1}>
+            {displayModelName}
+          </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Prompt</Text>
+        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+          <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>PROMPT</Text>
           <TextInput
             multiline
             value={prompt}
             onChangeText={setPrompt}
-            placeholder="Write a prompt to test"
-            placeholderTextColor={themeColors.secondaryText}
-            style={[styles.input, styles.promptInput, { color: themeColors.text, borderColor: themeColors.secondaryText + '30' }]}
+            placeholder="Write a prompt to test…"
+            placeholderTextColor={themeColors.secondaryText + '80'}
+            style={[styles.promptInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
           />
+          <Text style={[styles.cardLabel, { color: themeColors.secondaryText, marginTop: 14 }, fonts.semibold]}>SYSTEM PROMPT</Text>
           <TextInput
             multiline
             value={systemPrompt}
             onChangeText={setSystemPrompt}
-            placeholder="Optional system prompt override"
-            placeholderTextColor={themeColors.secondaryText}
-            style={[styles.input, styles.systemInput, { color: themeColors.text, borderColor: themeColors.secondaryText + '30' }]}
+            placeholder="Optional system prompt override…"
+            placeholderTextColor={themeColors.secondaryText + '80'}
+            style={[styles.systemInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
           />
+        </View>
 
-          <View style={styles.counterGrid}>
-            <CounterField
+        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+          <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>PARAMETERS</Text>
+          <View style={styles.paramGrid}>
+            <ParamStepper
               label="Temperature"
               value={temperature.toFixed(1)}
-              onDecrease={() => setTemperature(value => Math.max(0, Number((value - 0.1).toFixed(1))))}
-              onIncrease={() => setTemperature(value => Math.min(2, Number((value + 0.1).toFixed(1))))}
-              valueColor={valueColor}
-              accentColor={accentColor}
-              labelColor={themeColors.secondaryText}
+              onDecrease={() => setTemperature(v => Math.max(0, Number((v - 0.1).toFixed(1))))}
+              onIncrease={() => setTemperature(v => Math.min(2, Number((v + 0.1).toFixed(1))))}
+              themeColors={themeColors}
             />
-            <CounterField
+            <ParamStepper
               label="Max Tokens"
               value={String(maxTokens)}
-              onDecrease={() => setMaxTokens(value => Math.max(32, value - 32))}
-              onIncrease={() => setMaxTokens(value => Math.min(2048, value + 32))}
-              valueColor={valueColor}
-              accentColor={accentColor}
-              labelColor={themeColors.secondaryText}
+              onDecrease={() => setMaxTokens(v => Math.max(32, v - 32))}
+              onIncrease={() => setMaxTokens(v => Math.min(2048, v + 32))}
+              themeColors={themeColors}
             />
-            <CounterField
+            <ParamStepper
               label="Top K"
               value={String(topK)}
-              onDecrease={() => setTopK(value => Math.max(1, value - 5))}
-              onIncrease={() => setTopK(value => Math.min(200, value + 5))}
-              valueColor={valueColor}
-              accentColor={accentColor}
-              labelColor={themeColors.secondaryText}
+              onDecrease={() => setTopK(v => Math.max(1, v - 5))}
+              onIncrease={() => setTopK(v => Math.min(200, v + 5))}
+              themeColors={themeColors}
             />
-            <CounterField
+            <ParamStepper
               label="Top P"
               value={topP.toFixed(2)}
-              onDecrease={() => setTopP(value => Math.max(0.1, Number((value - 0.05).toFixed(2))))}
-              onIncrease={() => setTopP(value => Math.min(1, Number((value + 0.05).toFixed(2))))}
-              valueColor={valueColor}
-              accentColor={accentColor}
-              labelColor={themeColors.secondaryText}
+              onDecrease={() => setTopP(v => Math.max(0.1, Number((v - 0.05).toFixed(2))))}
+              onIncrease={() => setTopP(v => Math.min(1, Number((v + 0.05).toFixed(2))))}
+              themeColors={themeColors}
             />
           </View>
-
-          <Text style={[styles.helperText, { color: themeColors.secondaryText }]}>Top-k is applied to local engines. Remote providers in this screen use temperature, max tokens, and top-p.</Text>
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={[styles.primaryButton, { backgroundColor: themeColors.primary }]} onPress={handleRun} disabled={isRunning}>
-              {isRunning ? <ActivityIndicator color="#FFFFFF" /> : <MaterialCommunityIcons name="flask-outline" size={18} color="#FFFFFF" />}
-              <Text style={styles.primaryButtonText}>{isRunning ? 'Running...' : 'Run Prompt'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleClearOutput}>
-              <MaterialCommunityIcons name="eraser-variant" size={18} color={themeColors.text} />
-              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Clear</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleResetLab}>
-              <MaterialCommunityIcons name="restore" size={18} color={themeColors.text} />
-              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Reset</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleCopy}>
-              <MaterialCommunityIcons name="content-copy" size={18} color={themeColors.text} />
-              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Copy</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={[styles.hint, { color: themeColors.secondaryText }]}>Top K applies to local engines only.</Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Live Output</Text>
-          <Text style={[styles.outputText, { color: themeColors.text }]}>{output || 'Run a prompt to inspect the raw response here.'}</Text>
-          <View style={styles.statsRow}>
-            <Text style={[styles.statText, { color: themeColors.secondaryText }]}>Duration {stats.durationMs} ms</Text>
-            <Text style={[styles.statText, { color: themeColors.secondaryText }]}>TTFT {stats.firstTokenMs} ms</Text>
-            <Text style={[styles.statText, { color: themeColors.secondaryText }]}>Tokens {stats.tokens}</Text>
-          </View>
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.runBtn, { backgroundColor: themeColors.primary }]}
+            onPress={handleRun}
+            disabled={isRunning}
+            activeOpacity={0.8}
+          >
+            {isRunning
+              ? <ActivityIndicator color="#FFF" size="small" />
+              : <MaterialCommunityIcons name="play" size={18} color="#FFF" />}
+            <Text style={[styles.runBtnText, fonts.bold]}>{isRunning ? 'Running…' : 'Run'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
+            onPress={handleClearOutput}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <MaterialCommunityIcons name="eraser-variant" size={20} color={themeColors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
+            onPress={handleResetLab}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <MaterialCommunityIcons name="restore" size={20} color={themeColors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
+            onPress={handleCopy}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <MaterialCommunityIcons name="content-copy" size={20} color={themeColors.text} />
+          </TouchableOpacity>
         </View>
 
-        {history.length > 0 && (
-          <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Recent Runs</Text>
-            {history.map(entry => (
-              <TouchableOpacity
-                key={entry.id}
-                style={[styles.historyItem, { borderColor: themeColors.secondaryText + '20' }]}
-                onPress={() => {
-                  setPrompt(entry.prompt);
-                  setSystemPrompt(entry.systemPrompt);
-                  setOutput(entry.output);
-                  setTemperature(entry.temperature);
-                  setMaxTokens(entry.maxTokens);
-                  setTopK(entry.topK);
-                  setTopP(entry.topP);
-                  setStats({ durationMs: entry.durationMs, firstTokenMs: entry.firstTokenMs, tokens: entry.tokens });
-                }}
-              >
-                <Text style={[styles.historyTitle, { color: themeColors.text }]} numberOfLines={1}>{entry.prompt}</Text>
-                <Text style={[styles.historyMeta, { color: themeColors.secondaryText }]} numberOfLines={1}>
-                  {entry.model} • {new Date(entry.createdAt).toLocaleString()}
+        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+          <View style={styles.tabRow}>
+            <TouchableOpacity
+              style={[styles.tabPill, tab === 'output' && { backgroundColor: themeColors.primary }]}
+              onPress={() => setTab('output')}
+            >
+              <Text style={[styles.tabPillText, fonts.semibold, { color: tab === 'output' ? '#FFF' : themeColors.secondaryText }]}>Output</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabPill, tab === 'history' && { backgroundColor: themeColors.primary }]}
+              onPress={() => setTab('history')}
+            >
+              <Text style={[styles.tabPillText, fonts.semibold, { color: tab === 'history' ? '#FFF' : themeColors.secondaryText }]}>
+                History {history.length > 0 ? `(${history.length})` : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {tab === 'output' && (
+            <>
+              {isRunning && !output ? (
+                <View style={styles.runningPlaceholder}>
+                  <ActivityIndicator color={themeColors.primary} />
+                  <Text style={[styles.runningText, { color: themeColors.secondaryText }, fonts.regular]}>Generating…</Text>
+                </View>
+              ) : (
+                <Text style={[styles.outputText, { color: output ? themeColors.text : themeColors.secondaryText }]}>
+                  {output || 'Run a prompt to see the output here.'}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+              )}
+              {hasStats && (
+                <View style={styles.statsRow}>
+                  <View style={[styles.statPill, { backgroundColor: themeColors.cardBackground }]}>
+                    <Text style={[styles.statVal, { color: themeColors.text }, fonts.semibold]}>{stats.durationMs} ms</Text>
+                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>duration</Text>
+                  </View>
+                  <View style={[styles.statPill, { backgroundColor: themeColors.cardBackground }]}>
+                    <Text style={[styles.statVal, { color: themeColors.text }, fonts.semibold]}>{stats.firstTokenMs} ms</Text>
+                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>TTFT</Text>
+                  </View>
+                  <View style={[styles.statPill, { backgroundColor: themeColors.cardBackground }]}>
+                    <Text style={[styles.statVal, { color: themeColors.text }, fonts.semibold]}>{stats.tokens}</Text>
+                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>tokens</Text>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+
+          {tab === 'history' && (
+            <>
+              {history.length === 0 ? (
+                <Text style={[styles.outputText, { color: themeColors.secondaryText }]}>No runs yet.</Text>
+              ) : (
+                history.map(entry => (
+                  <TouchableOpacity
+                    key={entry.id}
+                    style={[styles.historyRow, { backgroundColor: themeColors.cardBackground }]}
+                    onPress={() => {
+                      setPrompt(entry.prompt);
+                      setSystemPrompt(entry.systemPrompt);
+                      setOutput(entry.output);
+                      setTemperature(entry.temperature);
+                      setMaxTokens(entry.maxTokens);
+                      setTopK(entry.topK);
+                      setTopP(entry.topP);
+                      setStats({ durationMs: entry.durationMs, firstTokenMs: entry.firstTokenMs, tokens: entry.tokens });
+                      setTab('output');
+                    }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.historyPrompt, { color: themeColors.text }, fonts.semibold]} numberOfLines={1}>{entry.prompt}</Text>
+                    <Text style={[styles.historyMeta, { color: themeColors.secondaryText }]} numberOfLines={1}>
+                      {entry.model} · {new Date(entry.createdAt).toLocaleString()}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </>
+          )}
+        </View>
+
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    gap: 16,
-  },
-  heroCard: {
-    borderRadius: 18,
-    padding: 18,
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  heroSubtitle: {
-    marginTop: 6,
-    fontSize: 14,
-  },
-  card: {
-    borderRadius: 18,
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  input: {
+  root: { flex: 1 },
+  scroll: { flex: 1 },
+  content: { padding: 16, paddingBottom: 40, gap: 12 },
+
+  modelChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
-    borderRadius: 14,
+    maxWidth: '100%',
+  },
+  modelChipText: { fontSize: 13 },
+
+  card: { borderRadius: 18, padding: 16 },
+  cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
+
+  promptInput: {
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    textAlignVertical: 'top',
     fontSize: 15,
-  },
-  promptInput: {
-    minHeight: 128,
+    lineHeight: 22,
+    minHeight: 120,
+    textAlignVertical: 'top',
   },
   systemInput: {
-    minHeight: 88,
-    marginTop: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    lineHeight: 22,
+    minHeight: 76,
+    textAlignVertical: 'top',
   },
-  counterGrid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 14,
-    flexWrap: 'wrap',
-  },
-  counterCard: {
-    flex: 1,
-    minWidth: 120,
-  },
-  counterLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  counterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  counterButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterValue: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  buttonRow: {
+
+  paramGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginTop: 18,
   },
-  primaryButton: {
+  stepper: {
     flex: 1,
-    minHeight: 48,
-    borderRadius: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    minHeight: 48,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  helperText: {
-    marginTop: 10,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  outputText: {
-    fontSize: 15,
-    lineHeight: 22,
-    minHeight: 96,
-  },
-  statsRow: {
-    marginTop: 14,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  historyItem: {
-    borderWidth: 1,
+    minWidth: '44%',
     borderRadius: 14,
     padding: 12,
-    marginTop: 10,
   },
-  historyTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+  stepperLabel: { fontSize: 12, marginBottom: 10 },
+  stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  stepBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  historyMeta: {
-    marginTop: 4,
-    fontSize: 13,
+  stepperValue: { fontSize: 16, fontWeight: '700' },
+  hint: { fontSize: 12, marginTop: 12, lineHeight: 17 },
+
+  actionRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  runBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
+  runBtnText: { color: '#FFF', fontSize: 15 },
+  iconBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  tabPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  tabPillText: { fontSize: 13 },
+
+  runningPlaceholder: { alignItems: 'center', paddingVertical: 32, gap: 10 },
+  runningText: { fontSize: 14 },
+
+  outputText: { fontSize: 15, lineHeight: 23, minHeight: 80 },
+
+  statsRow: { flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap' },
+  statPill: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center', minWidth: 80 },
+  statVal: { fontSize: 14 },
+  statKey: { fontSize: 11, marginTop: 2 },
+
+  historyRow: { borderRadius: 14, padding: 12, marginTop: 8 },
+  historyPrompt: { fontSize: 14 },
+  historyMeta: { fontSize: 12, marginTop: 3 },
 });
