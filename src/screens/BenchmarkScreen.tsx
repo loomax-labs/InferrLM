@@ -24,6 +24,7 @@ import { RootStackParamList } from '../types/navigation';
 import { engineLabels, type EngineId } from '../managers/inference-manager';
 import { engineService } from '../services/runtime-service';
 import { llamaManager } from '../utils/LlamaManager';
+import { useStoredModels } from '../hooks/useStoredModels';
 
 const DEFAULT_PROMPT = 'Explain how transformer attention works in two concise paragraphs.';
 
@@ -95,7 +96,17 @@ export default function BenchmarkScreen() {
   const themeColors = theme[currentTheme];
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<BenchmarkScreenRouteProp>();
-  const { modelName, modelPath } = route.params;
+  const routeModelName = route.params?.modelName;
+  const routeModelPath = route.params?.modelPath;
+
+  const { storedModels, loadStoredModels } = useStoredModels();
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const [selectedModelName, setSelectedModelName] = useState<string | undefined>(routeModelName);
+  const [selectedModelPath, setSelectedModelPath] = useState<string | undefined>(routeModelPath);
+
+  const modelName = selectedModelName ?? '';
+  const modelPath = selectedModelPath ?? '';
+
   const accentColor = currentTheme === 'dark' ? '#2E8B57' : '#1C6B4A';
   const valueColor = currentTheme === 'dark' ? '#F5F2E8' : '#111111';
 
@@ -111,7 +122,12 @@ export default function BenchmarkScreen() {
   const [globalSettings, setGlobalSettings] = useState<ModelSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const engine = useMemo<EngineId>(() => engineService.getEngineForModel(modelPath), [modelPath]);
+  const hasModel = Boolean(selectedModelPath);
+
+  const engine = useMemo<EngineId>(
+    () => (selectedModelPath ? engineService.getEngineForModel(selectedModelPath) : 'llama.rn'),
+    [selectedModelPath],
+  );
   const benchmarkSupported = engine !== 'mlx';
   const benchmarkHistory = useMemo(
     () => history.filter(result => !currentResult || result.id !== currentResult.id),
@@ -127,12 +143,21 @@ export default function BenchmarkScreen() {
   );
 
   useEffect(() => {
+    loadStoredModels();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedModelPath) {
+      setLoading(false);
+      return;
+    }
+
     const load = async () => {
       setLoading(true);
       try {
         const [storedConfig, storedHistory] = await Promise.all([
-          modelSettingsService.getModelSettings(modelPath),
-          benchmarkService.getHistory(modelPath),
+          modelSettingsService.getModelSettings(selectedModelPath),
+          benchmarkService.getHistory(selectedModelPath),
         ]);
         setSettingsConfig(storedConfig);
         setGlobalSettings(llamaManager.getSettings());
@@ -143,7 +168,7 @@ export default function BenchmarkScreen() {
     };
 
     load();
-  }, [modelPath]);
+  }, [selectedModelPath]);
 
   const resolveSettings = (): Partial<ModelSettings> => {
     const baseSettings = globalSettings ?? llamaManager.getSettings();
@@ -162,7 +187,8 @@ export default function BenchmarkScreen() {
   };
 
   const refreshHistory = async () => {
-    const storedHistory = await benchmarkService.getHistory(modelPath);
+    if (!selectedModelPath) return;
+    const storedHistory = await benchmarkService.getHistory(selectedModelPath);
     setHistory(storedHistory);
   };
 
@@ -218,10 +244,12 @@ export default function BenchmarkScreen() {
     });
   };
 
+  const isFromTab = !routeModelName && !routeModelPath;
+
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-        <AppHeader title="Benchmark" showBackButton showLogo={false} />
+        <AppHeader title="Benchmark" showBackButton={!isFromTab} showLogo={false} />
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={themeColors.primary} />
           <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading benchmark tools...</Text>
@@ -230,9 +258,64 @@ export default function BenchmarkScreen() {
     );
   }
 
+  if (!hasModel) {
+    const benchmarkableModels = storedModels.filter(m => m.path && engineService.getEngineForModel(m.path) !== 'mlx');
+    return (
+      <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+        <AppHeader title="Benchmark" showBackButton={false} showLogo={false} />
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>Select a model to benchmark</Text>
+          <Text style={[styles.emptySubtitle, { color: themeColors.secondaryText }]}>Choose a local GGUF or LiteRT model to run performance tests.</Text>
+          {benchmarkableModels.length === 0 ? (
+            <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+              <Text style={[styles.emptySubtitle, { color: themeColors.secondaryText }]}>No compatible models downloaded yet.</Text>
+            </View>
+          ) : (
+            benchmarkableModels.map(m => (
+              <TouchableOpacity
+                key={m.id}
+                style={[styles.modelPickerItem, { backgroundColor: themeColors.borderColor }]}
+                onPress={() => {
+                  setSelectedModelName(m.name);
+                  setSelectedModelPath(m.path);
+                }}
+              >
+                <MaterialCommunityIcons name="speedometer" size={20} color={themeColors.secondaryText} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.modelPickerName, { color: themeColors.text }]}>{formatModelName(m.name)}</Text>
+                  <Text style={[styles.modelPickerMeta, { color: themeColors.secondaryText }]}>
+                    {engineLabels[engineService.getEngineForModel(m.path)]}
+                  </Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
+              </TouchableOpacity>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-      <AppHeader title="Benchmark" showBackButton showLogo={false} rightButtons={[]} />
+      <AppHeader
+        title="Benchmark"
+        showBackButton={!isFromTab}
+        showLogo={false}
+        rightButtons={isFromTab ? (
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedModelName(undefined);
+              setSelectedModelPath(undefined);
+              setCurrentResult(null);
+              setHistory([]);
+            }}
+            style={{ padding: 8 }}
+          >
+            <MaterialCommunityIcons name="swap-horizontal" size={22} color={themeColors.text} />
+          </TouchableOpacity>
+        ) : undefined}
+      />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={[styles.heroCard, { backgroundColor: themeColors.borderColor }]}> 
           <Text style={[styles.modelName, { color: themeColors.text }]}>{formatModelName(modelName)}</Text>
@@ -574,5 +657,30 @@ const styles = StyleSheet.create({
   deltaText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  modelPickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
+  },
+  modelPickerName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  modelPickerMeta: {
+    fontSize: 12,
   },
 });
