@@ -27,6 +27,7 @@ import SystemInfoSection from '../components/settings/SystemInfoSection';
 import StorageSection from '../components/settings/StorageSection';
 import Dialog from '../components/Dialog';
 import * as WebBrowser from 'expo-web-browser';
+import { getEngineSettingsMeta, getEngineSettingsRoute } from '../config/engineSettings';
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
 import { EngineId } from '../managers/inference-manager';
 import type { ModelSettings as StoredModelSettings } from '../services/ModelSettingsService';
@@ -77,6 +78,9 @@ const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
 export default function SettingsScreen({ navigation }: SettingsScreenProps) {
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
+  const parameterEngines: EngineId[] = Platform.OS === 'ios'
+    ? ['llama', 'mlx', 'litert']
+    : ['llama', 'litert'];
   const [systemInfo, setSystemInfo] = useState({
     os: Platform.OS,
     osVersion: Device.osVersion,
@@ -633,7 +637,19 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           showAppleFoundationToggle={isAppleDevice}
           appleFoundationEnabled={appleFoundationEnabled}
           onToggleAppleFoundation={handleAppleFoundationToggle}
-          onModelParametersPress={() => navigation.navigate('ModelParameters')}
+          parameterEntries={parameterEngines.map((engine) => {
+            const meta = getEngineSettingsMeta(engine);
+
+            return {
+              key: engine,
+              label: meta.entryLabel,
+              description: meta.entryDescription,
+              badgeLabel: meta.badgeLabel,
+              iconName: meta.iconName,
+              accentColor: meta.accentColor,
+              onPress: () => navigation.navigate(getEngineSettingsRoute(engine)),
+            };
+          })}
         />
 
         <StorageSection

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { getEngineSettingsMeta, getEngineSettingsRoute } from '../config/engineSettings';
 import { theme } from '../constants/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { llamaManager } from '../utils/LlamaManager';
@@ -216,6 +217,7 @@ export default function ModelSettingsScreen() {
   const displaySettings = getDisplaySettings();
   const benchmarkEngine = engineService.getEngineForModel(modelPath);
   const benchmarkSupported = benchmarkEngine !== 'mlx';
+  const settingsMeta = getEngineSettingsMeta(benchmarkEngine);
   const displayModelName = modelName.replace(/\.(gguf|litertlm|task)$/i, '');
   const litertBackend = modelSettingsConfig.litertBackend ?? getLiteRTRecommendedBackend();
   const recommendedLiteRTBackend = getLiteRTRecommendedBackend();
@@ -363,7 +365,6 @@ export default function ModelSettingsScreen() {
                 modelSettings={displaySettings}
                 defaultSettings={globalSettings}
                 onOpenSystemPromptDialog={() => setSystemPromptDialogVisible(true)}
-                onResetSystemPrompt={() => handleCustomSettingsChange({ systemPrompt: globalSettings.systemPrompt })}
               />
 
               <ModelSettingsSection
@@ -371,16 +372,21 @@ export default function ModelSettingsScreen() {
                 defaultSettings={globalSettings}
                 error={null}
                 onSettingsChange={handleCustomSettingsChange}
-                onMaxTokensPress={() => setMaxTokensDialogVisible(true)}
-                onStopWordsPress={() => setStopWordsDialogVisible(true)}
-                onGrammarPress={() => {}}
-                onSeedPress={() => {}}
-                onNProbsPress={() => {}}
-                onLogitBiasPress={() => {}}
-                onDrySequenceBreakersPress={() => {}}
                 onDialogOpen={handleDialogOpen}
-                defaultExpanded={false}
-                onModelParametersPress={() => navigation.navigate('ModelParameters', { modelName })}
+                parameterEntries={[
+                  {
+                    key: benchmarkEngine,
+                    label: settingsMeta.entryLabel,
+                    description: settingsMeta.entryDescription,
+                    badgeLabel: settingsMeta.badgeLabel,
+                    iconName: settingsMeta.iconName,
+                    accentColor: settingsMeta.accentColor,
+                    onPress: () => navigation.navigate(getEngineSettingsRoute(benchmarkEngine), {
+                      modelName,
+                      modelPath,
+                    }),
+                  },
+                ]}
               />
             </View>
           </View>

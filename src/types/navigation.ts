@@ -50,9 +50,6 @@ export type RootStackParamList = {
   LlamaCppSettings: EngineSettingsParams;
   MlxSettings: EngineSettingsParams;
   LiteRTSettings: EngineSettingsParams;
-  ModelParameters: {
-    modelName?: string;
-  } | undefined;
   ServerLogs: undefined;
   APISetup: undefined;
 };

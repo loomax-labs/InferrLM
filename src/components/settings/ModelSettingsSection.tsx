@@ -7,6 +7,16 @@ import { EngineId } from '../../managers/inference-manager';
 import SettingsSection from './SettingsSection';
 import ModelSettingsCore from './ModelSettingsCore';
 
+type ParameterEntry = {
+  key: string;
+  label: string;
+  description: string;
+  onPress: () => void;
+  badgeLabel?: string;
+  iconName?: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  accentColor?: string;
+};
+
 type ModelSettings = {
   maxTokens: number;
   temperature: number;
@@ -57,6 +67,7 @@ type ModelSettingsSectionProps = {
   appleFoundationEnabled?: boolean;
   onToggleAppleFoundation?: (enabled: boolean) => void;
   onModelParametersPress?: () => void;
+  parameterEntries?: ParameterEntry[];
 };
 
 const ModelSettingsSection = ({
@@ -75,10 +86,24 @@ const ModelSettingsSection = ({
   appleFoundationEnabled,
   onToggleAppleFoundation,
   onModelParametersPress,
+  parameterEntries,
 }: ModelSettingsSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
+  const entries = parameterEntries && parameterEntries.length > 0
+    ? parameterEntries
+    : onModelParametersPress
+      ? [{
+          key: 'default',
+          label: 'Model Parameters',
+          description: 'Chat behavior and generation settings',
+          onPress: onModelParametersPress,
+          badgeLabel: 'ADVANCED',
+          iconName: 'cog-outline',
+          accentColor: themeColors.primary,
+        }]
+      : [];
 
   return (
     <SettingsSection title="MODEL SETTINGS">
@@ -95,38 +120,52 @@ const ModelSettingsSection = ({
         onDialogOpen={onDialogOpen}
       />
 
-      <View style={styles.separator} />
+      {entries.map((entry, index) => {
+        const accentColor = entry.accentColor ?? themeColors.primary;
+        const entryIconColor = currentTheme === 'dark' ? '#FFFFFF' : accentColor;
+        const entryIconBackground = currentTheme === 'dark'
+          ? 'rgba(255, 255, 255, 0.2)'
+          : accentColor + '20';
 
-      <TouchableOpacity
-        style={styles.settingItem}
-        onPress={onModelParametersPress}
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="cog-outline" size={22} color={iconColor} />
-          </View>
-          <View style={styles.settingTextContainer}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.settingText, { color: themeColors.text }]}>
-                Model Parameters
-              </Text>
-              <View style={[styles.advancedTag, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-                <Text style={[styles.advancedTagText, { color: currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary }]}>
-                  ADVANCED
-                </Text>
+        return (
+          <React.Fragment key={entry.key}>
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={entry.onPress}
+            >
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: entryIconBackground }]}> 
+                  <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <View style={styles.labelRow}>
+                    <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                      {entry.label}
+                    </Text>
+                    {entry.badgeLabel ? (
+                      <View style={[styles.advancedTag, { backgroundColor: entryIconBackground }]}> 
+                        <Text style={[styles.advancedTagText, { color: entryIconColor }]}> 
+                          {entry.badgeLabel}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                    {entry.description}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Chat behavior and generation settings
-            </Text>
-          </View>
-        </View>
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={20}
-          color={themeColors.secondaryText}
-        />
-      </TouchableOpacity>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={20}
+                color={themeColors.secondaryText}
+              />
+            </TouchableOpacity>
+          </React.Fragment>
+        );
+      })}
     </SettingsSection>
   );
 };
