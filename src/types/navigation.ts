@@ -1,3 +1,8 @@
+export type EngineSettingsParams = {
+  modelName?: string;
+  modelPath?: string;
+} | undefined;
+
 export type RootStackParamList = {
   Login: {
     redirectTo?: string;
@@ -42,6 +47,9 @@ export type RootStackParamList = {
   AudioScribe: undefined;
   MobileActions: undefined;
   TinyGarden: undefined;
+  LlamaCppSettings: EngineSettingsParams;
+  MlxSettings: EngineSettingsParams;
+  LiteRTSettings: EngineSettingsParams;
   ModelParameters: {
     modelName?: string;
   } | undefined;
