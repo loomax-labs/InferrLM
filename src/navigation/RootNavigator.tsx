@@ -17,7 +17,11 @@ import AudioScribeScreen from '../screens/AudioScribeScreen';
 import MobileActionsScreen from '../screens/MobileActionsScreen';
 import TinyGardenScreen from '../screens/TinyGardenScreen';
 import ModelSettingsScreen from '../screens/ModelSettingsScreen';
-import ModelParametersScreen from '../screens/ModelParametersScreen';
+import {
+  LlamaCppSettingsScreen,
+  MlxSettingsScreen,
+  LiteRTSettingsScreen,
+} from '../screens/EngineSettingsScreen';
 import ServerLogsScreen from '../screens/ServerLogsScreen';
 import APISetupScreen from '../screens/APISetupScreen';
 import { RootStackParamList } from '../types/navigation';
@@ -143,8 +147,22 @@ export default function RootNavigator() {
           }}
         />
         <Stack.Screen 
-          name="ModelParameters" 
-          component={ModelParametersScreen}
+          name="LlamaCppSettings" 
+          component={LlamaCppSettingsScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="MlxSettings" 
+          component={MlxSettingsScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="LiteRTSettings" 
+          component={LiteRTSettingsScreen}
           options={{
             animation: 'slide_from_right'
           }}
