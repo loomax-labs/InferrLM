@@ -230,8 +230,8 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
             />
             <TabButton
               tab="benchmark"
-              icon={activeTab === 'benchmark' ? 'speedometer' : 'speedometer-slow'}
-              label="Benchmark"
+              icon="tools"
+              label="Tools"
               isActive={activeTab === 'benchmark'}
             />
             <TabButton

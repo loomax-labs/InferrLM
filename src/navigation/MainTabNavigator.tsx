@@ -76,7 +76,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             iconName = isFocused ? 'server' : 'server';
             break;
           case 'BenchmarkTab':
-            iconName = isFocused ? 'speedometer' : 'speedometer-slow';
+            iconName = isFocused ? 'tools' : 'tools';
             break;
           case 'SettingsTab':
             iconName = isFocused ? 'cog' : 'cog-outline';
@@ -186,7 +186,7 @@ export default function MainTabNavigator() {
         name="BenchmarkTab"
         component={BenchmarkScreen}
         options={{
-          tabBarLabel: 'Benchmark'
+          tabBarLabel: 'Tools'
         }}
       />
       <Tab.Screen
