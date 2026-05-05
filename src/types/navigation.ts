@@ -52,6 +52,7 @@ export type RootStackParamList = {
   LiteRTSettings: EngineSettingsParams;
   ServerLogs: undefined;
   APISetup: undefined;
+  LocalServer: undefined;
 };
 
 export type TabParamList = {
@@ -66,7 +67,6 @@ export type TabParamList = {
         openRemoteTab?: boolean;
       }
     | undefined;
-  LocalServerTab: undefined;
   BenchmarkTab: undefined;
   NotificationsTab: undefined;
   SearchTab: undefined;

@@ -12,6 +12,7 @@ import ContentTermsScreen from '../screens/ContentTermsScreen';
 import ReportScreen from '../screens/ReportScreen';
 import BenchmarkScreen from '../screens/BenchmarkScreen';
 import BenchmarkRunnerScreen from '../screens/BenchmarkRunnerScreen';
+import LocalServerScreen from '../screens/LocalServerScreen';
 import PromptLabScreen from '../screens/PromptLabScreen';
 import SkillManagerScreen from '../screens/SkillManagerScreen';
 import AudioScribeScreen from '../screens/AudioScribeScreen';
@@ -178,6 +179,13 @@ export default function RootNavigator() {
         <Stack.Screen 
           name="APISetup" 
           component={APISetupScreen}
+          options={{
+            animation: 'slide_from_right'
+          }}
+        />
+        <Stack.Screen 
+          name="LocalServer" 
+          component={LocalServerScreen}
           options={{
             animation: 'slide_from_right'
           }}
