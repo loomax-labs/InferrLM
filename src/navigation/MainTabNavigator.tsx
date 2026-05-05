@@ -8,6 +8,7 @@ import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ModelScreen from '../screens/ModelScreen';
 import LocalServerScreen from '../screens/LocalServerScreen';
+import BenchmarkScreen from '../screens/BenchmarkScreen';
 import WideScreenLayout from '../components/WideScreenLayout';
 import { TabParamList } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
@@ -73,6 +74,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             break;
           case 'LocalServerTab':
             iconName = isFocused ? 'server' : 'server';
+            break;
+          case 'BenchmarkTab':
+            iconName = isFocused ? 'speedometer' : 'speedometer-slow';
             break;
           case 'SettingsTab':
             iconName = isFocused ? 'cog' : 'cog-outline';
@@ -176,6 +180,13 @@ export default function MainTabNavigator() {
         component={LocalServerScreen}
         options={{
           tabBarLabel: 'Server'
+        }}
+      />
+      <Tab.Screen
+        name="BenchmarkTab"
+        component={BenchmarkScreen}
+        options={{
+          tabBarLabel: 'Benchmark'
         }}
       />
       <Tab.Screen
