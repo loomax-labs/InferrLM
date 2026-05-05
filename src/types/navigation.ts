@@ -39,9 +39,9 @@ export type RootStackParamList = {
     modelPath: string;
   };
   Benchmark: {
-    modelName: string;
-    modelPath: string;
-  };
+    modelName?: string;
+    modelPath?: string;
+  } | undefined;
   PromptLab: undefined;
   SkillManager: undefined;
   AudioScribe: undefined;
@@ -67,6 +67,7 @@ export type TabParamList = {
       }
     | undefined;
   LocalServerTab: undefined;
+  BenchmarkTab: undefined;
   NotificationsTab: undefined;
   SearchTab: undefined;
 }; 
