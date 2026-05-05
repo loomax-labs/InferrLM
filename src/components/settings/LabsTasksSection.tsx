@@ -10,7 +10,6 @@ type LabsTasksSectionProps = {
   onOpenSkillManager: () => void;
   onOpenAudioScribe: () => void;
   onOpenMobileActions: () => void;
-  onOpenTinyGarden: () => void;
   onOpenBenchmark: () => void;
   onOpenServer: () => void;
 };
@@ -30,7 +29,6 @@ const LabsTasksSection = ({
   onOpenSkillManager,
   onOpenAudioScribe,
   onOpenMobileActions,
-  onOpenTinyGarden,
   onOpenBenchmark,
   onOpenServer,
 }: LabsTasksSectionProps) => {
@@ -73,15 +71,6 @@ const LabsTasksSection = ({
       lightAccent: '#AD1457',
       darkAccent: '#E57DAB',
       onPress: onOpenMobileActions,
-    },
-    {
-      key: 'tiny-garden',
-      label: 'Tiny Garden',
-      description: 'Tool-driven planting game',
-      icon: 'sprout-outline',
-      lightAccent: '#2E7D32',
-      darkAccent: '#66BB6A',
-      onPress: onOpenTinyGarden,
     },
     {
       key: 'benchmark',

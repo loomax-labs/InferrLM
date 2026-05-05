@@ -17,7 +17,6 @@ import PromptLabScreen from '../screens/PromptLabScreen';
 import SkillManagerScreen from '../screens/SkillManagerScreen';
 import AudioScribeScreen from '../screens/AudioScribeScreen';
 import MobileActionsScreen from '../screens/MobileActionsScreen';
-import TinyGardenScreen from '../screens/TinyGardenScreen';
 import ModelSettingsScreen from '../screens/ModelSettingsScreen';
 import {
   LlamaCppSettingsScreen,
@@ -137,13 +136,6 @@ export default function RootNavigator() {
         <Stack.Screen 
           name="MobileActions" 
           component={MobileActionsScreen}
-          options={{
-            animation: 'slide_from_right'
-          }}
-        />
-        <Stack.Screen 
-          name="TinyGarden" 
-          component={TinyGardenScreen}
           options={{
             animation: 'slide_from_right'
           }}

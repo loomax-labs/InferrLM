@@ -22,7 +22,6 @@ export default function BenchmarkScreen() {
           onOpenSkillManager={() => navigation.navigate('SkillManager')}
           onOpenAudioScribe={() => navigation.navigate('AudioScribe')}
           onOpenMobileActions={() => navigation.navigate('MobileActions')}
-          onOpenTinyGarden={() => navigation.navigate('TinyGarden')}
           onOpenBenchmark={() => navigation.navigate('Benchmark')}
           onOpenServer={() => navigation.navigate('LocalServer')}
         />

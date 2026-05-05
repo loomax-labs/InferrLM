@@ -46,7 +46,6 @@ export type RootStackParamList = {
   SkillManager: undefined;
   AudioScribe: undefined;
   MobileActions: undefined;
-  TinyGarden: undefined;
   LlamaCppSettings: EngineSettingsParams;
   MlxSettings: EngineSettingsParams;
   LiteRTSettings: EngineSettingsParams;
