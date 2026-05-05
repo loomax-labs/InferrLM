@@ -6,7 +6,7 @@ import UnifiedModelList from './UnifiedModelList';
 import CustomUrlDialog from '../CustomUrlDialog';
 import { DownloadableModel } from './DownloadableModelItem';
 import { StoredModel } from '../../services/ModelDownloaderTypes';
-import { DOWNLOADABLE_MODELS } from '../../constants/DownloadableModels';
+import { DOWNLOADABLE_MODELS, LITERT_MODELS } from '../../constants/DownloadableModels';
 import { FilterOptions } from '../ModelFilter';
 
 interface DownloadableModelsTabProps {
@@ -79,6 +79,7 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
     <View style={styles.container}>
       <UnifiedModelList
         curatedModels={filteredModels}
+        litertModels={LITERT_MODELS}
         storedModels={storedModels}
         downloadProgress={downloadProgress}
         setDownloadProgress={setDownloadProgress}

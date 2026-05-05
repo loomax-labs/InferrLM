@@ -11,6 +11,7 @@ import { DownloadableModel } from './DownloadableModelItem';
 
 interface CuratedModelsListProps {
   models: DownloadableModel[];
+  litertModels: DownloadableModel[];
   storedModels: any[];
   downloadProgress: any;
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>;
@@ -25,6 +26,7 @@ interface CuratedModelsListProps {
 
 export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
   models,
+  litertModels,
   storedModels,
   downloadProgress,
   setDownloadProgress,
@@ -61,8 +63,30 @@ export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
           </Text>
         </View>
       </TouchableOpacity>
+
+      {litertModels.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="chip" size={18} color={getThemeAwareColor('#4a0660', currentTheme)} />
+            <Text style={[styles.sectionHeaderTitle, { color: themeColors.text }]}>
+              LiteRT-LM Models ({litertModels.length})
+            </Text>
+          </View>
+          <Text style={[styles.sectionSubtitle, { color: themeColors.secondaryText }]}>
+            Optimized for on-device inference with LiteRT-LM
+          </Text>
+          <DownloadableModelList
+            key={`litert-${forceRender}`}
+            models={litertModels}
+            storedModels={storedModels}
+            downloadProgress={downloadProgress}
+            setDownloadProgress={setDownloadProgress}
+            onDownload={onDownload}
+          />
+        </View>
+      )}
       
-      <View style={styles.curatedSection}>
+      <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionHeaderTitle, { color: themeColors.text }]}>
             Curated GGUF Models ({models.length})
@@ -70,7 +94,7 @@ export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
         </View>
         
         <DownloadableModelList 
-          key={forceRender}
+          key={`gguf-${forceRender}`}
           models={models}
           storedModels={storedModels}
           downloadProgress={downloadProgress}
@@ -99,17 +123,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
   },
-  curatedSection: {
+  section: {
     marginTop: 8,
+    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 4,
     gap: 8,
   },
   sectionHeaderTitle: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    marginBottom: 12,
+    marginLeft: 2,
   },
 });

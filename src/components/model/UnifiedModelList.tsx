@@ -19,6 +19,7 @@ import { useModelDownloadHandlers } from '../../hooks/useModelDownloadHandlers';
 
 interface UnifiedModelListProps {
   curatedModels: DownloadableModel[];
+  litertModels: DownloadableModel[];
   storedModels: any[];
   downloadProgress: any;
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>;
@@ -31,6 +32,7 @@ interface UnifiedModelListProps {
 
 const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
   curatedModels,
+  litertModels,
   storedModels,
   downloadProgress,
   setDownloadProgress,
@@ -113,6 +115,7 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
         ) : (
           <CuratedModelsList
             models={curatedModels}
+            litertModels={litertModels}
             storedModels={storedModels}
             downloadProgress={downloadProgress}
             setDownloadProgress={setDownloadProgress}
