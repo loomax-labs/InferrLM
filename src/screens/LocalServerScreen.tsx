@@ -338,7 +338,7 @@ export default function LocalServerScreen() {
           } else {
             navigation.navigate('Login', {
               redirectTo: 'MainTabs',
-              redirectParams: { screen: 'LocalServerTab' }
+              redirectParams: { screen: 'BenchmarkTab' }
             });
           }
         }}

@@ -12,6 +12,7 @@ type LabsTasksSectionProps = {
   onOpenMobileActions: () => void;
   onOpenTinyGarden: () => void;
   onOpenBenchmark: () => void;
+  onOpenServer: () => void;
 };
 
 type LabItem = {
@@ -31,6 +32,7 @@ const LabsTasksSection = ({
   onOpenMobileActions,
   onOpenTinyGarden,
   onOpenBenchmark,
+  onOpenServer,
 }: LabsTasksSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -89,6 +91,15 @@ const LabsTasksSection = ({
       lightAccent: '#B54708',
       darkAccent: '#FFA040',
       onPress: onOpenBenchmark,
+    },
+    {
+      key: 'server',
+      label: 'Local Server',
+      description: 'Run an OpenAI-compatible API on device',
+      icon: 'server-network',
+      lightAccent: '#0277BD',
+      darkAccent: '#4FC3F7',
+      onPress: onOpenServer,
     },
   ];
 

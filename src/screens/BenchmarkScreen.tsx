@@ -24,6 +24,7 @@ export default function BenchmarkScreen() {
           onOpenMobileActions={() => navigation.navigate('MobileActions')}
           onOpenTinyGarden={() => navigation.navigate('TinyGarden')}
           onOpenBenchmark={() => navigation.navigate('Benchmark')}
+          onOpenServer={() => navigation.navigate('LocalServer')}
         />
       </ScrollView>
     </View>
