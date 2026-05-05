@@ -12,7 +12,7 @@ import { theme } from '../../constants/theme';
 import { getThemeAwareColor, getBrowserDownloadTextColor } from '../../utils/ColorUtils';
 import Dialog from '../Dialog';
 
-import { ModelType } from '../../types/models';
+import { ModelType, ModelFormat } from '../../types/models';
 
 export interface DownloadableModel {
   name: string;
@@ -24,6 +24,7 @@ export interface DownloadableModel {
   quantization: string;
   tags?: string[];
   modelType?: ModelType;
+  modelFormat?: ModelFormat;
   capabilities?: string[];
   supportsMultimodal?: boolean;
   additionalFiles?: {
