@@ -31,7 +31,7 @@ const formatBytes = (bytes?: number) => {
 };
 
 const getDisplayName = (filename: string) => {
-  return filename.replace(/\.(gguf|bin)$/i, '');
+  return filename.replace(/\.(gguf|bin|litertlm|task)$/i, '');
 };
 
 const StoredModelItem: React.FC<StoredModelProps> = ({
