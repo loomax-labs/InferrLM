@@ -36,20 +36,24 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
 
   const hideDialog = () => setDialogVisible(false);
 
-  const isModelDownloaded = (modelName: string) => {
+  const getModelFilename = (model: DownloadableModel) =>
+    model.huggingFaceLink.split('/').pop() || model.name;
+
+  const isModelDownloaded = (filename: string) => {
     return storedModels.some(storedModel => {
-      const storedModelName = storedModel.name.replace(/\.(gguf|bin)$/i, '');
-      const downloadableModelName = modelName.replace(/\.(gguf|bin)$/i, '');
-      return storedModelName.toLowerCase() === downloadableModelName.toLowerCase();
+      const storedName = storedModel.name.replace(/\.(gguf|bin|litertlm|task)$/i, '');
+      const checkName = filename.replace(/\.(gguf|bin|litertlm|task)$/i, '');
+      return storedName.toLowerCase() === checkName.toLowerCase();
     });
   };
 
   const isModelDownloading = (model: DownloadableModel) => {
-    const mainFileDownloading = Boolean(downloadProgress[model.name]);
+    const filename = getModelFilename(model);
+    const mainFileDownloading = Boolean(downloadProgress[filename]);
     
     if (model.additionalFiles && model.additionalFiles.length > 0) {
       const additionalFilesDownloading = model.additionalFiles.some(file => 
-        Boolean(downloadProgress[file.name])
+        Boolean(downloadProgress[file.url.split('/').pop() || file.name])
       );
       return mainFileDownloading || additionalFilesDownloading;
     }
@@ -58,11 +62,12 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
   };
 
   const isModelInitializing = (model: DownloadableModel) => {
-    const mainFileInitializing = Boolean(initializingDownloads[model.name]);
+    const filename = getModelFilename(model);
+    const mainFileInitializing = Boolean(initializingDownloads[filename]);
     
     if (model.additionalFiles && model.additionalFiles.length > 0) {
       const additionalFilesInitializing = model.additionalFiles.some(file => 
-        Boolean(initializingDownloads[file.name])
+        Boolean(initializingDownloads[file.url.split('/').pop() || file.name])
       );
       return mainFileInitializing || additionalFilesInitializing;
     }
@@ -71,7 +76,8 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
   };
 
   const handleDownload = async (model: DownloadableModel) => {
-    if (isModelDownloaded(model.name)) {
+    const mainFilename = getModelFilename(model);
+    if (isModelDownloaded(mainFilename)) {
       showDialog(
         'Model Already Downloaded',
         'This model is already in your stored models.'
@@ -87,13 +93,13 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
     navigation.navigate('Downloads' as never);
     
     const filesToDownload = [
-      { filename: model.name, downloadUrl: model.huggingFaceLink }
+      { filename: mainFilename, downloadUrl: model.huggingFaceLink }
     ];
 
     if (model.additionalFiles && model.additionalFiles.length > 0) {
       model.additionalFiles.forEach(file => {
         filesToDownload.push({
-          filename: file.name,
+          filename: file.url.split('/').pop() || file.name,
           downloadUrl: file.url
         });
       });
@@ -150,10 +156,10 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
         <DownloadableModelItem
           key={model.name}
           model={model}
-          isDownloaded={isModelDownloaded(model.name)}
+          isDownloaded={isModelDownloaded(getModelFilename(model))}
           isDownloading={isModelDownloading(model)}
           isInitializing={isModelInitializing(model)}
-          downloadProgress={downloadProgress[model.name]}
+          downloadProgress={downloadProgress[getModelFilename(model)]}
           onDownload={onDownload || handleDownload}
         />
       ))}
