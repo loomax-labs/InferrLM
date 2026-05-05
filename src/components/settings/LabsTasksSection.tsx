@@ -4,7 +4,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
-import { getThemeAwareColor } from '../../utils/ColorUtils';
 
 type LabsTasksSectionProps = {
   onOpenPromptLab: () => void;
@@ -12,6 +11,7 @@ type LabsTasksSectionProps = {
   onOpenAudioScribe: () => void;
   onOpenMobileActions: () => void;
   onOpenTinyGarden: () => void;
+  onOpenBenchmark: () => void;
 };
 
 type LabItem = {
@@ -19,7 +19,8 @@ type LabItem = {
   label: string;
   description: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  accent: string;
+  lightAccent: string;
+  darkAccent: string;
   onPress: () => void;
 };
 
@@ -29,6 +30,7 @@ const LabsTasksSection = ({
   onOpenAudioScribe,
   onOpenMobileActions,
   onOpenTinyGarden,
+  onOpenBenchmark,
 }: LabsTasksSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -39,7 +41,8 @@ const LabsTasksSection = ({
       label: 'Prompt Lab',
       description: 'Test prompts with live output',
       icon: 'flask-outline',
-      accent: '#5E35B1',
+      lightAccent: '#5E35B1',
+      darkAccent: '#9C6EE8',
       onPress: onOpenPromptLab,
     },
     {
@@ -47,7 +50,8 @@ const LabsTasksSection = ({
       label: 'Skills',
       description: 'Manage reusable skills & secrets',
       icon: 'shape-outline',
-      accent: '#1565C0',
+      lightAccent: '#1565C0',
+      darkAccent: '#5A9FE3',
       onPress: onOpenSkillManager,
     },
     {
@@ -55,7 +59,8 @@ const LabsTasksSection = ({
       label: 'Audio Scribe',
       description: 'Transcribe or translate audio',
       icon: 'waveform',
-      accent: '#00695C',
+      lightAccent: '#00695C',
+      darkAccent: '#4DB6A9',
       onPress: onOpenAudioScribe,
     },
     {
@@ -63,7 +68,8 @@ const LabsTasksSection = ({
       label: 'Mobile Actions',
       description: 'Run device actions via AI',
       icon: 'cellphone-cog',
-      accent: '#AD1457',
+      lightAccent: '#AD1457',
+      darkAccent: '#E57DAB',
       onPress: onOpenMobileActions,
     },
     {
@@ -71,8 +77,18 @@ const LabsTasksSection = ({
       label: 'Tiny Garden',
       description: 'Tool-driven planting game',
       icon: 'sprout-outline',
-      accent: '#2E7D32',
+      lightAccent: '#2E7D32',
+      darkAccent: '#66BB6A',
       onPress: onOpenTinyGarden,
+    },
+    {
+      key: 'benchmark',
+      label: 'Benchmark',
+      description: 'Measure model speed & performance',
+      icon: 'speedometer',
+      lightAccent: '#B54708',
+      darkAccent: '#FFA040',
+      onPress: onOpenBenchmark,
     },
   ];
 
@@ -81,8 +97,8 @@ const LabsTasksSection = ({
       <Text style={[styles.sectionLabel, { color: themeColors.secondaryText }]}>LABS & TOOLS</Text>
       <View style={styles.grid}>
         {items.map(item => {
-          const accent = getThemeAwareColor(item.accent, currentTheme);
-          const iconBg = currentTheme === 'dark' ? accent + '30' : accent + '18';
+          const accent = currentTheme === 'dark' ? item.darkAccent : item.lightAccent;
+          const iconBg = currentTheme === 'dark' ? accent + '28' : accent + '16';
           return (
             <TouchableOpacity
               key={item.key}
