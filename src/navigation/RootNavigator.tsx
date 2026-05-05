@@ -11,6 +11,7 @@ import LicensesScreen from '../screens/LicensesScreen';
 import ContentTermsScreen from '../screens/ContentTermsScreen';
 import ReportScreen from '../screens/ReportScreen';
 import BenchmarkScreen from '../screens/BenchmarkScreen';
+import BenchmarkRunnerScreen from '../screens/BenchmarkRunnerScreen';
 import PromptLabScreen from '../screens/PromptLabScreen';
 import SkillManagerScreen from '../screens/SkillManagerScreen';
 import AudioScribeScreen from '../screens/AudioScribeScreen';
@@ -106,7 +107,7 @@ export default function RootNavigator() {
         />
         <Stack.Screen 
           name="Benchmark" 
-          component={BenchmarkScreen}
+          component={BenchmarkRunnerScreen}
           options={{
             animation: 'slide_from_right'
           }}
