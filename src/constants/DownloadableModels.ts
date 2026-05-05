@@ -1,5 +1,5 @@
 import { DownloadableModel } from "../components/model/DownloadableModelItem";
-import { ModelType } from "../types/models";
+import { ModelType, ModelFormat } from "../types/models";
 
 export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
   {
@@ -382,5 +382,97 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.meta.com/llama/license/",
     "modelFamily": "70 Billion",
     "quantization": "Q3_K_M"
+  }
+];
+
+export const LITERT_MODELS: DownloadableModel[] = [
+  {
+    "name": "Gemma 4 E2B Instruct",
+    "description": "Google's Gemma 4 E2B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
+    "size": "2.41 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "2 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "reasoning", "fastest", "recommended"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 4 E4B Instruct",
+    "description": "Google's Gemma 4 E4B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
+    "size": "3.41 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "4 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "reasoning", "recommended"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 3n E2B Instruct",
+    "description": "Google's Gemma 3n E2B with multimodal input (text, vision, audio) support and 4096 context length.",
+    "size": "3.41 GB",
+    "huggingFaceLink": "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "2 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "fastest"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 3n E4B Instruct",
+    "description": "Google's Gemma 3n E4B with multimodal input (text, vision, audio) support and 4096 context length.",
+    "size": "4.58 GB",
+    "huggingFaceLink": "https://huggingface.co/google/gemma-3n-E4B-it-litert-lm/resolve/main/gemma-3n-E4B-it-int4.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "4 Billion",
+    "quantization": "int4",
+    "tags": ["vision"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 3 1B Instruct",
+    "description": "Compact Gemma 3 1B with 4-bit quantization optimized for fast on-device inference.",
+    "size": "0.54 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "1 Billion",
+    "quantization": "int4",
+    "tags": ["fastest", "recommended"],
+    "modelFormat": ModelFormat.LITERT
+  },
+  {
+    "name": "Qwen 2.5 1.5B Instruct",
+    "description": "Alibaba's Qwen 2.5 1.5B instruction-tuned model optimized for on-device deployment with LiteRT-LM.",
+    "size": "1.49 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "1.5 Billion",
+    "quantization": "q8",
+    "tags": ["fastest"],
+    "modelFormat": ModelFormat.LITERT
+  },
+  {
+    "name": "DeepSeek R1 Distill Qwen 1.5B",
+    "description": "DeepSeek's R1 reasoning model distilled into Qwen 1.5B, optimized for on-device deployment with LiteRT-LM.",
+    "size": "1.71 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B_multi-prefill-seq_q8_ekv4096.litertlm",
+    "licenseLink": "https://opensource.org/licenses/MIT",
+    "modelFamily": "1.5 Billion",
+    "quantization": "q8",
+    "tags": ["reasoning", "fastest"],
+    "modelFormat": ModelFormat.LITERT
   }
 ]; 
