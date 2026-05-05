@@ -25,6 +25,7 @@ import { engineLabels, type EngineId } from '../managers/inference-manager';
 import { engineService } from '../services/runtime-service';
 import { llamaManager } from '../utils/LlamaManager';
 import { useStoredModels } from '../hooks/useStoredModels';
+import LabsTasksSection from '../components/settings/LabsTasksSection';
 
 const DEFAULT_PROMPT = 'Explain how transformer attention works in two concise paragraphs.';
 
@@ -249,7 +250,7 @@ export default function BenchmarkScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-        <AppHeader title="Benchmark" showBackButton={!isFromTab} showLogo={false} />
+        <AppHeader title="Tools" showBackButton={!isFromTab} showLogo={false} />
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={themeColors.primary} />
           <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading benchmark tools...</Text>
@@ -262,8 +263,15 @@ export default function BenchmarkScreen() {
     const benchmarkableModels = storedModels.filter(m => m.path && engineService.getEngineForModel(m.path) !== 'mlx');
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-        <AppHeader title="Benchmark" showBackButton={false} showLogo={false} />
+        <AppHeader title="Tools" showBackButton={false} showLogo={false} />
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+          <LabsTasksSection
+            onOpenPromptLab={() => navigation.navigate('PromptLab')}
+            onOpenSkillManager={() => navigation.navigate('SkillManager')}
+            onOpenAudioScribe={() => navigation.navigate('AudioScribe')}
+            onOpenMobileActions={() => navigation.navigate('MobileActions')}
+            onOpenTinyGarden={() => navigation.navigate('TinyGarden')}
+          />
           <Text style={[styles.emptyTitle, { color: themeColors.text }]}>Select a model to benchmark</Text>
           <Text style={[styles.emptySubtitle, { color: themeColors.secondaryText }]}>Choose a local GGUF or LiteRT model to run performance tests.</Text>
           {benchmarkableModels.length === 0 ? (
@@ -491,6 +499,16 @@ export default function BenchmarkScreen() {
               </View>
             ))}
           </View>
+        )}
+
+        {isFromTab && (
+          <LabsTasksSection
+            onOpenPromptLab={() => navigation.navigate('PromptLab')}
+            onOpenSkillManager={() => navigation.navigate('SkillManager')}
+            onOpenAudioScribe={() => navigation.navigate('AudioScribe')}
+            onOpenMobileActions={() => navigation.navigate('MobileActions')}
+            onOpenTinyGarden={() => navigation.navigate('TinyGarden')}
+          />
         )}
       </ScrollView>
     </View>
