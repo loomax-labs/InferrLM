@@ -87,7 +87,7 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
                 Download from URL
               </Text>
               <Text style={[styles.customUrlButtonSubtitle, { color: themeColors.secondaryText }]}>
-                Download a custom GGUF model from a URL
+                Download a custom GGUF or LiteRT model from a URL
               </Text>
             </View>
           </View>
