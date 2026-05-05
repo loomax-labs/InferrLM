@@ -21,7 +21,6 @@ import { modelDownloader } from '../services/ModelDownloader';
 import AppearanceSection from '../components/settings/AppearanceSection';
 import { getCurrentUser } from '../services/AuthService';
 import SupportSection from '../components/settings/SupportSection';
-import LabsTasksSection from '../components/settings/LabsTasksSection';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import SystemInfoSection from '../components/settings/SystemInfoSection';
 import StorageSection from '../components/settings/StorageSection';
@@ -657,14 +656,6 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           clearingType={clearingType}
           onClearCache={clearCache}
           onClearAllModels={clearAllModels}
-        />
-
-        <LabsTasksSection
-          onOpenPromptLab={() => navigation.navigate('PromptLab')}
-          onOpenSkillManager={() => navigation.navigate('SkillManager')}
-          onOpenAudioScribe={() => navigation.navigate('AudioScribe')}
-          onOpenMobileActions={() => navigation.navigate('MobileActions')}
-          onOpenTinyGarden={() => navigation.navigate('TinyGarden')}
         />
 
         <SupportSection 
