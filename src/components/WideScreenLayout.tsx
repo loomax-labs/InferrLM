@@ -9,13 +9,14 @@ import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ModelScreen from '../screens/ModelScreen';
 import LocalServerScreen from '../screens/LocalServerScreen';
+import BenchmarkScreen from '../screens/BenchmarkScreen';
 import { useTheme } from '../context/ThemeContext';
 import { LayoutProvider } from '../context/LayoutContext';
 import { theme } from '../constants/theme';
 import { OpenSansFont } from '../hooks/OpenSansFont';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
-type TabType = 'models' | 'server' | 'settings';
+type TabType = 'models' | 'server' | 'benchmark' | 'settings';
 
 const SIDEBAR_WIDTH_STORAGE_KEY = 'widescreen_sidebar_width';
 
@@ -98,6 +99,10 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
 
     if (targetScreen === 'SettingsTab') {
       setActiveTab('settings');
+    }
+
+    if (targetScreen === 'BenchmarkTab') {
+      setActiveTab('benchmark');
     }
   }, [targetScreen]);
 
@@ -187,6 +192,8 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
         return <ModelScreen navigation={navigation as any} route={modelRoute as any} />;
       case 'server':
         return <LocalServerScreen />;
+      case 'benchmark':
+        return <BenchmarkScreen />;
       case 'settings':
         return <SettingsScreen navigation={navigation as any} />;
       default:
@@ -220,6 +227,12 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
               label="Server"
               isActive={activeTab === 'server'}
               showBeta
+            />
+            <TabButton
+              tab="benchmark"
+              icon={activeTab === 'benchmark' ? 'speedometer' : 'speedometer-slow'}
+              label="Benchmark"
+              isActive={activeTab === 'benchmark'}
             />
             <TabButton
               tab="settings"
