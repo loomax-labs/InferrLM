@@ -359,7 +359,9 @@ export const useUnifiedModelList = (
   };
 
   const proceedWithCuratedDownload = async (model: DownloadableModel) => {
-    if (isModelDownloaded(model.name)) {
+    const mainFilename = model.huggingFaceLink.split('/').pop() || model.name;
+
+    if (isModelDownloaded(mainFilename)) {
       showDialog('Already Downloaded', 'This model is already in your collection.');
       return;
     }
@@ -367,13 +369,13 @@ export const useUnifiedModelList = (
     navigation.navigate('Downloads' as never);
 
     const filesToDownload = [
-      { filename: model.name, downloadUrl: model.huggingFaceLink }
+      { filename: mainFilename, downloadUrl: model.huggingFaceLink }
     ];
 
     if (model.additionalFiles && model.additionalFiles.length > 0) {
       model.additionalFiles.forEach(file => {
         filesToDownload.push({
-          filename: file.name,
+          filename: file.url.split('/').pop() || file.name,
           downloadUrl: file.url
         });
       });
