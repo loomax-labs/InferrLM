@@ -8,7 +8,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ModelScreen from '../screens/ModelScreen';
-import LocalServerScreen from '../screens/LocalServerScreen';
 import BenchmarkScreen from '../screens/BenchmarkScreen';
 import { useTheme } from '../context/ThemeContext';
 import { LayoutProvider } from '../context/LayoutContext';
@@ -16,7 +15,7 @@ import { theme } from '../constants/theme';
 import { OpenSansFont } from '../hooks/OpenSansFont';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
-type TabType = 'models' | 'server' | 'benchmark' | 'settings';
+type TabType = 'models' | 'benchmark' | 'settings';
 
 const SIDEBAR_WIDTH_STORAGE_KEY = 'widescreen_sidebar_width';
 
@@ -89,11 +88,6 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
   useEffect(() => {
     if (targetScreen === 'ModelTab') {
       setActiveTab('models');
-      return;
-    }
-
-    if (targetScreen === 'LocalServerTab') {
-      setActiveTab('server');
       return;
     }
 
@@ -190,8 +184,6 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
     switch (activeTab) {
       case 'models':
         return <ModelScreen navigation={navigation as any} route={modelRoute as any} />;
-      case 'server':
-        return <LocalServerScreen />;
       case 'benchmark':
         return <BenchmarkScreen />;
       case 'settings':
@@ -220,13 +212,6 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
               icon={activeTab === 'models' ? 'cube' : 'cube-outline'}
               label="Models"
               isActive={activeTab === 'models'}
-            />
-            <TabButton
-              tab="server"
-              icon={activeTab === 'server' ? 'server' : 'server'}
-              label="Server"
-              isActive={activeTab === 'server'}
-              showBeta
             />
             <TabButton
               tab="benchmark"

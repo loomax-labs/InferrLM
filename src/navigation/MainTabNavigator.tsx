@@ -7,7 +7,6 @@ import React, { useState, useEffect } from 'react';
 import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ModelScreen from '../screens/ModelScreen';
-import LocalServerScreen from '../screens/LocalServerScreen';
 import BenchmarkScreen from '../screens/BenchmarkScreen';
 import WideScreenLayout from '../components/WideScreenLayout';
 import { TabParamList } from '../types/navigation';
@@ -72,9 +71,6 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           case 'ModelTab':
             iconName = isFocused ? 'cube' : 'cube-outline';
             break;
-          case 'LocalServerTab':
-            iconName = isFocused ? 'server' : 'server';
-            break;
           case 'BenchmarkTab':
             iconName = isFocused ? 'tools' : 'tools';
             break;
@@ -110,11 +106,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 size={24}
                 color={isFocused ? themeColors.tabBarActiveText : themeColors.tabBarInactiveText}
               />
-              {route.name === 'LocalServerTab' && (
-                <View style={styles.betaBadge}>
-                  <Text style={styles.betaText}>Beta</Text>
-                </View>
-              )}
+
             </View>
             <Text
               style={[
@@ -173,13 +165,6 @@ export default function MainTabNavigator() {
         component={ModelScreen}
         options={{
           tabBarLabel: 'Models'
-        }}
-      />
-      <Tab.Screen
-        name="LocalServerTab"
-        component={LocalServerScreen}
-        options={{
-          tabBarLabel: 'Server'
         }}
       />
       <Tab.Screen
