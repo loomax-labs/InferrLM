@@ -158,6 +158,18 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
                     <Text style={styles.modelTagText}>Reasoning</Text>
                   </View>
                 )}
+                {model.tags?.includes('litert') && (
+                  <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#1a7340', currentTheme) }]}>
+                    <MaterialCommunityIcons name="chip" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
+                    <Text style={styles.modelTagText}>LiteRT</Text>
+                  </View>
+                )}
+                {model.tags?.includes('llama.cpp') && (
+                  <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#7b3f00', currentTheme) }]}>
+                    <MaterialCommunityIcons name="llama" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
+                    <Text style={styles.modelTagText}>llama.cpp</Text>
+                  </View>
+                )}
                 {isDownloaded && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#666', currentTheme) }]}>
                     <MaterialCommunityIcons name="check" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
