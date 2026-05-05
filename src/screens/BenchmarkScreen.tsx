@@ -261,10 +261,11 @@ export default function BenchmarkScreen() {
 
   if (!hasModel) {
     const benchmarkableModels = storedModels.filter(m => m.path && engineService.getEngineForModel(m.path) !== 'mlx');
+    const benchmarkAccent = currentTheme === 'dark' ? '#2E8B57' : '#1C6B4A';
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
         <AppHeader title="Tools" showBackButton={false} showLogo={false} />
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <LabsTasksSection
             onOpenPromptLab={() => navigation.navigate('PromptLab')}
             onOpenSkillManager={() => navigation.navigate('SkillManager')}
@@ -272,33 +273,61 @@ export default function BenchmarkScreen() {
             onOpenMobileActions={() => navigation.navigate('MobileActions')}
             onOpenTinyGarden={() => navigation.navigate('TinyGarden')}
           />
-          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>Select a model to benchmark</Text>
-          <Text style={[styles.emptySubtitle, { color: themeColors.secondaryText }]}>Choose a local GGUF or LiteRT model to run performance tests.</Text>
-          {benchmarkableModels.length === 0 ? (
-            <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-              <Text style={[styles.emptySubtitle, { color: themeColors.secondaryText }]}>No compatible models downloaded yet.</Text>
-            </View>
-          ) : (
-            benchmarkableModels.map(m => (
-              <TouchableOpacity
-                key={m.id}
-                style={[styles.modelPickerItem, { backgroundColor: themeColors.borderColor }]}
-                onPress={() => {
-                  setSelectedModelName(m.name);
-                  setSelectedModelPath(m.path);
-                }}
-              >
-                <MaterialCommunityIcons name="speedometer" size={20} color={themeColors.secondaryText} style={{ marginRight: 12 }} />
+
+          <View style={styles.benchSection}>
+            <Text style={[styles.benchSectionLabel, { color: themeColors.secondaryText }]}>BENCHMARK</Text>
+            <View style={[styles.benchCard, { backgroundColor: themeColors.borderColor }]}>
+              <View style={[styles.benchCardHeader, { borderBottomColor: themeColors.secondaryText + '15' }]}>
+                <View style={[styles.benchIconWrap, { backgroundColor: benchmarkAccent + '22' }]}>
+                  <MaterialCommunityIcons name="speedometer" size={26} color={benchmarkAccent} />
+                </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.modelPickerName, { color: themeColors.text }]}>{formatModelName(m.name)}</Text>
-                  <Text style={[styles.modelPickerMeta, { color: themeColors.secondaryText }]}>
-                    {engineLabels[engineService.getEngineForModel(m.path)]}
+                  <Text style={[styles.benchCardTitle, { color: themeColors.text }]}>Model Benchmark</Text>
+                  <Text style={[styles.benchCardSubtitle, { color: themeColors.secondaryText }]}>
+                    Measure TTFT, prefill and decode speed
                   </Text>
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
-              </TouchableOpacity>
-            ))
-          )}
+              </View>
+
+              {benchmarkableModels.length === 0 ? (
+                <View style={styles.emptyModelWrap}>
+                  <MaterialCommunityIcons name="cube-outline" size={32} color={themeColors.secondaryText + '60'} />
+                  <Text style={[styles.emptyModelText, { color: themeColors.secondaryText }]}>
+                    No compatible models downloaded yet
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.modelList}>
+                  {benchmarkableModels.map((m, idx) => (
+                    <TouchableOpacity
+                      key={m.id}
+                      style={[
+                        styles.modelRow,
+                        idx < benchmarkableModels.length - 1 && { borderBottomWidth: 1, borderBottomColor: themeColors.secondaryText + '12' },
+                      ]}
+                      onPress={() => {
+                        setSelectedModelName(m.name);
+                        setSelectedModelPath(m.path);
+                      }}
+                    >
+                      <View style={[styles.modelDot, { backgroundColor: benchmarkAccent + '30' }]}>
+                        <MaterialCommunityIcons name="cube-outline" size={14} color={benchmarkAccent} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.modelRowName, { color: themeColors.text }]} numberOfLines={1}>
+                          {formatModelName(m.name)}
+                        </Text>
+                        <Text style={[styles.modelRowMeta, { color: themeColors.secondaryText }]}>
+                          {engineLabels[engineService.getEngineForModel(m.path)]}
+                        </Text>
+                      </View>
+                      <MaterialCommunityIcons name="chevron-right" size={18} color={themeColors.secondaryText + '80'} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
         </ScrollView>
       </View>
     );
@@ -697,6 +726,76 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     marginBottom: 2,
+  },
+  benchSection: {
+    marginTop: 8,
+  },
+  benchSectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: 12,
+    marginLeft: 2,
+  },
+  benchCard: {
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  benchCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  benchIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  benchCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  benchCardSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  emptyModelWrap: {
+    alignItems: 'center',
+    paddingVertical: 28,
+    gap: 10,
+  },
+  emptyModelText: {
+    fontSize: 14,
+  },
+  modelList: {
+    paddingHorizontal: 0,
+  },
+  modelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  modelDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modelRowName: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  modelRowMeta: {
+    fontSize: 12,
   },
   modelPickerMeta: {
     fontSize: 12,
