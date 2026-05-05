@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
-import SettingsSection from './SettingsSection';
+import { getThemeAwareColor } from '../../utils/ColorUtils';
 
 type LabsTasksSectionProps = {
   onOpenPromptLab: () => void;
@@ -19,6 +19,7 @@ type LabItem = {
   label: string;
   description: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  accent: string;
   onPress: () => void;
 };
 
@@ -31,114 +32,119 @@ const LabsTasksSection = ({
 }: LabsTasksSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
 
   const items: LabItem[] = [
     {
       key: 'prompt-lab',
       label: 'Prompt Lab',
-      description: 'Single-turn prompt testing with live output and history',
+      description: 'Test prompts with live output',
       icon: 'flask-outline',
+      accent: '#5E35B1',
       onPress: onOpenPromptLab,
     },
     {
       key: 'skills',
       label: 'Skills',
-      description: 'Manage reusable skills, imports, and secure secrets',
+      description: 'Manage reusable skills & secrets',
       icon: 'shape-outline',
+      accent: '#1565C0',
       onPress: onOpenSkillManager,
     },
     {
       key: 'audio-scribe',
       label: 'Audio Scribe',
-      description: 'Upload audio for transcription or translation',
+      description: 'Transcribe or translate audio',
       icon: 'waveform',
+      accent: '#00695C',
       onPress: onOpenAudioScribe,
     },
     {
       key: 'mobile-actions',
       label: 'Mobile Actions',
-      description: 'Run device actions through tool-enabled assistant flows',
+      description: 'Run device actions via AI',
       icon: 'cellphone-cog',
+      accent: '#AD1457',
       onPress: onOpenMobileActions,
     },
     {
       key: 'tiny-garden',
       label: 'Tiny Garden',
-      description: 'Play with tool-driven planting, watering, and harvesting',
+      description: 'Tool-driven planting game',
       icon: 'sprout-outline',
+      accent: '#2E7D32',
       onPress: onOpenTinyGarden,
     },
   ];
 
   return (
-    <SettingsSection title="LABS & TASKS">
-      {items.map((item, index) => (
-        <TouchableOpacity
-          key={item.key}
-          style={[styles.settingItem, index > 0 ? styles.settingItemBorder : null]}
-          onPress={item.onPress}
-        >
-          <View style={styles.settingLeft}>
-            <View
-              style={[
-                styles.iconContainer,
-                {
-                  backgroundColor:
-                    currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20',
-                },
-              ]}
+    <View style={styles.wrapper}>
+      <Text style={[styles.sectionLabel, { color: themeColors.secondaryText }]}>LABS & TOOLS</Text>
+      <View style={styles.grid}>
+        {items.map(item => {
+          const accent = getThemeAwareColor(item.accent, currentTheme);
+          const iconBg = currentTheme === 'dark' ? accent + '30' : accent + '18';
+          return (
+            <TouchableOpacity
+              key={item.key}
+              style={[styles.card, { backgroundColor: themeColors.borderColor }]}
+              onPress={item.onPress}
+              activeOpacity={0.75}
             >
-              <MaterialCommunityIcons name={item.icon} size={22} color={iconColor} />
-            </View>
-            <View style={styles.settingTextContainer}>
-              <Text style={[styles.settingText, { color: themeColors.text }]}>{item.label}</Text>
-              <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
+              <View style={[styles.cardIconWrap, { backgroundColor: iconBg }]}>
+                <MaterialCommunityIcons name={item.icon} size={26} color={accent} />
+              </View>
+              <Text style={[styles.cardTitle, { color: themeColors.text }]} numberOfLines={1}>
+                {item.label}
+              </Text>
+              <Text style={[styles.cardDesc, { color: themeColors.secondaryText }]} numberOfLines={2}>
                 {item.description}
               </Text>
-            </View>
-          </View>
-          <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
-        </TouchableOpacity>
-      ))}
-    </SettingsSection>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  settingItem: {
+  wrapper: {
+    marginBottom: 8,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginBottom: 12,
+    marginLeft: 2,
+  },
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  settingItemBorder: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(150, 150, 150, 0.1)',
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
+  card: {
+    width: '47%',
     borderRadius: 18,
+    padding: 16,
+    minHeight: 130,
+  },
+  cardIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginBottom: 12,
   },
-  settingTextContainer: {
-    flex: 1,
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  settingText: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  settingDescription: {
-    fontSize: 13,
+  cardDesc: {
+    fontSize: 12,
+    lineHeight: 17,
   },
 });
 
