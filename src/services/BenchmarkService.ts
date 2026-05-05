@@ -8,7 +8,7 @@ import type {
   BenchmarkResult,
   BenchmarkValueStats,
 } from '../types/benchmark';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { modelDownloader } from './ModelDownloader';
 
 const STORAGE_KEY = '@benchmark_history_v1';

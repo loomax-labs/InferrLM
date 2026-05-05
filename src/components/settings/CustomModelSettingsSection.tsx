@@ -50,7 +50,7 @@ type CustomModelSettingsSectionProps = {
   onSeedPress: () => void;
   onNProbsPress: () => void;
   onLogitBiasPress: () => void;
-  selectedInferenceEngine?: 'llama.cpp' | 'mediapipe' | 'mlc-llm' | EngineId;
+  selectedRuntime?: 'llama.cpp' | 'mediapipe' | 'mlc-llm' | EngineId;
 };
 
 const CustomModelSettingsSection = ({
@@ -64,13 +64,13 @@ const CustomModelSettingsSection = ({
   onSeedPress,
   onNProbsPress,
   onLogitBiasPress,
-  selectedInferenceEngine,
+  selectedRuntime,
 }: CustomModelSettingsSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const engineKey: EngineId = selectedInferenceEngine === 'mlx'
+  const engineKey: EngineId = selectedRuntime === 'mlx'
     ? 'mlx'
-    : selectedInferenceEngine === 'litert'
+    : selectedRuntime === 'litert'
       ? 'litert'
       : 'llama';
   const caps = featureCaps[engineKey];

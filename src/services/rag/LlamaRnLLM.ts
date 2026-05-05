@@ -1,6 +1,6 @@
 import type { LLM, Message } from 'react-native-rag';
 import { llamaManager } from '../../utils/LlamaManager';
-import { engineService } from '../inference-engine-service';
+import { engineService } from '../runtime-service';
 import type { ModelSettings } from '../ModelSettingsService';
 
 export class LlamaRnLLM implements LLM {

@@ -11,13 +11,12 @@ import { DownloadableModel } from './DownloadableModelItem';
 
 interface CuratedModelsListProps {
   models: DownloadableModel[];
-  litertModels: DownloadableModel[];
   storedModels: any[];
   downloadProgress: any;
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>;
   filters: FilterOptions;
   onFiltersChange: (filters: FilterOptions) => void;
-  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[] };
+  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[], runtimes: string[] };
   onGuidancePress: () => void;
   onDownload: (model: DownloadableModel) => void;
   forceRender: number;
@@ -26,7 +25,6 @@ interface CuratedModelsListProps {
 
 export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
   models,
-  litertModels,
   storedModels,
   downloadProgress,
   setDownloadProgress,
@@ -40,14 +38,16 @@ export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
 }) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
+  const opts = getAvailableFilterOptions();
 
   return (
     <>
       <ModelFilter
         onFiltersChange={onFiltersChange}
-        availableTags={getAvailableFilterOptions().tags}
-        availableModelFamilies={getAvailableFilterOptions().modelFamilies}
-        availableQuantizations={getAvailableFilterOptions().quantizations}
+        availableTags={opts.tags}
+        availableModelFamilies={opts.modelFamilies}
+        availableQuantizations={opts.quantizations}
+        availableRuntimes={opts.runtimes}
         initialFilters={filters}
         onExpandChange={onFilterExpandChange}
       />
@@ -64,37 +64,15 @@ export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
         </View>
       </TouchableOpacity>
 
-      {litertModels.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="chip" size={18} color={getThemeAwareColor('#4a0660', currentTheme)} />
-            <Text style={[styles.sectionHeaderTitle, { color: themeColors.text }]}>
-              LiteRT-LM Models ({litertModels.length})
-            </Text>
-          </View>
-          <Text style={[styles.sectionSubtitle, { color: themeColors.secondaryText }]}>
-            Optimized for on-device inference with LiteRT-LM
-          </Text>
-          <DownloadableModelList
-            key={`litert-${forceRender}`}
-            models={litertModels}
-            storedModels={storedModels}
-            downloadProgress={downloadProgress}
-            setDownloadProgress={setDownloadProgress}
-            onDownload={onDownload}
-          />
-        </View>
-      )}
-      
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionHeaderTitle, { color: themeColors.text }]}>
-            Curated GGUF Models ({models.length})
+            Models ({models.length})
           </Text>
         </View>
-        
-        <DownloadableModelList 
-          key={`gguf-${forceRender}`}
+
+        <DownloadableModelList
+          key={forceRender}
           models={models}
           storedModels={storedModels}
           downloadProgress={downloadProgress}
@@ -125,21 +103,15 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 8,
-    marginBottom: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 12,
     gap: 8,
   },
   sectionHeaderTitle: {
     fontSize: 18,
     fontWeight: '600',
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    marginBottom: 12,
-    marginLeft: 2,
   },
 });

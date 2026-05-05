@@ -30,7 +30,7 @@ import { llamaManager } from '../../utils/LlamaManager';
 import { Text } from 'react-native-paper';
 import Dialog from '../Dialog';
 import { modelDownloader } from '../../services/ModelDownloader';
-import { engineService } from '../../services/inference-engine-service';
+import { engineService } from '../../services/runtime-service';
 import AITermsDialog from './AITermsDialog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import StopButton from '../StopButton';

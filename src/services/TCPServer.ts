@@ -7,7 +7,7 @@ import { Buffer } from 'buffer';
 import { modelDownloader } from './ModelDownloader';
 import { modelSettingsService, type ModelSettings } from './ModelSettingsService';
 import { StoredModel } from './ModelDownloaderTypes';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { logger } from '../utils/logger';
 import type { ApiHandler, StatusHandler } from './tcp/http/apiTypes';
 import { createChatApiHandler } from './tcp/http/chatApiHandler';

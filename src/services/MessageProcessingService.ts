@@ -1,5 +1,5 @@
 import { ChatMessage } from '../utils/ChatManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
 import chatManager from '../utils/ChatManager';
 import { generateRandomId } from '../utils/homeScreenUtils';

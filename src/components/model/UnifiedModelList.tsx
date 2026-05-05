@@ -19,20 +19,18 @@ import { useModelDownloadHandlers } from '../../hooks/useModelDownloadHandlers';
 
 interface UnifiedModelListProps {
   curatedModels: DownloadableModel[];
-  litertModels: DownloadableModel[];
   storedModels: any[];
   downloadProgress: any;
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>;
   filters: FilterOptions;
   onFiltersChange: (filters: FilterOptions) => void;
-  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[] };
+  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[], runtimes: string[] };
   onCustomUrlPress: () => void;
   onGuidancePress: () => void;
 }
 
 const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
   curatedModels,
-  litertModels,
   storedModels,
   downloadProgress,
   setDownloadProgress,
@@ -115,7 +113,6 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
         ) : (
           <CuratedModelsList
             models={curatedModels}
-            litertModels={litertModels}
             storedModels={storedModels}
             downloadProgress={downloadProgress}
             setDownloadProgress={setDownloadProgress}

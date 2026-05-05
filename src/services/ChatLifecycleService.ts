@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import chatManager from '../utils/ChatManager';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { modelSettingsService } from './ModelSettingsService';
 import { usageTrackingService } from './UsageTrackingService';
 import { inAppReviewService } from './InAppReviewService';

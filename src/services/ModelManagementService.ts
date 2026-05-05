@@ -1,6 +1,6 @@
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import chatManager from '../utils/ChatManager';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Dispatch, SetStateAction } from 'react';

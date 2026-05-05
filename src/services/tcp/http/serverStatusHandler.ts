@@ -1,4 +1,4 @@
-import { engineService } from '../../inference-engine-service';
+import { engineService } from '../../runtime-service';
 import { RAGService } from '../../rag/RAGService';
 import { logger } from '../../../utils/logger';
 import type { JsonResponder, StatusHandler } from './apiTypes';

@@ -22,7 +22,7 @@ import { benchmarkService } from '../services/BenchmarkService';
 import type { BenchmarkDelta, BenchmarkProgress, BenchmarkResult } from '../types/benchmark';
 import { RootStackParamList } from '../types/navigation';
 import { engineLabels, type EngineId } from '../managers/inference-manager';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import { llamaManager } from '../utils/LlamaManager';
 
 const DEFAULT_PROMPT = 'Explain how transformer attention works in two concise paragraphs.';

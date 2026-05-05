@@ -15,7 +15,7 @@ export interface FilterOptions {
   tags: string[];
   modelFamilies: string[];
   quantizations: string[];
-  inferences: string[];
+  runtimes: string[];
 }
 
 interface ModelFilterProps {
@@ -23,7 +23,7 @@ interface ModelFilterProps {
   availableTags: string[];
   availableModelFamilies: string[];
   availableQuantizations: string[];
-  availableInferences?: string[];
+  availableRuntimes?: string[];
   initialFilters?: FilterOptions;
   onExpandChange?: (isExpanded: boolean) => void;
 }
@@ -33,7 +33,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
   availableTags,
   availableModelFamilies,
   availableQuantizations,
-  availableInferences = [],
+  availableRuntimes = [],
   initialFilters,
   onExpandChange,
 }) => {
@@ -44,7 +44,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>(initialFilters?.tags || []);
   const [selectedModelFamilies, setSelectedModelFamilies] = useState<string[]>(initialFilters?.modelFamilies || []);
   const [selectedQuantizations, setSelectedQuantizations] = useState<string[]>(initialFilters?.quantizations || []);
-  const [selectedInferences, setSelectedInferences] = useState<string[]>(initialFilters?.inferences || []);
+  const [selectedRuntimes, setSelectedRuntimes] = useState<string[]>(initialFilters?.runtimes || []);
 
 
   const toggleTag = (tag: string) => {
@@ -52,7 +52,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
       ? selectedTags.filter(t => t !== tag)
       : [...selectedTags, tag];
     setSelectedTags(newTags);
-    onFiltersChange({ tags: newTags, modelFamilies: selectedModelFamilies, quantizations: selectedQuantizations, inferences: selectedInferences });
+    onFiltersChange({ tags: newTags, modelFamilies: selectedModelFamilies, quantizations: selectedQuantizations, runtimes: selectedRuntimes });
   };
 
   const toggleModelFamily = (family: string) => {
@@ -60,7 +60,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
       ? selectedModelFamilies.filter(f => f !== family)
       : [...selectedModelFamilies, family];
     setSelectedModelFamilies(newFamilies);
-    onFiltersChange({ tags: selectedTags, modelFamilies: newFamilies, quantizations: selectedQuantizations, inferences: selectedInferences });
+    onFiltersChange({ tags: selectedTags, modelFamilies: newFamilies, quantizations: selectedQuantizations, runtimes: selectedRuntimes });
   };
 
   const toggleQuantization = (quantization: string) => {
@@ -68,26 +68,26 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
       ? selectedQuantizations.filter(q => q !== quantization)
       : [...selectedQuantizations, quantization];
     setSelectedQuantizations(newQuantizations);
-    onFiltersChange({ tags: selectedTags, modelFamilies: selectedModelFamilies, quantizations: newQuantizations, inferences: selectedInferences });
+    onFiltersChange({ tags: selectedTags, modelFamilies: selectedModelFamilies, quantizations: newQuantizations, runtimes: selectedRuntimes });
   };
 
-  const toggleInference = (inference: string) => {
-    const newInferences = selectedInferences.includes(inference)
-      ? selectedInferences.filter(i => i !== inference)
-      : [...selectedInferences, inference];
-    setSelectedInferences(newInferences);
-    onFiltersChange({ tags: selectedTags, modelFamilies: selectedModelFamilies, quantizations: selectedQuantizations, inferences: newInferences });
+  const toggleRuntime = (inference: string) => {
+    const newRuntimes = selectedRuntimes.includes(inference)
+      ? selectedRuntimes.filter(i => i !== inference)
+      : [...selectedRuntimes, inference];
+    setSelectedRuntimes(newRuntimes);
+    onFiltersChange({ tags: selectedTags, modelFamilies: selectedModelFamilies, quantizations: selectedQuantizations, runtimes: newRuntimes });
   };
 
   const clearAllFilters = () => {
     setSelectedTags([]);
     setSelectedModelFamilies([]);
     setSelectedQuantizations([]);
-    setSelectedInferences([]);
-    onFiltersChange({ tags: [], modelFamilies: [], quantizations: [], inferences: [] });
+    setSelectedRuntimes([]);
+    onFiltersChange({ tags: [], modelFamilies: [], quantizations: [], runtimes: [] });
   };
 
-  const hasActiveFilters = selectedTags.length > 0 || selectedModelFamilies.length > 0 || selectedQuantizations.length > 0 || selectedInferences.length > 0;
+  const hasActiveFilters = selectedTags.length > 0 || selectedModelFamilies.length > 0 || selectedQuantizations.length > 0 || selectedRuntimes.length > 0;
 
   const renderFilterChips = (
     items: string[],
@@ -149,7 +149,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
     return getThemeAwareColor('#2c7fb8', currentTheme);
   };
 
-  const getInferenceColor = (inference: string): string => {
+  const getRuntimeColor = (inference: string): string => {
     switch (inference) {
       case 'litert':
         return getThemeAwareColor('#1a7340', currentTheme);
@@ -183,7 +183,7 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
           {hasActiveFilters && (
             <View style={[styles.activeIndicator, { backgroundColor: getThemeAwareColor('#4a0660', currentTheme) }]}>
               <Text style={styles.activeIndicatorText}>
-                {selectedTags.length + selectedModelFamilies.length + selectedQuantizations.length + selectedInferences.length}
+                {selectedTags.length + selectedModelFamilies.length + selectedQuantizations.length + selectedRuntimes.length}
               </Text>
             </View>
           )}
@@ -246,16 +246,16 @@ const ModelFilter: React.FC<ModelFilterProps> = ({
             </View>
           )}
 
-          {availableInferences.length > 0 && (
+          {availableRuntimes.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-                Inference Engine
+                Runtime
               </Text>
               {renderFilterChips(
-                availableInferences,
-                selectedInferences,
-                toggleInference,
-                getInferenceColor
+                availableRuntimes,
+                selectedRuntimes,
+                toggleRuntime,
+                getRuntimeColor
               )}
             </View>
           )}

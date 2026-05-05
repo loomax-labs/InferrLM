@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { fs as FileSystem } from '../services/fs';
 import { engineLabels } from '../managers/inference-manager';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import { Snackbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from './ThemeContext';

@@ -21,7 +21,7 @@ import { useRemoteModel } from '../context/RemoteModelContext';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { onlineModelService } from '../services/OnlineModelService';
 import { engineLabels } from '../managers/inference-manager';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import { llamaManager } from '../utils/LlamaManager';
 import { Portal, Text } from 'react-native-paper';
 import Dialog from './Dialog';

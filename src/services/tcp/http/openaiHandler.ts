@@ -1,4 +1,4 @@
-import { engineService } from '../../inference-engine-service';
+import { engineService } from '../../runtime-service';
 import { modelDownloader } from '../../ModelDownloader';
 import { logger } from '../../../utils/logger';
 import { parseJsonBody } from './jsonParser';

@@ -20,7 +20,7 @@ import { AppleFoundationLLM } from './AppleFoundationLLM';
 import { UniversalEmbeddings } from './UniversalEmbeddings';
 import type { ModelSettings } from '../ModelSettingsService';
 import { llamaManager } from '../../utils/LlamaManager';
-import { engineService } from '../inference-engine-service';
+import { engineService } from '../runtime-service';
 import type { ProviderType } from '../ModelManagementService';
 
 const RAG_ENABLED_KEY = '@inferra/rag/enabled';

@@ -6,7 +6,7 @@ import UnifiedModelList from './UnifiedModelList';
 import CustomUrlDialog from '../CustomUrlDialog';
 import { DownloadableModel } from './DownloadableModelItem';
 import { StoredModel } from '../../services/ModelDownloaderTypes';
-import { DOWNLOADABLE_MODELS, LITERT_MODELS } from '../../constants/DownloadableModels';
+import { DOWNLOADABLE_MODELS } from '../../constants/DownloadableModels';
 import { FilterOptions } from '../ModelFilter';
 
 interface DownloadableModelsTabProps {
@@ -30,6 +30,7 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
     tags: [],
     modelFamilies: [],
     quantizations: [],
+    runtimes: [],
   });
   const [filteredModels, setFilteredModels] = useState<DownloadableModel[]>([]);
 
@@ -43,8 +44,9 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
     let filtered = [...DOWNLOADABLE_MODELS];
     
     if (newFilters.tags.length > 0) {
-      filtered = filtered.filter(model => 
-        model.tags && model.tags.some(tag => newFilters.tags.includes(tag))
+      const inferenceTags = ['litert', 'llama.cpp'];
+      filtered = filtered.filter(model =>
+        model.tags && model.tags.some(tag => newFilters.tags.includes(tag) && !inferenceTags.includes(tag))
       );
     }
     
@@ -59,19 +61,30 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
         newFilters.quantizations.includes(model.quantization)
       );
     }
-    
+
+    if (newFilters.runtimes.length > 0) {
+      filtered = filtered.filter(model =>
+        model.tags && model.tags.some(tag => newFilters.runtimes.includes(tag))
+      );
+    }
+
     setFilteredModels(filtered);
   }, []);
 
   const getAvailableFilterOptions = () => {
-    const allTags = [...new Set(DOWNLOADABLE_MODELS.flatMap(model => model.tags || []))];
+    const inferenceTags = ['litert', 'llama.cpp'];
+    const allTags = [...new Set(DOWNLOADABLE_MODELS.flatMap(model => model.tags || []))].filter(t => !inferenceTags.includes(t));
     const allModelFamilies = [...new Set(DOWNLOADABLE_MODELS.map(model => model.modelFamily))];
     const allQuantizations = [...new Set(DOWNLOADABLE_MODELS.map(model => model.quantization))];
-    
+    const allRuntimes = inferenceTags.filter(t =>
+      DOWNLOADABLE_MODELS.some(m => m.tags?.includes(t))
+    );
+
     return {
       tags: allTags,
       modelFamilies: allModelFamilies,
       quantizations: allQuantizations,
+      runtimes: allRuntimes,
     };
   };
 
@@ -79,7 +92,6 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
     <View style={styles.container}>
       <UnifiedModelList
         curatedModels={filteredModels}
-        litertModels={LITERT_MODELS}
         storedModels={storedModels}
         downloadProgress={downloadProgress}
         setDownloadProgress={setDownloadProgress}

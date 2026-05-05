@@ -7,12 +7,12 @@ import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
 
-interface InferenceEngineProps {
+interface RuntimeProps {
   enabled: Record<EngineId, boolean>;
   onToggle: (engine: EngineId, enabled: boolean) => void;
 }
 
-const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
+const RuntimeSection: React.FC<RuntimeProps> = ({
   enabled,
   onToggle,
 }) => {
@@ -41,7 +41,7 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
     {
       id: 'litert' as const,
       name: 'LiteRT-LM',
-      description: 'Optimized LiteRT-LM runtime for .litertlm and .task models',
+      description: 'Google AI Edge gallery\'s LiteRT-LM runtime for .litertlm and .task models',
       icon: 'lightning-bolt-outline',
       enabled: true,
       beta: true,
@@ -124,7 +124,7 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
           <View style={styles.settingTextContainer}>
             <Text style={[styles.settingText, { color: themeColors.text }]}>Inference</Text>
             <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Enable or disable local inference engines
+              Enable or disable local runtimes
             </Text>
           </View>
         </View>
@@ -140,7 +140,7 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: themeColors.background }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable inference engines</Text>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable runtimes</Text>
               <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
                 <MaterialCommunityIcons name="close" size={24} color={themeColors.text} />
               </TouchableOpacity>
@@ -264,4 +264,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default InferenceEngineSection;
+export default RuntimeSection;

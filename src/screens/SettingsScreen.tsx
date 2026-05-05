@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import AppHeader from '../components/AppHeader';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
@@ -95,7 +95,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     llamaManager.getSettings()
   );
   const [error, setError] = useState<string | null>(null);
-  const [activeInferenceEngine, setActiveInferenceEngine] =
+  const [activeRuntime, setActiveRuntime] =
     useState<EngineId>('llama');
   const [engineEnabled, setEngineEnabled] = useState<Record<EngineId, boolean>>({
     llama: true,
@@ -196,7 +196,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     React.useCallback(() => {
       setModelSettings(llamaManager.getSettings());
       loadStorageInfo();
-      loadInferenceEnginePreference();
+      loadRuntimePreference();
     }, [])
   );
 
@@ -225,7 +225,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     getSystemInfo();
   }, []);
 
-  const loadInferenceEnginePreference = async () => {
+  const loadRuntimePreference = async () => {
     try {
       const { active, enabled } = await engineService.load();
       const supportsMLX = Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 16;
@@ -245,7 +245,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
       if (nextActive !== active) {
         await engineService.set(nextActive);
       }
-      setActiveInferenceEngine(nextActive);
+      setActiveRuntime(nextActive);
     } catch (error) {
     }
   };
@@ -258,7 +258,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
   };
 
-  const handleInferenceEngineToggle = async (engine: EngineId, enabled: boolean) => {
+  const handleRuntimeToggle = async (engine: EngineId, enabled: boolean) => {
     const next = { ...engineEnabled, [engine]: enabled };
     if (!next.llama && !next.mlx && !next.litert) {
       showDialog('Engine Required', 'At least one inference engine must remain enabled.');
@@ -270,10 +270,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
     try {
       await engineService.setEnabled(engine, enabled);
-      if (!enabled && activeInferenceEngine === engine) {
+      if (!enabled && activeRuntime === engine) {
         const fallback = pickActiveEngine(next);
         await engineService.set(fallback);
-        setActiveInferenceEngine(fallback);
+        setActiveRuntime(fallback);
       }
     } catch (error) {
       setEngineEnabled(prev => ({ ...prev, [engine]: previous }));
@@ -628,9 +628,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           error={error}
           onSettingsChange={handleSettingsChange}
           onDialogOpen={handleOpenDialog}
-          activeEngine={activeInferenceEngine}
+          activeEngine={activeRuntime}
           engineEnabled={engineEnabled}
-          onEngineToggle={handleInferenceEngineToggle}
+          onEngineToggle={handleRuntimeToggle}
           onOpenSystemPromptDialog={() => setShowSystemPromptDialog(true)}
           enableRemoteModels={enableRemoteModels}
           onToggleRemoteModels={handleRemoteModelsToggle}

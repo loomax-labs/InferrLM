@@ -159,46 +159,43 @@ const ModelSettingsSampling = ({
             thumbColor={noExtraBuffers ? themeColors.primary : themeColors.background}
           />
         </View>
-      )}
+      ) : null}
 
-      {gpuConfig && onToggleGpu && (
-            onValueChange={onToggleNoExtraBuffers!}
+      {showGpu ? (
+        <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
             <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
               <MaterialCommunityIcons name="chip" size={22} color={iconColor} />
             </View>
-      ) : null}
+            <View style={styles.settingTextContainer}>
               <View style={styles.labelRow}>
-      {showGpu ? (
-                  {gpuConfig.label}
+                <Text style={[styles.settingText, { color: themeColors.text }]}>
+                  {gpuConfig!.label}
                 </Text>
-                {gpuConfig.experimental && (
+                {gpuConfig!.experimental && (
                   <View style={[styles.gpuBadge, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
                     <Text style={[styles.gpuBadgeText, { color: iconColor }]}>EXPERIMENTAL</Text>
                   </View>
                 )}
               </View>
               <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                {gpuConfig.description}
+                {gpuConfig!.description}
               </Text>
-              {showMlxWarning && (
-                <Text style={styles.unsupportedText}>Unsupported on MLX</Text>
-              )}
-              {!gpuConfig.supported && gpuConfig.reason && (
+              {!gpuConfig!.supported && gpuConfig!.reason && (
                 <Text style={[styles.gpuSupportText, { color: themeColors.secondaryText }]}>
-                  {gpuConfig.reason === 'ios_version' && 'Requires iOS 18 or newer.'}
-                  {gpuConfig.reason === 'no_adreno' && 'Requires an Adreno GPU.'}
-                  {gpuConfig.reason === 'missing_cpu_features' && 'Missing required CPU features.'}
+                  {gpuConfig!.reason === 'ios_version' && 'Requires iOS 18 or newer.'}
+                  {gpuConfig!.reason === 'no_adreno' && 'Requires an Adreno GPU.'}
+                  {gpuConfig!.reason === 'missing_cpu_features' && 'Missing required CPU features.'}
                 </Text>
               )}
             </View>
           </View>
           <Switch
-            value={gpuConfig.enabled}
+            value={gpuConfig!.enabled}
             onValueChange={onToggleGpu!}
-            disabled={!gpuConfig.supported}
+            disabled={!gpuConfig!.supported}
             trackColor={{ false: themeColors.borderColor, true: themeColors.primary + '80' }}
-            thumbColor={gpuConfig.enabled ? themeColors.primary : themeColors.background}
+            thumbColor={gpuConfig!.enabled ? themeColors.primary : themeColors.background}
           />
         </View>
       ) : null}

@@ -17,7 +17,7 @@ import { getThemeAwareColor } from '../utils/ColorUtils';
 import { llamaManager } from '../utils/LlamaManager';
 import { modelSettingsService, ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
 import { engineLabels } from '../managers/inference-manager';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import {
   formatLiteRTBackend,
   getLiteRTBackendWarning,

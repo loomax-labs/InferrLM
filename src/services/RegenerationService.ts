@@ -1,6 +1,6 @@
 import { ChatMessage } from '../utils/ChatManager';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
 import chatManager from '../utils/ChatManager';
 import { generateRandomId } from '../utils/homeScreenUtils';

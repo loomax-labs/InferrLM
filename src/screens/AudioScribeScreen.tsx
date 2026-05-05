@@ -25,7 +25,7 @@ import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useModel } from '../context/ModelContext';
 import { modelDownloader } from '../services/ModelDownloader';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 
 type SelectedAudio = {
   uri: string;

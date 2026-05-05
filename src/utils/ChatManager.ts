@@ -902,7 +902,7 @@ class ChatManager {
   async generateChatTitle(userMessage: string): Promise<string> {
     try {
       if (this.currentProvider === 'local') {
-        const { engineService } = await import('../services/inference-engine-service');
+        const { engineService } = await import('../services/runtime-service');
         if (engineService.mgr().ready()) {
           const { llamaManager } = await import('./LlamaManager');
           return await llamaManager.generateChatTitle(userMessage);
@@ -919,7 +919,7 @@ class ChatManager {
         }
       }
 
-      const { engineService } = await import('../services/inference-engine-service');
+      const { engineService } = await import('../services/runtime-service');
       if (engineService.mgr().ready()) {
         const { llamaManager } = await import('./LlamaManager');
         return await llamaManager.generateChatTitle(userMessage);

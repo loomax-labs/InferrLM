@@ -29,7 +29,7 @@ import { useModel } from '../context/ModelContext';
 
 import Dialog from '../components/Dialog';
 import { useRemoteModel } from '../context/RemoteModelContext';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 
 import { debounce, generateRandomId } from '../utils/homeScreenUtils';
 import { useDialog } from '../hooks/useDialog';

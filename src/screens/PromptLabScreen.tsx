@@ -19,7 +19,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useModel } from '../context/ModelContext';
 import { engineLabels } from '../managers/inference-manager';
 import { modelDownloader } from '../services/ModelDownloader';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import { onlineModelService, OnlineModelService } from '../services/OnlineModelService';
 import { skillManager } from '../services/SkillManager';
 

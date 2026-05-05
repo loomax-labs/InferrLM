@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
-import InferenceEngineSection from './InferenceEngine';
+import RuntimeSection from './Runtime';
 
 export type GpuConfig = {
   label: string;
@@ -128,7 +128,7 @@ const ModelSettingsCore = ({
       )}
 
       {engineEnabled && onEngineToggle && (
-        <InferenceEngineSection
+        <RuntimeSection
           enabled={engineEnabled}
           onToggle={onEngineToggle}
         />
