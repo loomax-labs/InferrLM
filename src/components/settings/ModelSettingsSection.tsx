@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
+import LlamaCppIcon from '../icons/LlamaCppIcon';
 import SettingsSection from './SettingsSection';
 import ModelSettingsCore from './ModelSettingsCore';
 
@@ -14,6 +15,7 @@ type ParameterEntry = {
   onPress: () => void;
   badgeLabel?: string;
   iconName?: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  iconKey?: 'llama-cpp';
   accentColor?: string;
 };
 
@@ -137,7 +139,11 @@ const ModelSettingsSection = ({
             >
               <View style={styles.settingLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: entryIconBackground }]}> 
-                  <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
+                  {entry.iconKey === 'llama-cpp' ? (
+                    <LlamaCppIcon size={22} color="#FF8A1C" accentColor="#FFB84D" />
+                  ) : (
+                    <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
+                  )}
                 </View>
                 <View style={styles.settingTextContainer}>
                   <View style={styles.labelRow}>

@@ -5,6 +5,7 @@ import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-naviga
 import { RouteProp, useFocusEffect } from '@react-navigation/native';
 
 import AppHeader from '../components/AppHeader';
+import LlamaCppIcon from '../components/icons/LlamaCppIcon';
 import Dialog from '../components/Dialog';
 import ModelSettingDialog from '../components/ModelSettingDialog';
 import StopWordsDialog from '../components/StopWordsDialog';
@@ -364,11 +365,15 @@ function EngineSettingsView({ engine, route }: EngineSettingsProps) {
           ]}
         >
           <View style={[styles.noticeIcon, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : meta.accentColor + '20' }]}>
-            <MaterialCommunityIcons
-              name={meta.iconName}
-              size={20}
-              color={currentTheme === 'dark' ? '#FFFFFF' : meta.accentColor}
-            />
+            {meta.iconKey === 'llama-cpp' ? (
+              <LlamaCppIcon size={20} color="#FF8A1C" accentColor="#FFB84D" />
+            ) : (
+              <MaterialCommunityIcons
+                name={meta.iconName}
+                size={20}
+                color={currentTheme === 'dark' ? '#FFFFFF' : meta.accentColor}
+              />
+            )}
           </View>
           <View style={styles.noticeContent}>
             <View style={styles.noticeHeader}>

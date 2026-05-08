@@ -345,6 +345,7 @@ export default function ModelSettingsScreen() {
                     description: settingsMeta.entryDescription,
                     badgeLabel: settingsMeta.badgeLabel,
                     iconName: settingsMeta.iconName,
+                    iconKey: settingsMeta.iconKey,
                     accentColor: settingsMeta.accentColor,
                     onPress: () => navigation.navigate(getEngineSettingsRoute(benchmarkEngine), {
                       modelName,

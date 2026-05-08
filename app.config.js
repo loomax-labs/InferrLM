@@ -23,6 +23,7 @@ export default {
       supportsTablet: true,
       requireFullScreen: false,
       bundleIdentifier: "com.gorai.inferra",
+      appleTeamId: "8TK59W9DZP",
       buildNumber: "293",
       runtimeVersion: "0.8.7",
       infoPlist: {

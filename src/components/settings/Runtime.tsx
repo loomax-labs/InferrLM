@@ -41,7 +41,7 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
     {
       id: 'litert' as const,
       name: 'LiteRT-LM',
-      description: 'Google AI Edge gallery\'s LiteRT-LM runtime for .litertlm and .task models',
+      description: 'Google AI Edge Gallery\'s LiteRT-LM runtime for .litertlm and .task models',
       icon: 'lightning-bolt-outline',
       enabled: true,
       beta: true,

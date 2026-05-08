@@ -645,6 +645,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               description: meta.entryDescription,
               badgeLabel: meta.badgeLabel,
               iconName: meta.iconName,
+              iconKey: meta.iconKey,
               accentColor: meta.accentColor,
               onPress: () => navigation.navigate(getEngineSettingsRoute(engine)),
             };

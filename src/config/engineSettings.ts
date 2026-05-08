@@ -13,6 +13,7 @@ type EngineSettingsMeta = {
   entryDescription: string;
   badgeLabel: string;
   iconName: IconName;
+  iconKey?: 'llama-cpp';
   accentColor: string;
   globalSummary: string;
   modelSummary: (modelName: string) => string;
@@ -31,7 +32,8 @@ export const engineSettingsMeta: Record<EngineId, EngineSettingsMeta> = {
     entryDescription: 'Sampling, penalties, grammar, DRY, and llama.cpp runtime tuning for GGUF models.',
     badgeLabel: 'GGUF',
     iconName: 'cog-outline',
-    accentColor: '#1c6b4a',
+    iconKey: 'llama-cpp',
+    accentColor: '#C76A00',
     globalSummary: 'Applies to local GGUF models using llama.cpp.',
     modelSummary: (modelName: string) => `Applies only to ${modelName}.`,
   },
