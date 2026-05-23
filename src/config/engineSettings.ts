@@ -14,7 +14,7 @@ type EngineSettingsMeta = {
   badgeLabel: string;
   iconName: IconName;
   iconKey?: 'llama-cpp';
-  accentColor: string;
+  accentColor?: string;
   globalSummary: string;
   modelSummary: (modelName: string) => string;
 };
@@ -33,7 +33,6 @@ export const engineSettingsMeta: Record<EngineId, EngineSettingsMeta> = {
     badgeLabel: 'GGUF',
     iconName: 'cog-outline',
     iconKey: 'llama-cpp',
-    accentColor: '#C76A00',
     globalSummary: 'Applies to local GGUF models using llama.cpp.',
     modelSummary: (modelName: string) => `Applies only to ${modelName}.`,
   },
@@ -53,7 +52,6 @@ export const engineSettingsMeta: Record<EngineId, EngineSettingsMeta> = {
     entryDescription: 'Sampling controls for LiteRT-LM text generation and delegate-backed runtimes.',
     badgeLabel: 'LiteRT',
     iconName: 'memory',
-    accentColor: '#8a4b00',
     globalSummary: 'Applies to LiteRT-LM models and delegate-backed runtimes.',
     modelSummary: (modelName: string) => `Applies only to ${modelName}.`,
   },

@@ -359,27 +359,27 @@ function EngineSettingsView({ engine, route }: EngineSettingsProps) {
           style={[
             styles.noticeCard,
             {
-              backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.08)' : meta.accentColor + '12',
-              borderColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.12)' : meta.accentColor + '28',
+              backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.08)' : (meta.accentColor ?? themeColors.primary) + '12',
+              borderColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.12)' : (meta.accentColor ?? themeColors.primary) + '28',
             },
           ]}
         >
-          <View style={[styles.noticeIcon, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : meta.accentColor + '20' }]}>
+          <View style={[styles.noticeIcon, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : (meta.accentColor ?? themeColors.primary) + '20' }]}>
             {meta.iconKey === 'llama-cpp' ? (
               <LlamaCppIcon size={20} color="#ff8236" />
             ) : (
               <MaterialCommunityIcons
                 name={meta.iconName}
                 size={20}
-                color={currentTheme === 'dark' ? '#FFFFFF' : meta.accentColor}
+                color={currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary)}
               />
             )}
           </View>
           <View style={styles.noticeContent}>
             <View style={styles.noticeHeader}>
               <Text style={[styles.noticeTitle, { color: themeColors.text }]}>{meta.entryLabel}</Text>
-              <View style={[styles.noticeBadge, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : meta.accentColor + '20' }]}>
-                <Text style={[styles.noticeBadgeText, { color: currentTheme === 'dark' ? '#FFFFFF' : meta.accentColor }]}>{meta.badgeLabel}</Text>
+              <View style={[styles.noticeBadge, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : (meta.accentColor ?? themeColors.primary) + '20' }]}>
+                <Text style={[styles.noticeBadgeText, { color: currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary) }]}>{meta.badgeLabel}</Text>
               </View>
             </View>
             {modelName ? (
