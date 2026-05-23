@@ -1,12 +1,1 @@
-<svg width="256" height="256" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="5" y="5" width="54" height="54" rx="16" fill="#1B1323"/>
-  <path d="M24 12C15.5 12 9 18.7 9 28.5V35.5C9 44.6 15.2 52 24 52H28" stroke="#FFB84D" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M30 11L35 4.5L40 10.5V17L46 20.5L52 28L49.5 38L42 46L31 44.5L28 36L24 29.5H18L22.5 18.5L30 11Z" fill="#FF8A1C"/>
-  <path d="M34.5 18L36.5 9.5L39 13.5L38.5 20.5Z" fill="#FFB84D"/>
-  <path d="M38 25.5L44.5 26.5L47.8 29.4L41.6 31.4Z" fill="#FFB84D"/>
-  <path d="M46.5 35L52 36.2L50 41.8Z" fill="#FFB84D"/>
-  <path d="M44 46.5V54.5" stroke="#FFB84D" stroke-width="4" stroke-linecap="round"/>
-  <path d="M40 50.5H48" stroke="#FFB84D" stroke-width="4" stroke-linecap="round"/>
-  <path d="M53 42.5V48.5" stroke="#FFB84D" stroke-width="4" stroke-linecap="round"/>
-  <path d="M50 45.5H56" stroke="#FFB84D" stroke-width="4" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="m356.4 201.3-32.8 58.3c-43.3-33.3-107.4-38.2-150.7-2.4-69.8 57.6-64.9 190.8 43.7 191.6 30.4 0 56.2-14.3 83.9-23.8l14.6 58.1c-24.6 11.4-49.6 23.1-76.6 26.7-246 33.5-231.9-321.6-9.5-340.1 46.7-3.9 87.8 8.3 127.6 31.6zm-169.9-55.9c-37.4 11.2-72.2 31.8-98.5 60.8-4.9-58.8 8.3-177.7 73.7-201 9.7-3.4 43-11.9 42.1 5.3-1 17.3-24.1 46.9-29.7 63-9.7 28.2-.7 47.6 12.6 72.2zm92.4 252.8h-36.5v-41.3h-41.3v-34h37.7l3.6-3.6v-40.1h36.5V323h38.9v34h-38.9zm133.7-41.3v41.3h-36.5v-41.3h-38.9v-34h38.9v-43.8h36.5v40.1l3.6 3.6h37.7v34h-41.3zM305.4 31.4c4.9 7.3-22.6 38.7-27 46.7-12.6 23.8-4.1 37.4 5.3 60-27.5-4.1-53-.7-80.2 2.4C209.6 88.3 239 12.2 305.4 31.4" style="fill:#ff8236"/></svg>

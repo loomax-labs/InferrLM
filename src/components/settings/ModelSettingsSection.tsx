@@ -140,7 +140,7 @@ const ModelSettingsSection = ({
               <View style={styles.settingLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: entryIconBackground }]}> 
                   {entry.iconKey === 'llama-cpp' ? (
-                    <LlamaCppIcon size={22} color="#FF8A1C" accentColor="#FFB84D" />
+                    <LlamaCppIcon size={22} color="#ff8236" />
                   ) : (
                     <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
                   )}
