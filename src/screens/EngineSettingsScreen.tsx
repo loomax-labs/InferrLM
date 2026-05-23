@@ -366,7 +366,7 @@ function EngineSettingsView({ engine, route }: EngineSettingsProps) {
         >
           <View style={[styles.noticeIcon, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : (meta.accentColor ?? themeColors.primary) + '20' }]}>
             {meta.iconKey === 'llama-cpp' ? (
-              <LlamaCppIcon size={20} color="#ff8236" />
+              <LlamaCppIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary)} />
             ) : (
               <MaterialCommunityIcons
                 name={meta.iconName}
