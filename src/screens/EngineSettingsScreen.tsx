@@ -6,6 +6,7 @@ import { RouteProp, useFocusEffect } from '@react-navigation/native';
 
 import AppHeader from '../components/AppHeader';
 import LlamaCppIcon from '../components/icons/LlamaCppIcon';
+import MlxIcon from '../components/icons/MlxIcon';
 import Dialog from '../components/Dialog';
 import ModelSettingDialog from '../components/ModelSettingDialog';
 import StopWordsDialog from '../components/StopWordsDialog';
@@ -367,9 +368,11 @@ function EngineSettingsView({ engine, route }: EngineSettingsProps) {
           <View style={[styles.noticeIcon, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : (meta.accentColor ?? themeColors.primary) + '20' }]}>
             {meta.iconKey === 'llama-cpp' ? (
               <LlamaCppIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary)} />
+            ) : meta.iconKey === 'mlx' ? (
+              <MlxIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary)} />
             ) : (
               <MaterialCommunityIcons
-                name={meta.iconName}
+                name={meta.iconName ?? 'cog-outline'}
                 size={20}
                 color={currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary)}
               />

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIn
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import MlxIcon from './icons/MlxIcon';
 import { HFModelDetails, HFFile } from '../services/HuggingFaceService';
 import { huggingFaceService } from '../services/HuggingFaceService';
 import { ModelFormat } from '../types/models';
@@ -175,7 +176,9 @@ export default function ModelFilesDialog({
             )}
             {isMLXModel && isRequiredMLXFile(file.filename) && (
               <View style={[styles.fileChip, { backgroundColor: currentTheme === 'dark' ? 'rgba(0, 122, 255, 0.25)' : 'rgba(0, 122, 255, 0.1)' }]}>
-                <MaterialCommunityIcons name="apple" size={14} color={currentTheme === 'dark' ? '#5AC8FA' : '#007AFF'} style={styles.chipIcon} />
+                <View style={styles.chipIcon}>
+                  <MlxIcon size={14} color={currentTheme === 'dark' ? '#5AC8FA' : '#007AFF'} />
+                </View>
                 <Text style={[styles.chipText, { color: currentTheme === 'dark' ? '#5AC8FA' : '#007AFF' }]}>Required</Text>
               </View>
             )}

@@ -12,8 +12,8 @@ type EngineSettingsMeta = {
   entryLabel: string;
   entryDescription: string;
   badgeLabel: string;
-  iconName: IconName;
-  iconKey?: 'llama-cpp';
+  iconName?: IconName;
+  iconKey?: 'llama-cpp' | 'mlx';
   accentColor?: string;
   globalSummary: string;
   modelSummary: (modelName: string) => string;
@@ -41,7 +41,7 @@ export const engineSettingsMeta: Record<EngineId, EngineSettingsMeta> = {
     entryLabel: 'MLX Settings',
     entryDescription: 'Apple MLX generation controls for local MLX models.',
     badgeLabel: 'MLX',
-    iconName: 'apple-keyboard-command',
+    iconKey: 'mlx',
     accentColor: '#005b99',
     globalSummary: 'Applies to MLX models running on Apple devices.',
     modelSummary: (modelName: string) => `Applies only to ${modelName}.`,

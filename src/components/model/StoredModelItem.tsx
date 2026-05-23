@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import MlxIcon from '../icons/MlxIcon';
 import { getThemeAwareColor, getDocumentIconColor } from '../../utils/ColorUtils';
 
 interface StoredModelProps {
@@ -67,7 +68,9 @@ const StoredModelItem: React.FC<StoredModelProps> = ({
           </Text>
           {isMLXGroup && (
             <View style={styles.mlxBadgeContainer}>
-              <MaterialCommunityIcons name="apple" size={12} color="white" style={{ marginRight: 4 }} />
+              <View style={styles.mlxIconWrap}>
+                <MlxIcon size={12} color="#FFFFFF" />
+              </View>
               <Text style={styles.mlxBadgeText}>MLX</Text>
             </View>
           )}
@@ -172,6 +175,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 11,
     fontWeight: '600',
+  },
+  mlxIconWrap: {
+    marginRight: 4,
   },
   llamaBadgeContainer: {
     flexDirection: 'row',

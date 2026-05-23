@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
 import LlamaCppIcon from '../icons/LlamaCppIcon';
+import MlxIcon from '../icons/MlxIcon';
 import SettingsSection from './SettingsSection';
 import ModelSettingsCore from './ModelSettingsCore';
 
@@ -15,7 +16,7 @@ type ParameterEntry = {
   onPress: () => void;
   badgeLabel?: string;
   iconName?: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-  iconKey?: 'llama-cpp';
+  iconKey?: 'llama-cpp' | 'mlx';
   accentColor?: string;
 };
 
@@ -141,6 +142,8 @@ const ModelSettingsSection = ({
                 <View style={[styles.iconContainer, { backgroundColor: entryIconBackground }]}> 
                   {entry.iconKey === 'llama-cpp' ? (
                     <LlamaCppIcon size={22} color={entryIconColor} />
+                  ) : entry.iconKey === 'mlx' ? (
+                    <MlxIcon size={22} color={entryIconColor} />
                   ) : (
                     <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
                   )}
