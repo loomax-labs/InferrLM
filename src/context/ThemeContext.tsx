@@ -51,7 +51,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setTheme(newTheme);
       
       if (Platform.OS === 'android') {
-        Appearance.setColorScheme(null); 
+        Appearance.setColorScheme(newTheme);
       }
     } else {
       setTheme(selectedTheme as ThemeColors);
