@@ -129,7 +129,9 @@ const ModelSettingsSection = ({
         const entryIconColor = currentTheme === 'dark' ? '#FFFFFF' : accentColor;
         const entryIconBackground = currentTheme === 'dark'
           ? 'rgba(255, 255, 255, 0.2)'
-          : accentColor + '20';
+          : entry.iconKey === 'litert'
+            ? 'rgba(0,0,0,0.06)'
+            : accentColor + '20';
 
         return (
           <React.Fragment key={entry.key}>
