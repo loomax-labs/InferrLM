@@ -1,20 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../types/navigation';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
-
-type LicensesScreenProps = {
-  navigation: CompositeNavigationProp<
-    BottomTabNavigationProp<TabParamList, 'SettingsTab'>,
-    NativeStackNavigationProp<RootStackParamList>
-  >;
-};
 
 interface License {
   name: string;
@@ -174,7 +164,8 @@ const licenses: License[] = [
   }
 ];
 
-const LicensesScreen = ({ navigation }: LicensesScreenProps) => {
+const LicensesScreen = () => {
+  const router = useRouter();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
 
@@ -245,7 +236,7 @@ const LicensesScreen = ({ navigation }: LicensesScreenProps) => {
         leftComponent={
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => router.back()}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color={themeColors.headerText} />
