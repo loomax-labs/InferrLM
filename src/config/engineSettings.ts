@@ -3,7 +3,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import type { EngineId } from '../managers/inference-manager';
 
-export type EngineSettingsRoute = 'LlamaCppSettings' | 'MlxSettings' | 'LiteRTSettings';
+export type EngineSettingsRoute = '/llama-cpp-settings' | '/mlx-settings' | '/litert-settings';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -20,9 +20,9 @@ type EngineSettingsMeta = {
 };
 
 export const engineSettingsRoutes: Record<EngineId, EngineSettingsRoute> = {
-  llama: 'LlamaCppSettings',
-  mlx: 'MlxSettings',
-  litert: 'LiteRTSettings',
+  llama: '/llama-cpp-settings',
+  mlx: '/mlx-settings',
+  litert: '/litert-settings',
 };
 
 export const engineSettingsMeta: Record<EngineId, EngineSettingsMeta> = {

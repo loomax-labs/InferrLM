@@ -1,29 +1,28 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { RootStackParamList } from '../types/navigation';
 import LabsTasksSection from '../components/settings/LabsTasksSection';
 
 export default function BenchmarkScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const router = useRouter();
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <AppHeader title="Tools" />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LabsTasksSection
-          onOpenPromptLab={() => navigation.navigate('PromptLab')}
-          onOpenSkillManager={() => navigation.navigate('SkillManager')}
-          onOpenAudioScribe={() => navigation.navigate('AudioScribe')}
-          onOpenMobileActions={() => navigation.navigate('MobileActions')}
-          onOpenBenchmark={() => navigation.navigate('Benchmark')}
-          onOpenServer={() => navigation.navigate('LocalServer')}
+          onOpenPromptLab={() => router.push('/prompt-lab')}
+          onOpenSkillManager={() => router.push('/skill-manager')}
+          onOpenAudioScribe={() => router.push('/audio-scribe')}
+          onOpenMobileActions={() => router.push('/mobile-actions')}
+          onOpenBenchmark={() => router.push('/benchmark')}
+          onOpenServer={() => router.push('/local-server')}
         />
       </ScrollView>
     </View>
