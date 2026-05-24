@@ -13,7 +13,6 @@ interface DownloadableModelsTabProps {
   storedModels: StoredModel[];
   downloadProgress: Record<string, any>;
   setDownloadProgress: (progress: any) => void;
-  navigation: any;
   onCustomDownload: (downloadId: number, modelName: string) => void;
 }
 
@@ -21,7 +20,6 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
   storedModels,
   downloadProgress,
   setDownloadProgress,
-  navigation,
   onCustomDownload
 }) => {
   const [customUrlDialogVisible, setCustomUrlDialogVisible] = useState(false);
@@ -106,7 +104,6 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
         visible={customUrlDialogVisible}
         onClose={() => setCustomUrlDialogVisible(false)}
         onDownloadStart={onCustomDownload}
-        navigation={navigation}
       />
 
       <Dialog visible={guidanceDialogVisible} onDismiss={() => setGuidanceDialogVisible(false)}
