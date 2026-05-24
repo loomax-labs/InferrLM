@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, ScrollView, Linking, TouchableOpacity, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../types/navigation';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
@@ -16,7 +13,6 @@ import Constants from 'expo-constants';
 import { llamaManager } from '../utils/LlamaManager';
 import SystemPromptDialog from '../components/SystemPromptDialog';
 import { fs as FileSystem } from '../services/fs';
-import { useFocusEffect } from '@react-navigation/native';
 import { modelDownloader } from '../services/ModelDownloader';
 import AppearanceSection from '../components/settings/AppearanceSection';
 import { getCurrentUser } from '../services/AuthService';
@@ -32,13 +28,6 @@ import { EngineId } from '../managers/inference-manager';
 import type { ModelSettings as StoredModelSettings } from '../services/ModelSettingsService';
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { appleFoundationService } from '../services/AppleFoundationService';
-
-type SettingsScreenProps = {
-  navigation: CompositeNavigationProp<
-    BottomTabNavigationProp<TabParamList, 'SettingsTab'>,
-    NativeStackNavigationProp<RootStackParamList>
-  >;
-};
 
 type ThemeOption = 'system' | 'light' | 'dark';
 
@@ -74,9 +63,10 @@ const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
   return 'mlx';
 };
 
-export default function SettingsScreen({ navigation }: SettingsScreenProps) {
+export default function SettingsScreen() {
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
+  const router = useRouter();
   const parameterEngines: EngineId[] = Platform.OS === 'ios'
     ? ['llama', 'mlx', 'litert']
     : ['llama', 'litert'];
@@ -475,32 +465,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           label: 'Sign In',
           onPress: () => {
             hideDialog();
-            navigation.navigate('Login', {
-              redirectTo: 'MainTabs',
-              redirectParams: {
-                screen: 'ModelTab',
-                params: {
-                  autoEnableRemoteModels: true,
-                  openRemoteTab: true,
-                },
-              }
-            });
+            router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/models' } });
           }
         },
         {
           label: 'Sign Up',
           onPress: () => {
             hideDialog();
-            navigation.navigate('Register', {
-              redirectTo: 'MainTabs',
-              redirectParams: {
-                screen: 'ModelTab',
-                params: {
-                  autoEnableRemoteModels: true,
-                  openRemoteTab: true,
-                },
-              }
-            });
+            router.push({ pathname: '/register', params: { redirectTo: '/(tabs)/models' } });
           }
         }
       );
@@ -517,7 +489,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             label: 'Go to Profile',
             onPress: () => {
               hideDialog();
-              navigation.navigate('Profile');
+              router.push('/profile');
             }
           },
           { label: 'Cancel', onPress: hideDialog }
@@ -529,16 +501,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     const result = await toggleRemoteModels();
     if (!result.success) {
       if (result.requiresLogin) {
-        navigation.navigate('Login', {
-          redirectTo: 'MainTabs',
-          redirectParams: {
-            screen: 'ModelTab',
-            params: {
-              autoEnableRemoteModels: true,
-              openRemoteTab: true,
-            },
-          }
-        });
+        router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/models' } });
       } else if (result.emailNotVerified) {
         showDialog(
           'Email Verification Required',
@@ -547,7 +510,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             label: 'Go to Profile',
             onPress: () => {
               hideDialog();
-              navigation.navigate('Profile');
+              router.push('/profile');
             }
           },
           { label: 'Cancel', onPress: hideDialog }
@@ -585,12 +548,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         style={styles.headerButton}
         onPress={() => {
           if (isLoggedIn) {
-            navigation.navigate('Profile');
+            router.push('/profile');
           } else {
-            navigation.navigate('Login', {
-              redirectTo: 'MainTabs',
-              redirectParams: { screen: 'SettingsTab' }
-            });
+            router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/settings' } });
           }
         }}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -647,7 +607,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
               iconName: meta.iconName,
               iconKey: meta.iconKey,
               accentColor: meta.accentColor,
-              onPress: () => navigation.navigate(getEngineSettingsRoute(engine)),
+              onPress: () => router.push(getEngineSettingsRoute(engine)),
             };
           })}
         />
@@ -661,8 +621,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
         <SupportSection 
           onOpenLink={openLink} 
-          onNavigateToLicenses={() => navigation.navigate('Licenses')}
-          onNavigateToContentTerms={() => navigation.navigate('ContentTerms')}
+          onNavigateToLicenses={() => router.push('/licenses')}
+          onNavigateToContentTerms={() => router.push('/content-terms')}
         />  
 
         <SystemInfoSection systemInfo={systemInfo} />
