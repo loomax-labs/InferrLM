@@ -11,8 +11,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { useRemoteModel } from '../context/RemoteModelContext';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
@@ -31,15 +30,12 @@ import { isEmailFromTrustedProvider } from '../services/SecurityUtils';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { logger } from '../utils/logger';
 
-type RegisterScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-  route: { params: { redirectTo?: string; redirectParams?: any } };
-};
-
-export default function RegisterScreen({ navigation, route }: RegisterScreenProps) {
+export default function RegisterScreen() {
   const { theme: currentTheme } = useTheme();
   const { checkLoginStatus } = useRemoteModel();
   const themeColors = theme[currentTheme];
+  const router = useRouter();
+  const params = useLocalSearchParams<{ redirectTo?: string }>();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -58,25 +54,10 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   const [termsError, setTermsError] = useState<string | null>(null);
   const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
 
-  const redirectAfterRegister = route.params?.redirectTo || 'MainTabs';
-  const redirectParams = route.params?.redirectParams || { screen: 'HomeTab' };
+  const redirectAfterRegister = params.redirectTo || '/(tabs)';
 
   const navigateAfterAuth = () => {
-    if (redirectAfterRegister === 'MainTabs') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs', params: redirectParams as any }],
-      });
-      return;
-    }
-
-    navigation.reset({
-      index: 1,
-      routes: [
-        { name: 'MainTabs', params: { screen: 'HomeTab' } as any },
-        { name: redirectAfterRegister as any, params: redirectParams as any },
-      ],
-    });
+    router.replace(redirectAfterRegister as any);
   };
 
   const pendingDeletionMessage = (value?: string | null) => {
@@ -322,10 +303,7 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   };
 
   const navigateToLogin = () => {
-    navigation.navigate('Login', {
-      redirectTo: route.params?.redirectTo,
-      redirectParams: route.params?.redirectParams
-    });
+    router.push({ pathname: '/login', params: { redirectTo: params.redirectTo } });
   };
 
   return (
@@ -341,7 +319,7 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
           <View style={styles.headerContainer}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => router.back()}
             >
               <MaterialCommunityIcons 
                 name="arrow-left" 
