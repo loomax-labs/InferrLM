@@ -13,7 +13,7 @@ type EngineSettingsMeta = {
   entryDescription: string;
   badgeLabel: string;
   iconName?: IconName;
-  iconKey?: 'llama-cpp' | 'mlx';
+  iconKey?: 'llama-cpp' | 'mlx' | 'litert';
   accentColor?: string;
   globalSummary: string;
   modelSummary: (modelName: string) => string;
@@ -51,7 +51,8 @@ export const engineSettingsMeta: Record<EngineId, EngineSettingsMeta> = {
     entryLabel: 'LiteRT-LM Settings',
     entryDescription: 'Sampling controls for LiteRT-LM text generation and delegate-backed runtimes.',
     badgeLabel: 'LiteRT',
-    iconName: 'memory',
+    iconKey: 'litert',
+    accentColor: '#4285F4',
     globalSummary: 'Applies to LiteRT-LM models and delegate-backed runtimes.',
     modelSummary: (modelName: string) => `Applies only to ${modelName}.`,
   },
