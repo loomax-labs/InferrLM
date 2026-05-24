@@ -18,9 +18,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ModelSelectorRef } from '../components/ModelSelector';
 import { llamaManager } from '../utils/LlamaManager';
 import AppHeader from '../components/AppHeader';
-import { useFocusEffect, RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import chatManager, { Chat, ChatMessage } from '../utils/ChatManager';
 import ChatView from '../components/chat/ChatView';
 import ChatInput from '../components/chat/ChatInput';
@@ -53,11 +51,6 @@ import { skillManager } from '../services/SkillManager';
 import { homeScreenStyles } from './homeScreenStyles';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
-type HomeScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-  route: RouteProp<TabParamList, 'HomeTab'>;
-};
-
 let hasInitializedChat = false;
 
 const remoteProviders: ProviderType[] = ['gemini', 'chatgpt', 'claude'];
@@ -70,10 +63,12 @@ const isRemoteProvider = (provider: string | null): boolean => {
   return remoteProviders.includes(baseProvider as ProviderType);
 };
 
-export default function HomeScreen({ route, navigation }: HomeScreenProps) {
+export default function HomeScreen() {
   const { theme: currentTheme, selectedTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const { isWideScreen } = useResponsiveLayout();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ loadChatId?: string; modelPath?: string }>();
   const [chat, setChat] = useState<Chat | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const modelSelectorRef = useRef<ModelSelectorRef>(null);
@@ -139,7 +134,6 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
     activeProvider,
     enableRemoteModels,
     isLoggedIn,
-    navigation,
     showDialog,
     hideDialog
   );
@@ -188,7 +182,7 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
 
   useEffect(() => {
     const initializeChat = async () => {
-      const pendingLoadChatId = route.params?.loadChatId || (route.params as any)?.params?.loadChatId;
+      const pendingLoadChatId = params.loadChatId;
       if (pendingLoadChatId) {
         loadChatIdRef.current = pendingLoadChatId;
         isFirstLaunchRef.current = false;
@@ -246,7 +240,7 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
     }
 
     checkSystemMemory();
-  }, [route.params?.modelPath, checkSystemMemory]);
+  }, [params.modelPath, checkSystemMemory]);
 
   useEffect(() => {
     if (activeProvider) return;
@@ -273,7 +267,7 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
 
   useEffect(() => {
     const handleLoadChat = async () => {
-      const loadChatId = route.params?.loadChatId || (route.params as any)?.params?.loadChatId;
+      const loadChatId = params.loadChatId;
 
       if (loadChatId) {
         isLoadingChatRef.current = true;
@@ -291,13 +285,13 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
         } finally {
           isLoadingChatRef.current = false;
           loadChatIdRef.current = null;
-          navigation.setParams({ loadChatId: undefined });
+          router.setParams({ loadChatId: undefined });
         }
       }
     };
 
     handleLoadChat();
-  }, [route.params?.loadChatId, (route.params as any)?.params?.loadChatId, navigation]);
+  }, [params.loadChatId, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -507,7 +501,7 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
         showDialog(
           `${provider} API Quota Exceeded`,
           `Your ${provider} API quota has been exceeded. Please try again later or upgrade your API plan.`,
-          { label: 'Go to Settings', onPress: () => { hideDialog(); navigation.navigate('MainTabs', { screen: 'SettingsTab' }); } },
+          { label: 'Go to Settings', onPress: () => { hideDialog(); router.push('/(tabs)/settings'); } },
           { label: 'OK', onPress: hideDialog }
         );
         return;
@@ -517,7 +511,7 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
         showDialog(
           `${provider} API Authentication Error`,
           `Your ${provider} API key appears to be invalid. Please check your API key in Settings.`,
-          { label: 'Go to Settings', onPress: () => { hideDialog(); navigation.navigate('MainTabs', { screen: 'SettingsTab' }); } },
+          { label: 'Go to Settings', onPress: () => { hideDialog(); router.push('/(tabs)/settings'); } },
           { label: 'OK', onPress: hideDialog }
         );
         return;
@@ -734,9 +728,9 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
       setSelectedModelPath,
       showDialog,
       hideDialog,
-      navigation
+      () => router.push('/(tabs)/settings')
     );
-  }, [isLoading, isRegenerating, enableRemoteModels, isLoggedIn, loadModel, unloadModel, showDialog, hideDialog, navigation]);
+  }, [isLoading, isRegenerating, enableRemoteModels, isLoggedIn, loadModel, unloadModel, showDialog, hideDialog, router]);
 
   useEffect(() => {
     const cleanup = ModelManagementService.setupModelChangeListeners(
@@ -774,7 +768,7 @@ export default function HomeScreen({ route, navigation }: HomeScreenProps) {
             
             <TouchableOpacity
               style={styles.headerButton}
-              onPress={() => navigation.navigate('ChatHistory')}
+              onPress={() => router.push('/chat-history')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <MaterialCommunityIcons name="clock-outline" size={22} color={themeColors.headerText} />
