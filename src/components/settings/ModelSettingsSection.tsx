@@ -146,7 +146,7 @@ const ModelSettingsSection = ({
                   {entry.iconKey === 'llama-cpp' ? (
                     <LlamaCppIcon size={22} />
                   ) : entry.iconKey === 'mlx' ? (
-                    <MlxIcon size={22} color={entryIconColor} />
+                    <MlxIcon size={22} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} secondaryColor={currentTheme === 'dark' ? '#999999' : undefined} />
                   ) : entry.iconKey === 'litert' ? (
                     <LiteRtIcon size={22} />
                   ) : (

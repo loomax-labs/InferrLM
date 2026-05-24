@@ -358,7 +358,7 @@ function EngineSettingsView({ engine }: EngineSettingsProps) {
             {meta.iconKey === 'llama-cpp' ? (
               <LlamaCppIcon size={20} />
             ) : meta.iconKey === 'mlx' ? (
-              <MlxIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary)} />
+              <MlxIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} secondaryColor={currentTheme === 'dark' ? '#999999' : undefined} />
             ) : meta.iconKey === 'litert' ? (
               <LiteRtIcon size={20} />
             ) : (
