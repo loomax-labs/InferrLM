@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { CommonActions } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppHeader from '../components/AppHeader';
@@ -10,15 +9,12 @@ import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { deleteAccount } from '../services/AuthService';
-import { RootStackParamList } from '../types/navigation';
-
-type Props = NativeStackScreenProps<RootStackParamList, 'DeleteAccount'>;
-
-export default function DeleteAccountScreen({ navigation }: Props) {
+export default function DeleteAccountScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
   const { checkLoginStatus } = useRemoteModel();
+  const router = useRouter();
   const [keyword, setKeyword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState('');
@@ -77,12 +73,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
 
   const handleDone = () => {
     setSuccessVisible(false);
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs', params: { screen: 'SettingsTab' } }],
-      })
-    );
+    router.replace('/(tabs)');
   };
 
   return (
@@ -157,7 +148,7 @@ export default function DeleteAccountScreen({ navigation }: Props) {
             <View style={styles.actions}>
               <TouchableOpacity
                 style={[styles.actionButton, styles.outlineActionButton]}
-                onPress={() => navigation.goBack()}
+                onPress={() => router.back()}
                 disabled={isDeleting}
               >
                 <MaterialCommunityIcons name="arrow-left" size={20} color="#FF5252" />

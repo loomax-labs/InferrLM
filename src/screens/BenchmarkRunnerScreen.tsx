@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
@@ -20,15 +20,12 @@ import type { ModelSettings, ModelSettingsConfig } from '../services/ModelSettin
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { benchmarkService } from '../services/BenchmarkService';
 import type { BenchmarkDelta, BenchmarkProgress, BenchmarkResult } from '../types/benchmark';
-import { RootStackParamList } from '../types/navigation';
 import { engineLabels, type EngineId } from '../managers/inference-manager';
 import { engineService } from '../services/runtime-service';
 import { llamaManager } from '../utils/LlamaManager';
 import { useStoredModels } from '../hooks/useStoredModels';
 
 const DEFAULT_PROMPT = 'Explain how transformer attention works in two concise paragraphs.';
-
-type BenchmarkRunnerRouteProp = RouteProp<RootStackParamList, 'Benchmark'>;
 
 const fmt = (value: number, digits = 2) => value.toFixed(digits);
 
@@ -91,10 +88,8 @@ function Counter({
 export default function BenchmarkRunnerScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const route = useRoute<BenchmarkRunnerRouteProp>();
-  const routeModelName = route.params?.modelName;
-  const routeModelPath = route.params?.modelPath;
+  const router = useRouter();
+  const { modelName: routeModelName, modelPath: routeModelPath } = useLocalSearchParams<{ modelName?: string; modelPath?: string }>();
 
   const { storedModels, loadStoredModels } = useStoredModels();
   const [selectedModelName, setSelectedModelName] = useState<string | undefined>(routeModelName);

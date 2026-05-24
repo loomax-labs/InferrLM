@@ -4,25 +4,20 @@ import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFocusEffect, CommonActions } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { getCurrentUser, logoutUser, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeAuth, type UserData } from '../services/AuthService';
 import { getUserFromSecureStorage } from '../services/AuthStorage';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialog } from '../context/DialogContext';
 
-type ProfileScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-};
-
-export default function ProfileScreen({ navigation }: ProfileScreenProps) {
+export default function ProfileScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
   const { checkLoginStatus } = useRemoteModel();
   const { showDialog } = useDialog();
+  const router = useRouter();
   const [userData, setUserData] = useState({
     displayName: '',
     email: '',
@@ -288,7 +283,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
   const handleDeleteAccount = () => {
     setMenuVisible(false);
-    navigation.navigate('DeleteAccount');
+    router.push('/delete-account');
   };
 
   const toggleMenu = () => {
@@ -306,17 +301,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         if (result.success) {
           setMenuVisible(false);
           await checkLoginStatus();
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [
-                {
-                  name: 'MainTabs',
-                  params: { screen: 'SettingsTab' }
-                }
-              ]
-            })
-          );
+          router.replace('/(tabs)');
         } else {
           showDialog({
             title: 'Error',
