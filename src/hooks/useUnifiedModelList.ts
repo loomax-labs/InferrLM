@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { huggingFaceService, HFModel, HFModelDetails } from '../services/HuggingFaceService';
 import { modelDownloader } from '../services/ModelDownloader';
 import { DownloadableModel } from '../components/model/DownloadableModelItem';
@@ -14,7 +14,7 @@ export const useUnifiedModelList = (
   downloadProgress: any,
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  const navigation = useNavigation();
+  const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [hfModels, setHfModels] = useState<HFModel[]>([]);
@@ -245,7 +245,7 @@ export const useUnifiedModelList = (
 
     const { modelId, files } = pendingMLXDownload;
     hideMLXDirDialog();
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     try {
       await modelDownloader.downloadMLXModel(
@@ -269,7 +269,7 @@ export const useUnifiedModelList = (
       return;
     }
 
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     try {
       setDownloadProgress((prev: any) => ({
@@ -309,7 +309,7 @@ export const useUnifiedModelList = (
   };
 
   const proceedWithMultipleDownloads = async (files: any[], modelId: string) => {
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     const downloadPromises = files.map(async (file) => {
       const fullFilename = file.filename;
@@ -366,7 +366,7 @@ export const useUnifiedModelList = (
       return;
     }
 
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     const filesToDownload = [
       { filename: mainFilename, downloadUrl: model.huggingFaceLink }
