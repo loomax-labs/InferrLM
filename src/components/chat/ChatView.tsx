@@ -20,9 +20,7 @@ import MarkdownBoundary from './MarkdownBoundary';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import chatManager from '../../utils/ChatManager';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types/navigation';
+import { useRouter } from 'expo-router';
 import * as MediaLibrary from 'expo-media-library';
 
 export type Message = {
@@ -105,7 +103,7 @@ export default function ChatView({
 }: ChatViewProps) {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
@@ -139,11 +137,8 @@ export default function ChatView({
   }, [chatId, messages]);
 
   const openReportDialog = useCallback((messageContent: string, provider: string) => {
-    navigation.navigate('Report', {
-      messageContent,
-      provider
-    });
-  }, [navigation]);
+    router.push({ pathname: '/report', params: { messageContent, provider } });
+  }, [router]);
 
   const openImageViewer = useCallback((imageUri: string) => {
     setImgViewSize(null);

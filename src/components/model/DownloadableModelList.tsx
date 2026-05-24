@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import DownloadableModelItem, { DownloadableModel } from './DownloadableModelItem';
 import { modelDownloader } from '../../services/ModelDownloader';
 import Dialog from '../Dialog';
@@ -20,7 +20,7 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
   setDownloadProgress,
   onDownload
 }) => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const [initializingDownloads, setInitializingDownloads] = useState<{ [key: string]: boolean }>({});
 
 
@@ -90,7 +90,7 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
       return;
     }
 
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
     
     const filesToDownload = [
       { filename: mainFilename, downloadUrl: model.huggingFaceLink }
