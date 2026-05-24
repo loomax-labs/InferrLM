@@ -26,9 +26,7 @@ import { llamaManager } from '../utils/LlamaManager';
 import { Portal, Text } from 'react-native-paper';
 import Dialog from './Dialog';
 import Slider from '@react-native-community/slider';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter } from 'expo-router';
 import { appleFoundationService } from '../services/AppleFoundationService';
 import type { ProviderType } from '../services/ModelManagementService';
 import { LLAMA_INIT_CONFIG } from '../config/llamaConfig';
@@ -110,12 +108,11 @@ const hasCompleteMlxPackage = (files: StoredModel[]) => {
 };
 
 const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorProps>(
-  ({ isOpen, onClose, preselectedModelPath, isGenerating, onModelSelect, navigation: propNavigation }, ref) => {
+  ({ isOpen, onClose, preselectedModelPath, isGenerating, onModelSelect }, ref) => {
     const { theme: currentTheme } = useTheme();
     const themeColors = theme[currentTheme as ThemeColors];
     const { enableRemoteModels, isLoggedIn } = useRemoteModel();
-    const defaultNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const navigation = propNavigation || defaultNavigation;
+    const router = useRouter();
     const [modalVisible, setModalVisible] = useState(false);
     const { storedModels: models, isLoading: isLoadingLocalModels, isRefreshing: isRefreshingLocalModels, refreshStoredModels } = useStoredModels();
     const { selectedModelPath, selectedProjectorPath, isModelLoading, loadModel, unloadModel, unloadProjector, isMultimodalEnabled } = useModel();
@@ -488,7 +485,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
               showDialog(
                 'Remote Models Disabled',
                 'Remote models require the "Enable Remote Models" setting to be turned on and you need to be signed in. Would you like to go to Settings to configure this?',
-                { label: 'Go to Settings', onPress: () => { hideDialog(); if (onClose) onClose(); navigation.navigate('MainTabs', { screen: 'SettingsTab' }); } },
+                { label: 'Go to Settings', onPress: () => { hideDialog(); if (onClose) onClose(); router.push('/(tabs)/settings'); } },
                 { label: 'Cancel', onPress: hideDialog }
               );
             }, 300);
