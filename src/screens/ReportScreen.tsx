@@ -17,20 +17,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { fs as FileSystem } from '../services/fs';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { submitReport } from '../services/ReportService';
-import { getCurrentUser } from '../services/AuthService';
-
-type ReportScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Report'>;
-  route: {
-    params: {
-      messageContent: string;
-      provider: string;
-    };
-  };
-};
 
 const REPORT_CATEGORIES = [
   { id: 'harmful', label: 'Harmful or unsafe content' },
@@ -42,8 +30,9 @@ const REPORT_CATEGORIES = [
   { id: 'other', label: 'Other' },
 ];
 
-export default function ReportScreen({ navigation, route }: ReportScreenProps) {
-  const { messageContent, provider } = route.params;
+export default function ReportScreen() {
+  const router = useRouter();
+  const { messageContent, provider } = useLocalSearchParams<{ messageContent: string; provider: string }>();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   
@@ -202,7 +191,7 @@ export default function ReportScreen({ navigation, route }: ReportScreenProps) {
         <View style={[styles.header, { borderBottomColor: themeColors.borderColor }]}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => router.back()}
           >
             <MaterialCommunityIcons
               name="arrow-left"
@@ -375,14 +364,14 @@ export default function ReportScreen({ navigation, route }: ReportScreenProps) {
         visible={showSuccessDialog}
         onDismiss={() => {
           setShowSuccessDialog(false);
-          navigation.goBack();
+          router.back();
         }}
         title="Report Submitted"
         description="Thank you for your report. I will review it and take appropriate action."
         buttonText="OK"
         onClose={() => {
           setShowSuccessDialog(false);
-          navigation.goBack();
+          router.back();
         }}
       />
     </SafeAreaView>

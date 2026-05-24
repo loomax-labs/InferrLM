@@ -3,13 +3,11 @@ import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Alert, Switch, Cl
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCodeStyled from 'react-native-qrcode-styled';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
-import { RootStackParamList } from '../types/navigation';
 import AppHeader from '../components/AppHeader';
 import SettingsSection from '../components/settings/SettingsSection';
 import { localServer } from '../services/LocalServer';
@@ -44,7 +42,7 @@ const parsePortFromURL = (value?: string) => {
 export default function LocalServerScreen() {
   const { theme: currentTheme } = useTheme();
   const { isLoggedIn } = useRemoteModel();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
 
@@ -334,12 +332,9 @@ export default function LocalServerScreen() {
         style={styles.headerButton}
         onPress={() => {
           if (isLoggedIn) {
-            navigation.navigate('Profile');
+            router.push('/profile');
           } else {
-            navigation.navigate('Login', {
-              redirectTo: 'MainTabs',
-              redirectParams: { screen: 'BenchmarkTab' }
-            });
+            router.push({ pathname: '/login', params: { redirectTo: '/(tabs)' } });
           }
         }}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -486,7 +481,7 @@ export default function LocalServerScreen() {
         <SettingsSection title="LOGS">
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => navigation.navigate('ServerLogs')}
+            onPress={() => router.push('/server-logs')}
           >
             <View style={styles.settingLeft}>
               <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
@@ -576,7 +571,7 @@ export default function LocalServerScreen() {
         <SettingsSection title="HELP">
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => navigation.navigate('APISetup')}
+            onPress={() => router.push('/api-setup')}
           >
             <View style={styles.settingLeft}>
               <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
