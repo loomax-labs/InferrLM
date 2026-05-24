@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import LiteRtIcon from '../components/icons/LiteRtIcon';
 import { useTheme } from '../context/ThemeContext';
 import { getEngineSettingsMeta, getEngineSettingsRoute } from '../config/engineSettings';
 import { theme } from '../constants/theme';
@@ -235,8 +236,8 @@ export default function ModelSettingsScreen() {
           <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}> 
             <View style={styles.backendHeader}>
               <View style={styles.settingLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : getThemeAwareColor('#005b99', currentTheme) + '20' }]}> 
-                  <MaterialCommunityIcons name="memory" size={22} color={currentTheme === 'dark' ? '#FFFFFF' : getThemeAwareColor('#005b99', currentTheme)} />
+                <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0,0,0,0.06)' }]}>
+                  <LiteRtIcon size={22} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} />
                 </View>
                 <View style={styles.settingTextContainer}>
                   <Text style={[styles.settingText, { color: themeColors.text }]}> 
