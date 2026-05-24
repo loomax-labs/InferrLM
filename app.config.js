@@ -66,7 +66,6 @@ export default {
       },
       package: "com.gorai.ragionare",
       runtimeVersion: "0.8.7",
-      edgeToEdgeEnabled: true,
       resizeableActivity: true,
       supportsFreeform: true,
       permissions: [
