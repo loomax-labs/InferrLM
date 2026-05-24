@@ -23,7 +23,7 @@ export default {
       supportsTablet: true,
       requireFullScreen: false,
       bundleIdentifier: "com.gorai.inferra",
-      appleTeamId: "8TK59W9DZP",
+      appleTeamId: "GXKD77CCQ6",
       buildNumber: "293",
       runtimeVersion: "0.8.7",
       infoPlist: {
@@ -121,6 +121,8 @@ export default {
     },
     plugins: [
       "@inferrlm/react-native-litert-lm",
+      "expo-sharing",
+      "expo-status-bar",
       "expo-font",
       "expo-web-browser",
       "expo-asset",
@@ -146,6 +148,7 @@ export default {
           }
         }
       ],
+      "./app.plugin",
       [
         "expo-splash-screen",
         {
