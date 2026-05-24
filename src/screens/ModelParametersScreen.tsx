@@ -6,9 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, Text, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useFocusEffect } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { llamaManager } from '../utils/LlamaManager';
@@ -49,12 +47,11 @@ type DialogSettingConfig = {
   onSave?: (value: number) => Promise<void> | void;
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ModelParameters'>;
-
-export default function ModelParametersScreen({ navigation, route }: Props) {
+export default function ModelParametersScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const modelName = route.params?.modelName;
+  const router = useRouter();
+  const { modelName } = useLocalSearchParams<{ modelName?: string }>();
   const isPerModel = !!modelName;
 
   const [settings, setSettings] = useState<ModelSettings>(
@@ -241,7 +238,7 @@ export default function ModelParametersScreen({ navigation, route }: Props) {
               leftComponent={
                 <TouchableOpacity
                   style={styles.backButton}
-                  onPress={() => navigation.goBack()}
+                  onPress={() => router.back()}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <MaterialCommunityIcons name="arrow-left" size={24} color={themeColors.headerText} />
