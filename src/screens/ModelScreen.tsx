@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -21,19 +18,11 @@ import { getActiveDownloadsCount } from '../utils/ModelUtils';
 import { StoredModel } from '../services/ModelDownloaderTypes';
 
 
-type ModelScreenProps = {
-  navigation: CompositeNavigationProp<
-    BottomTabNavigationProp<TabParamList, 'ModelTab'>,
-    NativeStackNavigationProp<RootStackParamList>
-  >;
-  route?: {
-    params?: TabParamList['ModelTab'];
-  };
-};
-
-export default function ModelScreen({ navigation, route }: ModelScreenProps) {
+export default function ModelScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
+  const router = useRouter();
+  const params = useLocalSearchParams<{ autoEnableRemoteModels?: string; openRemoteTab?: string }>();
   
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -43,7 +32,12 @@ export default function ModelScreen({ navigation, route }: ModelScreenProps) {
   const [dialogSecondaryText, setDialogSecondaryText] = useState<string | undefined>(undefined);
   const [dialogSecondaryPress, setDialogSecondaryPress] = useState<(() => void) | undefined>(undefined);
 
-  const logic = useModelScreenLogic(navigation, route?.params);
+  const routeParams = {
+    autoEnableRemoteModels: params.autoEnableRemoteModels === 'true',
+    openRemoteTab: params.openRemoteTab === 'true',
+  };
+
+  const logic = useModelScreenLogic(routeParams);
 
   const hideDialog = () => setDialogVisible(false);
 
@@ -60,12 +54,9 @@ export default function ModelScreen({ navigation, route }: ModelScreenProps) {
 
   const handleProfilePress = () => {
     if (logic.isLoggedIn) {
-      navigation.navigate('Profile');
+      router.push('/profile');
     } else {
-      navigation.navigate('Login', {
-        redirectTo: 'MainTabs',
-        redirectParams: { screen: 'ModelTab' }
-      });
+      router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/models' } });
     }
   };
 
@@ -121,7 +112,7 @@ export default function ModelScreen({ navigation, route }: ModelScreenProps) {
       >
         <TouchableOpacity
           style={[styles.floatingButtonContent, { backgroundColor: themeColors.primary }]}
-          onPress={() => navigation.navigate('Downloads')}
+          onPress={() => router.push('/downloads')}
         >
           <MaterialCommunityIcons name="cloud-download" size={24} color={themeColors.headerText} />
           <View style={styles.downloadCount}>
@@ -165,7 +156,6 @@ export default function ModelScreen({ navigation, route }: ModelScreenProps) {
               storedModels={logic.storedModels}
               downloadProgress={logic.downloadProgress}
               setDownloadProgress={logic.setDownloadProgress}
-              navigation={navigation}
               onCustomDownload={logic.handleCustomDownload}
             />
           </View>
