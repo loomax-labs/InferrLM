@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
+import InferenceIcon from '../icons/InferenceIcon';
 
 interface RuntimeProps {
   enabled: Record<EngineId, boolean>;
@@ -119,7 +120,7 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
       >
         <View style={styles.settingLeft}>
           <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="engine" size={22} color={iconColor} />
+            <InferenceIcon size={22} color={iconColor} />
           </View>
           <View style={styles.settingTextContainer}>
             <Text style={[styles.settingText, { color: themeColors.text }]}>Inference</Text>
