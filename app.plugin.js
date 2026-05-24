@@ -16,6 +16,37 @@ function disableDeterministicPodUuids(contents) {
   return contents.replace(anchor, `${line}\n\n${anchor}`);
 }
 
+function injectSpmRootFix(contents) {
+  const block = [
+    'class SPMManager',
+    '  unless method_defined?(:inferrlm_add_spm_to_target)',
+    '    alias_method :inferrlm_add_spm_to_target, :add_spm_to_target',
+    '',
+    '    def add_spm_to_target(project, target, url, requirement, products)',
+    '      root = project.root_object',
+    '      if root && project.objects_by_uuid[root.uuid] != root',
+    '        root.add_referrer(project)',
+    '      end',
+    '',
+    '      inferrlm_add_spm_to_target(project, target, url, requirement, products)',
+    '    end',
+    '  end',
+    'end',
+  ].join('\n');
+
+  if (contents.includes('alias_method :inferrlm_add_spm_to_target, :add_spm_to_target')) {
+    return contents;
+  }
+
+  const anchor = 'prepare_react_native_project!';
+
+  if (!contents.includes(anchor)) {
+    return contents;
+  }
+
+  return contents.replace(anchor, `${block}\n\n${anchor}`);
+}
+
 function stripProjectBuildSettings(project) {
   const section = project.pbxXCBuildConfigurationSection();
 
@@ -41,6 +72,7 @@ function stripProjectBuildSettings(project) {
 function withIos(config) {
   config = withPodfile(config, (modConfig) => {
     modConfig.modResults.contents = disableDeterministicPodUuids(modConfig.modResults.contents);
+    modConfig.modResults.contents = injectSpmRootFix(modConfig.modResults.contents);
     return modConfig;
   });
 
@@ -51,3 +83,7 @@ function withIos(config) {
 }
 
 module.exports = withIos;
+module.exports._helpers = {
+  disableDeterministicPodUuids,
+  injectSpmRootFix,
+};
