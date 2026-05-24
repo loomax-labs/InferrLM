@@ -7,6 +7,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
 import InferenceIcon from '../icons/InferenceIcon';
+import LlamaCppIcon from '../icons/LlamaCppIcon';
+import MlxIcon from '../icons/MlxIcon';
+import LiteRtIcon from '../icons/LiteRtIcon';
 
 interface RuntimeProps {
   enabled: Record<EngineId, boolean>;
@@ -62,6 +65,15 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
           isDisabled && styles.engineItemDisabled,
         ]}
       >
+        <View style={[styles.engineIconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)' }]}>
+          {engine.id === 'llama' ? (
+            <LlamaCppIcon size={20} />
+          ) : engine.id === 'mlx' ? (
+            <MlxIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} secondaryColor={currentTheme === 'dark' ? '#999999' : undefined} />
+          ) : (
+            <LiteRtIcon size={20} />
+          )}
+        </View>
         <View style={styles.engineInfo}>
           <View style={styles.engineHeader}>
             <Text
@@ -229,6 +241,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 12,
+  },
+  engineIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   engineItemDisabled: {
     opacity: 0.5,
