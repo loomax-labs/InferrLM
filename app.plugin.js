@@ -18,23 +18,25 @@ function disableDeterministicPodUuids(contents) {
 
 function injectSpmRootFix(contents) {
   const block = [
-    'class SPMManager',
-    '  unless method_defined?(:inferrlm_add_spm_to_target)',
-    '    alias_method :inferrlm_add_spm_to_target, :add_spm_to_target',
+    'if defined?(::SPMManager) && ::SPMManager.instance_methods.include?(:add_spm_to_target)',
+    '  ::SPMManager.class_eval do',
+    '    unless method_defined?(:inferrlm_add_spm_to_target)',
+    '      alias_method :inferrlm_add_spm_to_target, :add_spm_to_target',
     '',
-    '    def add_spm_to_target(project, target, url, requirement, products)',
-    '      root = project.root_object',
-    '      if root && project.objects_by_uuid[root.uuid] != root',
-    '        root.add_referrer(project)',
+    '      def add_spm_to_target(project, target, url, requirement, products)',
+    '        root = project.root_object',
+    '        if root && project.objects_by_uuid[root.uuid] != root',
+    '          root.add_referrer(project)',
+    '        end',
+    '',
+    '        inferrlm_add_spm_to_target(project, target, url, requirement, products)',
     '      end',
-    '',
-    '      inferrlm_add_spm_to_target(project, target, url, requirement, products)',
     '    end',
     '  end',
     'end',
   ].join('\n');
 
-  if (contents.includes('alias_method :inferrlm_add_spm_to_target, :add_spm_to_target')) {
+  if (contents.includes('::SPMManager.class_eval do')) {
     return contents;
   }
 
