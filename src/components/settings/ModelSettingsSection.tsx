@@ -146,7 +146,7 @@ const ModelSettingsSection = ({
                   ) : entry.iconKey === 'mlx' ? (
                     <MlxIcon size={22} color={entryIconColor} />
                   ) : entry.iconKey === 'litert' ? (
-                    <LiteRtIcon size={22} color={entryIconColor} />
+                    <LiteRtIcon size={22} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} />
                   ) : (
                     <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
                   )}
