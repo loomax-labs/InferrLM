@@ -237,7 +237,7 @@ export default function ModelSettingsScreen() {
             <View style={styles.backendHeader}>
               <View style={styles.settingLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0,0,0,0.06)' }]}>
-                  <LiteRtIcon size={22} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} />
+                  <LiteRtIcon size={22} />
                 </View>
                 <View style={styles.settingTextContainer}>
                   <Text style={[styles.settingText, { color: themeColors.text }]}> 
