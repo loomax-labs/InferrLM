@@ -144,7 +144,7 @@ const ModelSettingsSection = ({
               <View style={styles.settingLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: entryIconBackground }]}> 
                   {entry.iconKey === 'llama-cpp' ? (
-                    <LlamaCppIcon size={22} color={entryIconColor} />
+                    <LlamaCppIcon size={22} />
                   ) : entry.iconKey === 'mlx' ? (
                     <MlxIcon size={22} color={entryIconColor} />
                   ) : entry.iconKey === 'litert' ? (
