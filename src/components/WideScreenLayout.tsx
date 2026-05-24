@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ModelScreen from '../screens/ModelScreen';
@@ -30,12 +30,11 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
   const { fonts } = OpenSansFont();
   const { screenWidth } = useResponsiveLayout();
   const [activeTab, setActiveTab] = useState<TabType>('models');
-  const navigation = useNavigation();
-  const route = useRoute();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ screen?: string; params?: string }>();
 
-  const routeParams = (route as any)?.params as { screen?: string; params?: any } | undefined;
-  const targetScreen = routeParams?.screen;
-  const modelRoute = targetScreen === 'ModelTab' ? { params: routeParams?.params } : undefined;
+  const targetScreen = params?.screen;
+  const modelRoute = targetScreen === 'ModelTab' ? { params: params?.params ? JSON.parse(params.params as string) : undefined } : undefined;
 
   const [sidebarWidth, setSidebarWidth] = useState(screenWidth * 0.45);
   const [isDragging, setIsDragging] = useState(false);
@@ -183,13 +182,13 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
   const renderSidebarContent = () => {
     switch (activeTab) {
       case 'models':
-        return <ModelScreen navigation={navigation as any} route={modelRoute as any} />;
+        return <ModelScreen />;
       case 'benchmark':
         return <BenchmarkScreen />;
       case 'settings':
-        return <SettingsScreen navigation={navigation as any} />;
+        return <SettingsScreen />;
       default:
-        return <ModelScreen navigation={navigation as any} route={modelRoute as any} />;
+        return <ModelScreen />;
     }
   };
 
@@ -279,7 +278,7 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
             backgroundColor: themeColors.background,
           }
         ]}>
-          <HomeScreen navigation={navigation as any} route={route as any} />
+          <HomeScreen />
         </View>
       </View>
     </LayoutProvider>
