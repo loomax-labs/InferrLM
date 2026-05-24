@@ -9,9 +9,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter } from 'expo-router';
 import chatManager, { Chat } from '../utils/ChatManager';
 import AppHeader from '../components/AppHeader';
 import { Text } from 'react-native-paper';
@@ -23,7 +21,7 @@ const PAGE_SIZE = 15;
 export default function ChatHistoryScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
 
   const allChatsRef = useRef<Chat[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -78,18 +76,7 @@ export default function ChatHistoryScreen() {
       await chatManager.flushPendingSaves();
       const latest = chatManager.getLatestBranch(chatId);
       const targetId = latest?.id ?? chatId;
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'MainTabs',
-            params: {
-              screen: 'HomeTab',
-              params: { loadChatId: targetId },
-            },
-          },
-        ],
-      });
+      router.replace({ pathname: '/(tabs)', params: { loadChatId: targetId } });
     } catch (error) {
       showDialog('Error', 'Failed to load selected chat');
     }
@@ -138,7 +125,7 @@ export default function ChatHistoryScreen() {
 
   const handleCreateNewChat = async () => {
     await chatManager.createNewChat();
-    navigation.navigate('MainTabs', { screen: 'HomeTab' });
+    router.replace('/(tabs)');
   };
 
   const renderItem = ({ item }: { item: Chat }) => {

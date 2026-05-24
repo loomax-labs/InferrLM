@@ -1,12 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, RefreshControl, Switch, Clipboard } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { RootStackParamList } from '../types/navigation';
 import AppHeader from '../components/AppHeader';
 import { logger } from '../utils/logger';
 import type { LogMetadata } from '../utils/logger';
@@ -22,7 +20,7 @@ interface LogEntry {
 
 export default function ServerLogsScreen() {
   const { theme: currentTheme } = useTheme();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -292,7 +290,7 @@ export default function ServerLogsScreen() {
       <AppHeader
         title="Server Logs"
         showBackButton
-        onBackPress={() => navigation.goBack()}
+        onBackPress={() => router.back()}
         rightButtons={
           <View style={s.headerBtns}>
             <TouchableOpacity
