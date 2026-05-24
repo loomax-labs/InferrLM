@@ -158,13 +158,6 @@ const ModelSettingsSection = ({
                     <Text style={[styles.settingText, { color: themeColors.text }]}> 
                       {entry.label}
                     </Text>
-                    {entry.badgeLabel ? (
-                      <View style={[styles.advancedTag, { backgroundColor: entryIconBackground }]}> 
-                        <Text style={[styles.advancedTagText, { color: entryIconColor }]}> 
-                          {entry.badgeLabel}
-                        </Text>
-                      </View>
-                    ) : null}
                   </View>
                   <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
                     {entry.description}
