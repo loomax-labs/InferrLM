@@ -1,13 +1,6 @@
 import { StyleSheet, Text, View, TextInput, FlatList } from 'react-native';
 import { useState } from 'react';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
-
-type SearchScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Search'>;
-};
-
-export default function SearchScreen({ navigation }: SearchScreenProps) {
+export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [results] = useState([
     { id: '1', title: 'Result 1' },
