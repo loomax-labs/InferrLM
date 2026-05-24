@@ -234,9 +234,9 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if (route.params?.modelPath) {
+    if (params.modelPath) {
       setShouldOpenModelSelector(true);
-      setPreselectedModelPath(route.params.modelPath);
+      setPreselectedModelPath(params.modelPath);
     }
 
     checkSystemMemory();
