@@ -64,7 +64,6 @@ function stripProjectBuildSettings(project) {
       continue;
     }
 
-    delete buildSettings.SDKROOT;
     delete buildSettings.LIBRARY_SEARCH_PATHS;
   }
 
