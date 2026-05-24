@@ -11,8 +11,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { useRemoteModel } from '../context/RemoteModelContext';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -28,15 +27,12 @@ import { loginWithEmail, restorePendingAccount, signInWithGoogle, signInWithAppl
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { logger } from '../utils/logger';
 
-type LoginScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-  route: { params: { redirectTo?: string; redirectParams?: any } };
-};
-
-export default function LoginScreen({ navigation, route }: LoginScreenProps) {
+export default function LoginScreen() {
   const { theme: currentTheme } = useTheme();
   const { checkLoginStatus } = useRemoteModel();
   const themeColors = theme[currentTheme];
+  const router = useRouter();
+  const params = useLocalSearchParams<{ redirectTo?: string; redirectParams?: string }>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,32 +46,14 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
   const [scheduledDeletionAt, setScheduledDeletionAt] = useState<string | null>(null);
   const [restoreProvider, setRestoreProvider] = useState<'email' | 'google' | 'apple'>('email');
 
-  const redirectAfterLogin = route.params?.redirectTo || 'MainTabs';
-  const redirectParams = route.params?.redirectParams || { screen: 'HomeTab' };
+  const redirectAfterLogin = params.redirectTo || '/(tabs)';
 
   const navigateAfterAuth = () => {
-    if (redirectAfterLogin === 'MainTabs') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs', params: redirectParams as any }],
-      });
-      return;
-    }
-
-    navigation.reset({
-      index: 1,
-      routes: [
-        { name: 'MainTabs', params: { screen: 'HomeTab' } as any },
-        { name: redirectAfterLogin as any, params: redirectParams as any },
-      ],
-    });
+    router.replace(redirectAfterLogin as any);
   };
 
   const navigateToRegister = () => {
-    navigation.navigate('Register', {
-      redirectTo: route.params?.redirectTo,
-      redirectParams: route.params?.redirectParams
-    });
+    router.push({ pathname: '/register', params: { redirectTo: params.redirectTo } });
   };
 
   const formatDeletionDate = (value?: string | null) => {
@@ -317,7 +295,7 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
           <View style={styles.headerContainer}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => router.back()}
             >
               <MaterialCommunityIcons 
                 name="arrow-left" 
