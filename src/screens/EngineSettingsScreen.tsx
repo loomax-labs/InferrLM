@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RouteProp, useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 
 import AppHeader from '../components/AppHeader';
 import LlamaCppIcon from '../components/icons/LlamaCppIcon';
@@ -33,17 +32,8 @@ import {
   DEFAULT_GPU_LAYERS,
   type GpuSettings,
 } from '../services/GpuSettingsService';
-import { RootStackParamList } from '../types/navigation';
 import { checkGpuSupport, type GpuSupport } from '../utils/gpuCapabilities';
 import { llamaManager } from '../utils/LlamaManager';
-
-type RouteName = 'LlamaCppSettings' | 'MlxSettings' | 'LiteRTSettings';
-type SharedRoute =
-  | RouteProp<RootStackParamList, 'LlamaCppSettings'>
-  | RouteProp<RootStackParamList, 'MlxSettings'>
-  | RouteProp<RootStackParamList, 'LiteRTSettings'>;
-
-type SharedNavigation = NativeStackNavigationProp<RootStackParamList>;
 
 type DialogSettingConfig = {
   key?: keyof ModelSettings;
@@ -59,8 +49,6 @@ type DialogSettingConfig = {
 
 type EngineSettingsProps = {
   engine: EngineId;
-  navigation: SharedNavigation;
-  route: SharedRoute;
 };
 
 const cleanModelName = (value?: string): string =>
@@ -68,12 +56,12 @@ const cleanModelName = (value?: string): string =>
     .replace(/\.(gguf|litertlm|task|safetensors|json)$/i, '')
     .trim();
 
-function EngineSettingsView({ engine, route }: EngineSettingsProps) {
+function EngineSettingsView({ engine }: EngineSettingsProps) {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const meta = getEngineSettingsMeta(engine);
-  const modelName = cleanModelName(route.params?.modelName);
-  const modelPath = route.params?.modelPath;
+  const { modelName: rawModelName, modelPath } = useLocalSearchParams<{ modelName?: string; modelPath?: string }>();
+  const modelName = cleanModelName(rawModelName);
   const isPerModel = Boolean(modelPath);
   const showLlamaHardware = engine === 'llama' && !isPerModel;
 
@@ -561,18 +549,16 @@ function EngineSettingsView({ engine, route }: EngineSettingsProps) {
   );
 }
 
-type RouteProps<T extends RouteName> = NativeStackScreenProps<RootStackParamList, T>;
-
-export function LlamaCppSettingsScreen(props: RouteProps<'LlamaCppSettings'>) {
-  return <EngineSettingsView {...props} engine="llama" />;
+export function LlamaCppSettingsScreen() {
+  return <EngineSettingsView engine="llama" />;
 }
 
-export function MlxSettingsScreen(props: RouteProps<'MlxSettings'>) {
-  return <EngineSettingsView {...props} engine="mlx" />;
+export function MlxSettingsScreen() {
+  return <EngineSettingsView engine="mlx" />;
 }
 
-export function LiteRTSettingsScreen(props: RouteProps<'LiteRTSettings'>) {
-  return <EngineSettingsView {...props} engine="litert" />;
+export function LiteRTSettingsScreen() {
+  return <EngineSettingsView engine="litert" />;
 }
 
 const styles = StyleSheet.create({

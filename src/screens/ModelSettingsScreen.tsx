@@ -31,10 +31,7 @@ import MaxTokensDialog from '../components/MaxTokensDialog';
 import StopWordsDialog from '../components/StopWordsDialog';
 import ModelSettingDialog from '../components/ModelSettingDialog';
 import AppHeader from '../components/AppHeader';
-import { useRoute, useNavigation, RouteProp, NavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation';
-
-type ModelSettingsScreenRouteProp = RouteProp<RootStackParamList, 'ModelSettings'>;
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 type DialogConfig = {
   key?: keyof ModelSettings;
@@ -51,10 +48,8 @@ type DialogConfig = {
 export default function ModelSettingsScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const route = useRoute<ModelSettingsScreenRouteProp>();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  
-  const { modelName, modelPath } = route.params;
+  const router = useRouter();
+  const { modelName, modelPath } = useLocalSearchParams<{ modelName: string; modelPath: string }>();
   
   const [modelSettingsConfig, setModelSettingsConfig] = useState<ModelSettingsConfig>({
     useGlobalSettings: true,
@@ -347,10 +342,7 @@ export default function ModelSettingsScreen() {
                     iconName: settingsMeta.iconName,
                     iconKey: settingsMeta.iconKey,
                     accentColor: settingsMeta.accentColor,
-                    onPress: () => navigation.navigate(getEngineSettingsRoute(benchmarkEngine), {
-                      modelName,
-                      modelPath,
-                    }),
+                    onPress: () => router.push({ pathname: getEngineSettingsRoute(benchmarkEngine), params: { modelName, modelPath } }),
                   },
                 ]}
               />
