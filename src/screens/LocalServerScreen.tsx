@@ -5,8 +5,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCodeStyled from 'react-native-qrcode-styled';
 import { useRouter } from 'expo-router';
 import Dialog from '../components/Dialog';
-import { useTheme } from '../context/ThemeContext';
-import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
 import SettingsSection from '../components/settings/SettingsSection';
@@ -41,7 +39,6 @@ const parsePortFromURL = (value?: string) => {
 
 export default function LocalServerScreen() {
   const { theme: currentTheme } = useTheme();
-  const { isLoggedIn } = useRemoteModel();
   const router = useRouter();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
@@ -326,33 +323,10 @@ export default function LocalServerScreen() {
     return `${minutes}m`;
   };
 
-  const ProfileButton = () => {
-    return (
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={() => {
-          if (isLoggedIn) {
-            router.push('/profile');
-          } else {
-            router.push({ pathname: '/login', params: { redirectTo: '/(tabs)' } });
-          }
-        }}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <MaterialCommunityIcons
-          name={isLoggedIn ? "account-circle" : "login"}
-          size={22}
-          color={themeColors.headerText}
-        />
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       <AppHeader
         title="Server"
-        rightButtons={<ProfileButton />}
       />
 
       <ScrollView
@@ -662,14 +636,6 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     marginHorizontal: 16,
-  },
-  headerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   qrDisplayContainer: {
     alignItems: 'center',
