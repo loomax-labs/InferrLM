@@ -116,28 +116,18 @@ export default function TabLayout() {
   const { isWideScreen } = useResponsiveLayout();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
 
   if (isWideScreen) {
     return <WideScreenLayout />;
   }
 
-  const isIOS = Platform.OS === 'ios';
-
-  return (
-    <Tabs
-      backBehavior="history"
-      tabBar={isIOS ? undefined : props => <CustomTabBar {...props} />}
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        freezeOnBlur: false,
-        ...(isIOS && {
+  if (Platform.OS === 'ios') {
+    return (
+      <Tabs
+        backBehavior="history"
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          freezeOnBlur: false,
           tabBarActiveTintColor: themeColors.tabBarActiveText,
           tabBarInactiveTintColor: themeColors.tabBarInactiveText,
           tabBarStyle: {
@@ -168,8 +158,24 @@ export default function TabLayout() {
             }
             return <MaterialCommunityIcons name={iconName as any} size={24} color={color} />;
           },
-        }),
-      })}
+        })}
+      >
+        <Tabs.Screen name="index" options={{ tabBarLabel: 'Chat' }} />
+        <Tabs.Screen name="models" options={{ tabBarLabel: 'Models' }} />
+        <Tabs.Screen name="tools" options={{ tabBarLabel: 'Tools' }} />
+        <Tabs.Screen name="settings" options={{ tabBarLabel: 'Settings' }} />
+      </Tabs>
+    );
+  }
+
+  return (
+    <Tabs
+      backBehavior="history"
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+        freezeOnBlur: false,
+      }}
     >
       <Tabs.Screen name="index" options={{ tabBarLabel: 'Chat' }} />
       <Tabs.Screen name="models" options={{ tabBarLabel: 'Models' }} />
