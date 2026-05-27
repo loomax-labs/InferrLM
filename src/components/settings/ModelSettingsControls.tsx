@@ -66,9 +66,6 @@ const ModelSettingsControls = ({
           onPress={onStopWordsPress}
         >
           <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
-              <MaterialCommunityIcons name="stop-circle-outline" size={22} color={iconColor} />
-            </View>
             <View style={styles.settingTextContainer}>
               <View style={styles.labelRow}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}> 
@@ -105,9 +102,6 @@ const ModelSettingsControls = ({
       {showJinja ? (
         <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
-              <MaterialCommunityIcons name="code-braces" size={22} color={iconColor} />
-            </View>
             <View style={styles.settingTextContainer}>
               <Text style={[styles.settingText, { color: themeColors.text }]}> 
                 Jinja Templating
@@ -135,9 +129,6 @@ const ModelSettingsControls = ({
           onPress={onGrammarDialogOpen}
         >
           <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
-              <MaterialCommunityIcons name="format-text" size={22} color={iconColor} />
-            </View>
             <View style={styles.settingTextContainer}>
               <View style={styles.labelRow}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}> 
@@ -162,9 +153,6 @@ const ModelSettingsControls = ({
       {showEnableThinking ? (
         <View style={[styles.settingItem, styles.settingItemBorder]}>
           <View style={styles.settingLeft}>
-            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
-              <MaterialCommunityIcons name="brain" size={22} color={iconColor} />
-            </View>
             <View style={styles.settingTextContainer}>
               <Text style={[styles.settingText, { color: themeColors.text }]}> 
                 Enable Thinking
@@ -214,14 +202,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
   },
   settingTextContainer: {
     flex: 1,

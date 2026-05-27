@@ -45,9 +45,6 @@ const ModelSettingsAdvanced = ({
         onPress={onNProbsDialogOpen}
       >
         <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="chart-line" size={22} color={iconColor} />
-          </View>
           <View style={styles.settingTextContainer}>
             <View style={styles.labelRow}>
               <Text style={[styles.settingText, { color: themeColors.text }]}>
@@ -82,9 +79,6 @@ const ModelSettingsAdvanced = ({
         onPress={onSeedDialogOpen}
       >
         <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="dice-multiple" size={22} color={iconColor} />
-          </View>
           <View style={styles.settingTextContainer}>
             <View style={styles.labelRow}>
               <Text style={[styles.settingText, { color: themeColors.text }]}>
@@ -120,9 +114,6 @@ const ModelSettingsAdvanced = ({
 
       <View style={[styles.settingItem, styles.settingItemBorder]}>
         <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="infinity" size={22} color={iconColor} />
-          </View>
           <View style={styles.settingTextContainer}>
             <Text style={[styles.settingText, { color: themeColors.text }]}>
               Ignore End of Stream
@@ -145,9 +136,6 @@ const ModelSettingsAdvanced = ({
         onPress={onLogitBiasDialogOpen}
       >
         <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="tune" size={22} color={iconColor} />
-          </View>
           <View style={styles.settingTextContainer}>
             <View style={styles.labelRow}>
               <Text style={[styles.settingText, { color: themeColors.text }]}>
@@ -199,14 +187,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
   },
   settingTextContainer: {
     flex: 1,

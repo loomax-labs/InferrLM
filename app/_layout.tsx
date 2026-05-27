@@ -131,7 +131,9 @@ function InnerLayout() {
     notificationService.initialize().catch(() => {});
 
     return () => {
-      BackgroundTask.unregisterTaskAsync(BACKGROUND_DOWNLOAD_TASK).catch(() => {});
+      TaskManager.isTaskRegisteredAsync(BACKGROUND_DOWNLOAD_TASK).then((registered) => {
+        if (registered) BackgroundTask.unregisterTaskAsync(BACKGROUND_DOWNLOAD_TASK).catch(() => {});
+      }).catch(() => {});
     };
   }, []);
 
