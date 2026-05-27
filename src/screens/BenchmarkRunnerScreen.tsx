@@ -293,19 +293,6 @@ export default function BenchmarkRunnerScreen() {
         title="Benchmark"
         showBackButton
         showLogo={false}
-        rightButtons={
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedModelName(undefined);
-              setSelectedModelPath(undefined);
-              setCurrentResult(null);
-              setHistory([]);
-            }}
-            style={{ padding: 8 }}
-          >
-            <MaterialCommunityIcons name="swap-horizontal" size={22} color={themeColors.text} />
-          </TouchableOpacity>
-        }
       />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroCard, { backgroundColor: themeColors.borderColor }]}>
