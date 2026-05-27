@@ -112,58 +112,10 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 }
 
-function IOSTabLayout() {
-  const { theme: currentTheme } = useTheme();
-  const themeColors = theme[currentTheme];
-
-  return (
-    <Tabs
-      backBehavior="history"
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        freezeOnBlur: false,
-        tabBarActiveTintColor: themeColors.tabBarActiveText,
-        tabBarInactiveTintColor: themeColors.tabBarInactiveText,
-        tabBarStyle: {
-          backgroundColor: themeColors.tabBarBackground,
-          borderTopWidth: 0,
-        },
-        tabBarLabelStyle: {
-          fontFamily: 'OpenSans-Medium',
-          fontSize: 12,
-        },
-        tabBarIcon: ({ focused, color }) => {
-          let iconName: string;
-          switch (route.name) {
-            case 'index':
-              iconName = focused ? 'home' : 'home-outline';
-              break;
-            case 'models':
-              iconName = focused ? 'cube' : 'cube-outline';
-              break;
-            case 'tools':
-              iconName = 'tools';
-              break;
-            case 'settings':
-              iconName = focused ? 'cog' : 'cog-outline';
-              break;
-            default:
-              iconName = 'alert-circle';
-          }
-          return <MaterialCommunityIcons name={iconName as any} size={24} color={color} />;
-        },
-      })}
-    >
-      <Tabs.Screen name="index" options={{ tabBarLabel: 'Chat' }} />
-      <Tabs.Screen name="models" options={{ tabBarLabel: 'Models' }} />
-      <Tabs.Screen name="tools" options={{ tabBarLabel: 'Tools' }} />
-      <Tabs.Screen name="settings" options={{ tabBarLabel: 'Settings' }} />
-    </Tabs>
-  );
-}
-
 export default function TabLayout() {
   const { isWideScreen } = useResponsiveLayout();
+  const { theme: currentTheme } = useTheme();
+  const themeColors = theme[currentTheme];
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -176,18 +128,48 @@ export default function TabLayout() {
     return <WideScreenLayout />;
   }
 
-  if (Platform.OS === 'ios') {
-    return <IOSTabLayout />;
-  }
+  const isIOS = Platform.OS === 'ios';
 
   return (
     <Tabs
       backBehavior="history"
-      tabBar={props => <CustomTabBar {...props} />}
-      screenOptions={{
+      tabBar={isIOS ? undefined : props => <CustomTabBar {...props} />}
+      screenOptions={({ route }) => ({
         headerShown: false,
         freezeOnBlur: false,
-      }}
+        ...(isIOS && {
+          tabBarActiveTintColor: themeColors.tabBarActiveText,
+          tabBarInactiveTintColor: themeColors.tabBarInactiveText,
+          tabBarStyle: {
+            backgroundColor: themeColors.tabBarBackground,
+            borderTopWidth: 0,
+          },
+          tabBarLabelStyle: {
+            fontFamily: 'OpenSans-Medium',
+            fontSize: 12,
+          },
+          tabBarIcon: ({ focused, color }: { focused: boolean; color: string }) => {
+            let iconName: string;
+            switch (route.name) {
+              case 'index':
+                iconName = focused ? 'home' : 'home-outline';
+                break;
+              case 'models':
+                iconName = focused ? 'cube' : 'cube-outline';
+                break;
+              case 'tools':
+                iconName = 'tools';
+                break;
+              case 'settings':
+                iconName = focused ? 'cog' : 'cog-outline';
+                break;
+              default:
+                iconName = 'alert-circle';
+            }
+            return <MaterialCommunityIcons name={iconName as any} size={24} color={color} />;
+          },
+        }),
+      })}
     >
       <Tabs.Screen name="index" options={{ tabBarLabel: 'Chat' }} />
       <Tabs.Screen name="models" options={{ tabBarLabel: 'Models' }} />
