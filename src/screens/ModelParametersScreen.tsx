@@ -241,7 +241,7 @@ export default function ModelParametersScreen() {
                   onPress={() => router.back()}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <MaterialCommunityIcons name="arrow-left" size={24} color={themeColors.headerText} />
+                  <MaterialCommunityIcons name="arrow-left" size={24} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
                 </TouchableOpacity>
               }
               rightButtons={[]}
