@@ -5,6 +5,7 @@ import {
   SectionList,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
@@ -292,13 +293,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerButton: {
-    width: 40,
-    height: 40,
+    width: Platform.OS === 'ios' ? 44 : 40,
+    height: Platform.OS === 'ios' ? 44 : 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    marginLeft: 8,
+    borderRadius: Platform.OS === 'ios' ? 0 : 20,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.15)',
+    marginLeft: Platform.OS === 'ios' ? 0 : 8,
   },
   listContent: {
     padding: 12,

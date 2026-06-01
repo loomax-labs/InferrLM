@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, RefreshControl, Switch, Clipboard } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, RefreshControl, Switch, Clipboard, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Dialog from '../components/Dialog';
@@ -417,10 +417,10 @@ const s = StyleSheet.create({
     gap: 8,
   },
   headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    width: Platform.OS === 'ios' ? 44 : 36,
+    height: Platform.OS === 'ios' ? 44 : 36,
+    borderRadius: Platform.OS === 'ios' ? 0 : 18,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
   },
