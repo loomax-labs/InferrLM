@@ -86,7 +86,7 @@ export default function AppHeader({
           </View>
 
           <Text
-            style={[styles.iosTitle, { color: themeColors.text }, fonts.semibold]}
+            style={[styles.iosTitle, { color: themeColors.text }, fonts.bold]}
             numberOfLines={1}
           >
             {title}
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   iosTitle: {
     flex: 3,
     textAlign: 'center',
-    fontSize: 17,
+    fontSize: 20,
     letterSpacing: -0.3,
   },
   iosRight: {
