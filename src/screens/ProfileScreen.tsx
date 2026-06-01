@@ -343,7 +343,7 @@ export default function ProfileScreen() {
             onPress={toggleMenu}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialCommunityIcons name="dots-vertical" size={22} color={themeColors.headerText} />
+            <MaterialCommunityIcons name="dots-vertical" size={22} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
           </TouchableOpacity>
         }
       />

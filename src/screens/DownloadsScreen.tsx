@@ -312,7 +312,7 @@ export default function DownloadsScreen() {
       <MaterialCommunityIcons
         name="close-circle-outline"
         size={22}
-        color={themeColors.headerText}
+        color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText}
       />
     </TouchableOpacity>
   ) : null;

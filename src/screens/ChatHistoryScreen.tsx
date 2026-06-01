@@ -206,7 +206,7 @@ export default function ChatHistoryScreen() {
         onPress={handleCreateNewChat}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <MaterialCommunityIcons name="plus" size={24} color={themeColors.headerText} />
+        <MaterialCommunityIcons name="plus" size={24} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
       </TouchableOpacity>
       
       {chats.length > 0 && (
@@ -215,7 +215,7 @@ export default function ChatHistoryScreen() {
           onPress={handleDeleteAllChats}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <MaterialCommunityIcons name="delete-outline" size={24} color={themeColors.headerText} />
+          <MaterialCommunityIcons name="delete-outline" size={24} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
         </TouchableOpacity>
       )}
     </>
@@ -264,7 +264,7 @@ export default function ChatHistoryScreen() {
                   style={[styles.newChatButtonEmpty, { backgroundColor: themeColors.headerBackground }]}
                   onPress={handleCreateNewChat}
                 >
-                  <MaterialCommunityIcons name="plus" size={20} color={themeColors.headerText} style={styles.newChatIcon} />
+                  <MaterialCommunityIcons name="plus" size={20} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} style={styles.newChatIcon} />
                   <Text style={styles.newChatText}>Start a new chat</Text>
                 </TouchableOpacity>
               </View>

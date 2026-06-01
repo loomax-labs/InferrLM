@@ -29,7 +29,7 @@ export const ModelScreenHeader: React.FC<ModelScreenHeaderProps> = ({
             <MaterialCommunityIcons 
               name={isLoggedIn ? "account-circle" : "login"} 
               size={22} 
-              color={theme[currentTheme].headerText} 
+              color={Platform.OS === 'ios' && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
             />
           </TouchableOpacity>
         </View>
