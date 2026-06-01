@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,6 +8,9 @@ import { useRouter, usePathname } from 'expo-router';
 import chatManager from '../utils/ChatManager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OpenSansFont } from '../hooks/OpenSansFont';
+
+const isIOS = Platform.OS === 'ios';
+const NAV_HEIGHT = isIOS ? 44 : 52;
 
 type AppHeaderProps = {
   title?: string;
@@ -20,8 +24,8 @@ type AppHeaderProps = {
   leftComponent?: React.ReactNode;
 };
 
-export default function AppHeader({ 
-  title = 'InferrLM', 
+export default function AppHeader({
+  title = 'InferrLM',
   showBackButton = false,
   showLogo = true,
   onNewChat,
@@ -29,7 +33,7 @@ export default function AppHeader({
   rightButtons,
   customLeftComponent,
   transparent = false,
-  leftComponent
+  leftComponent,
 }: AppHeaderProps) {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
@@ -60,15 +64,80 @@ export default function AppHeader({
     }
   };
 
+  if (isIOS) {
+    return (
+      <View style={[styles.iosContainer, { height: NAV_HEIGHT + insets.top }]}>
+        {!transparent && (
+          <>
+            <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(102, 8, 128, 0.72)' }]} />
+          </>
+        )}
+        <View style={[styles.iosContent, { paddingTop: insets.top }]}>
+          <View style={styles.iosLeft}>
+            {leftComponent ? (
+              leftComponent
+            ) : customLeftComponent ? (
+              customLeftComponent
+            ) : showBackButton ? (
+              <TouchableOpacity
+                style={styles.iosNavButton}
+                onPress={handleBackPress}
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+              >
+                <MaterialCommunityIcons name="chevron-left" size={30} color={themeColors.headerText} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <Text
+            style={[styles.iosTitle, { color: themeColors.headerText }, fonts.semibold]}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+
+          <View style={styles.iosRight}>
+            {rightButtons !== undefined ? (
+              rightButtons
+            ) : (
+              <>
+                {isHomeScreen && (
+                  <TouchableOpacity
+                    style={styles.iosNavButton}
+                    onPress={handleNewChat}
+                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                  >
+                    <MaterialCommunityIcons name="plus" size={23} color={themeColors.headerText} />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.iosNavButton}
+                  onPress={handleOpenChatHistory}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                >
+                  <MaterialCommunityIcons name="clock-outline" size={22} color={themeColors.headerText} />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+        <View style={styles.iosSeparator} />
+      </View>
+    );
+  }
+
   return (
-    <View style={[
-      styles.container, 
-      { 
-        backgroundColor: transparent ? 'transparent' : themeColors.headerBackground,
-        paddingTop: insets.top,
-        height: 52 + insets.top,
-      }
-    ]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: transparent ? 'transparent' : themeColors.headerBackground,
+          paddingTop: insets.top,
+          height: NAV_HEIGHT + insets.top,
+        },
+      ]}
+    >
       <View style={styles.headerContent}>
         {leftComponent ? (
           leftComponent
@@ -77,7 +146,7 @@ export default function AppHeader({
         ) : (
           <View style={styles.leftSection}>
             {showBackButton && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.backButton}
                 onPress={handleBackPress}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -85,12 +154,12 @@ export default function AppHeader({
                 <MaterialCommunityIcons name="arrow-left" size={24} color={themeColors.headerText} />
               </TouchableOpacity>
             )}
-            
+
             {showLogo && (
               <>
-                <Image 
-                  source={require('../../assets/icon.png')} 
-                  style={styles.icon} 
+                <Image
+                  source={require('../../assets/icon.png')}
+                  style={styles.icon}
                   resizeMode="cover"
                 />
                 <Text style={[styles.title, { color: themeColors.headerText }, fonts.bold]}>
@@ -98,7 +167,7 @@ export default function AppHeader({
                 </Text>
               </>
             )}
-            
+
             {!showLogo && (
               <Text style={[styles.title, { color: themeColors.headerText }, fonts.bold]}>
                 {title}
@@ -121,7 +190,6 @@ export default function AppHeader({
                   <MaterialCommunityIcons name="plus" size={22} color={themeColors.headerText} />
                 </TouchableOpacity>
               )}
-
               <TouchableOpacity
                 style={styles.headerButton}
                 onPress={handleOpenChatHistory}
@@ -138,6 +206,48 @@ export default function AppHeader({
 }
 
 const styles = StyleSheet.create({
+  iosContainer: {
+    width: '100%',
+    zIndex: 10,
+    overflow: 'hidden',
+  },
+  iosContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  iosLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iosTitle: {
+    flex: 3,
+    textAlign: 'center',
+    fontSize: 17,
+    letterSpacing: -0.3,
+  },
+  iosRight: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  iosNavButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iosSeparator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
   container: {
     width: '100%',
     elevation: 4,
@@ -188,4 +298,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-}); 
+});

@@ -673,10 +673,10 @@ const styles = StyleSheet.create({
     paddingTop: 22
   },
   headerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    width: Platform.OS === 'ios' ? 44 : 36,
+    height: Platform.OS === 'ios' ? 44 : 36,
+    borderRadius: Platform.OS === 'ios' ? 0 : 18,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
