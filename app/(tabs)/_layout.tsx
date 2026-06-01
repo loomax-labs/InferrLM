@@ -25,16 +25,16 @@ export default function TabLayout() {
       backgroundColor={isIOS ? undefined : themeColors.tabBarBackground}
       disableTransparentOnScrollEdge={true}
       unstable_nativeProps={{ ios: { tabBarControllerMode: 'tabBar' } }}
-      tintColor={isIOS ? themeColors.tabBarBackground : themeColors.tabBarActiveText}
+      tintColor={isIOS ? themeColors.primary : themeColors.tabBarActiveText}
       indicatorColor="rgba(255, 255, 255, 0.15)"
       rippleColor="rgba(255, 255, 255, 0.15)"
       iconColor={{
         default: isIOS ? themeColors.textSecondary : themeColors.tabBarInactiveText,
-        selected: isIOS ? themeColors.tabBarBackground : themeColors.tabBarActiveText,
+        selected: isIOS ? themeColors.primary : themeColors.tabBarActiveText,
       }}
       labelStyle={{
         default: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.textSecondary : themeColors.tabBarInactiveText },
-        selected: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.tabBarBackground : themeColors.tabBarActiveText },
+        selected: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.primary : themeColors.tabBarActiveText },
       }}
     >
       <NativeTabs.Trigger name="index">
