@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -40,6 +41,7 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
   onCustomUrlPress,
   onGuidancePress
 }) => {
+  const insets = useSafeAreaInsets();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
 
@@ -71,7 +73,7 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
     <View style={styles.container}>
       <ScrollView 
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingTop: 8 }}
+        contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: Platform.OS === 'ios' ? insets.bottom : 16 }}
         showsVerticalScrollIndicator={false}
       >
         <TouchableOpacity

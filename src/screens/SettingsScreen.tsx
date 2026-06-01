@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, ScrollView, Linking, TouchableOpacity, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
@@ -64,6 +65,7 @@ const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
 };
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
   const router = useRouter();
@@ -574,7 +576,7 @@ export default function SettingsScreen() {
           </View>
         } 
       />
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView contentContainerStyle={[styles.contentContainer, Platform.OS === 'ios' && { paddingBottom: insets.bottom }]}>
         
        <AppearanceSection
         selectedTheme={selectedTheme}
