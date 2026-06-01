@@ -3,6 +3,114 @@ import { ModelType, ModelFormat } from "../types/models";
 
 export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
   {
+    "name": "Gemma 4 31B Instruct",
+    "description": "Google's flagship Gemma 4 model with 31B parameters, vision capabilities, and 256K context.",
+    "size": "18.3 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/gemma-4-31B-it-Q4_K_M.gguf",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "31 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "reasoning", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-BF16.gguf",
+        "url": "https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/mmproj-BF16.gguf",
+        "description": "Multimodal projector for Gemma 4 31B"
+      }
+    ]
+  },
+  {
+    "name": "Gemma 4 26B-A4B Instruct",
+    "description": "Google's Gemma 4 MoE with 26B total and 4B active parameters. Vision-capable with 256K context.",
+    "size": "16.9 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "26 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "reasoning", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-BF16.gguf",
+        "url": "https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/mmproj-BF16.gguf",
+        "description": "Multimodal projector for Gemma 4 26B"
+      }
+    ]
+  },
+  {
+    "name": "Gemma 4 E4B Instruct",
+    "description": "Google's Gemma 4 E4B with vision capabilities and built-in reasoning. 256K context length.",
+    "size": "4.98 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "4 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "reasoning", "recommended", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-BF16.gguf",
+        "url": "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/mmproj-BF16.gguf",
+        "description": "Multimodal projector for Gemma 4 E4B"
+      }
+    ]
+  },
+  {
+    "name": "Gemma 4 E2B Instruct",
+    "description": "Google's Gemma 4 E2B with vision capabilities and built-in reasoning. 256K context length.",
+    "size": "3.11 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "2 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "reasoning", "fastest", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-BF16.gguf",
+        "url": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-BF16.gguf",
+        "description": "Multimodal projector for Gemma 4 E2B"
+      }
+    ]
+  },
+  {
+    "name": "Gemma 4 E4B Instruct (LiteRT)",
+    "description": "Google's Gemma 4 E4B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
+    "size": "3.41 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "4 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "reasoning", "recommended", "litert"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 4 E2B Instruct (LiteRT)",
+    "description": "Google's Gemma 4 E2B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
+    "size": "2.41 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "2 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "reasoning", "fastest", "recommended", "litert"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
     "name": "Qwen3.5 9B Instruct",
     "description": "Latest Qwen 3.5 9B instruct model for higher quality responses and reasoning.",
     "size": "5.68 GB",
@@ -141,114 +249,6 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
         "description": "Multimodal projector for Qwen3-VL 4B"
       }
     ]
-  },
-  {
-    "name": "Gemma 4 31B Instruct",
-    "description": "Google's flagship Gemma 4 model with 31B parameters, vision capabilities, and 256K context.",
-    "size": "18.3 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/gemma-4-31B-it-Q4_K_M.gguf",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "31 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["vision", "reasoning", "llama.cpp"],
-    "modelType": ModelType.VISION,
-    "capabilities": ["vision", "text"],
-    "supportsMultimodal": true,
-    "additionalFiles": [
-      {
-        "name": "mmproj-BF16.gguf",
-        "url": "https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-        "description": "Multimodal projector for Gemma 4 31B"
-      }
-    ]
-  },
-  {
-    "name": "Gemma 4 26B-A4B Instruct",
-    "description": "Google's Gemma 4 MoE with 26B total and 4B active parameters. Vision-capable with 256K context.",
-    "size": "16.9 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "26 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["vision", "reasoning", "llama.cpp"],
-    "modelType": ModelType.VISION,
-    "capabilities": ["vision", "text"],
-    "supportsMultimodal": true,
-    "additionalFiles": [
-      {
-        "name": "mmproj-BF16.gguf",
-        "url": "https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-        "description": "Multimodal projector for Gemma 4 26B"
-      }
-    ]
-  },
-  {
-    "name": "Gemma 4 E4B Instruct",
-    "description": "Google's Gemma 4 E4B with vision capabilities and built-in reasoning. 256K context length.",
-    "size": "4.98 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "4 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["vision", "reasoning", "recommended", "llama.cpp"],
-    "modelType": ModelType.VISION,
-    "capabilities": ["vision", "text"],
-    "supportsMultimodal": true,
-    "additionalFiles": [
-      {
-        "name": "mmproj-BF16.gguf",
-        "url": "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-        "description": "Multimodal projector for Gemma 4 E4B"
-      }
-    ]
-  },
-  {
-    "name": "Gemma 4 E2B Instruct",
-    "description": "Google's Gemma 4 E2B with vision capabilities and built-in reasoning. 256K context length.",
-    "size": "3.11 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "2 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["vision", "reasoning", "fastest", "llama.cpp"],
-    "modelType": ModelType.VISION,
-    "capabilities": ["vision", "text"],
-    "supportsMultimodal": true,
-    "additionalFiles": [
-      {
-        "name": "mmproj-BF16.gguf",
-        "url": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-        "description": "Multimodal projector for Gemma 4 E2B"
-      }
-    ]
-  },
-  {
-    "name": "Gemma 4 E4B Instruct (LiteRT)",
-    "description": "Google's Gemma 4 E4B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
-    "size": "3.41 GB",
-    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "4 Billion",
-    "quantization": "int4",
-    "tags": ["vision", "reasoning", "recommended", "litert"],
-    "modelType": ModelType.VISION,
-    "modelFormat": ModelFormat.LITERT,
-    "capabilities": ["vision", "text", "audio"],
-    "supportsMultimodal": true
-  },
-  {
-    "name": "Gemma 4 E2B Instruct (LiteRT)",
-    "description": "Google's Gemma 4 E2B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
-    "size": "2.41 GB",
-    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "2 Billion",
-    "quantization": "int4",
-    "tags": ["vision", "reasoning", "fastest", "recommended", "litert"],
-    "modelType": ModelType.VISION,
-    "modelFormat": ModelFormat.LITERT,
-    "capabilities": ["vision", "text", "audio"],
-    "supportsMultimodal": true
   },
   {
     "name": "Gemma 3n-E4B Instruct (Q4_K_S)",
