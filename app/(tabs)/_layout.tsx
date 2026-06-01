@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTheme } from '../../src/context/ThemeContext';
 import { theme } from '../../src/constants/theme';
@@ -15,23 +16,25 @@ export default function TabLayout() {
     return <WideScreenLayout />;
   }
 
+  const isIOS = Platform.OS === 'ios';
+
   return (
     <NativeTabs
       backBehavior="history"
       labelVisibilityMode="labeled"
-      backgroundColor={themeColors.tabBarBackground}
+      backgroundColor={isIOS ? undefined : themeColors.tabBarBackground}
       disableTransparentOnScrollEdge={true}
       unstable_nativeProps={{ ios: { tabBarControllerMode: 'tabBar' } }}
-      tintColor={themeColors.tabBarActiveText}
+      tintColor={isIOS ? themeColors.tabBarBackground : themeColors.tabBarActiveText}
       indicatorColor="rgba(255, 255, 255, 0.15)"
       rippleColor="rgba(255, 255, 255, 0.15)"
       iconColor={{
-        default: themeColors.tabBarInactiveText,
-        selected: themeColors.tabBarActiveText,
+        default: isIOS ? themeColors.textSecondary : themeColors.tabBarInactiveText,
+        selected: isIOS ? themeColors.tabBarBackground : themeColors.tabBarActiveText,
       }}
       labelStyle={{
-        default: { fontFamily: fonts.medium.fontFamily, color: themeColors.tabBarInactiveText },
-        selected: { fontFamily: fonts.medium.fontFamily, color: themeColors.tabBarActiveText },
+        default: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.textSecondary : themeColors.tabBarInactiveText },
+        selected: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.tabBarBackground : themeColors.tabBarActiveText },
       }}
     >
       <NativeTabs.Trigger name="index">
