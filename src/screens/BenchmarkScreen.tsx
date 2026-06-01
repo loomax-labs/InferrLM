@@ -14,7 +14,7 @@ export default function BenchmarkScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-      <AppHeader title="Tools" />
+      <AppHeader title="Tools" rightButtons={null} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LabsTasksSection
           onOpenPromptLab={() => router.push('/prompt-lab')}

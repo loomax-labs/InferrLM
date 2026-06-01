@@ -326,9 +326,7 @@ export default function LocalServerScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <AppHeader
-        title="Server"
-      />
+      <AppHeader title="Server" rightButtons={null} />
 
       <ScrollView
         contentContainerStyle={styles.contentContainer}
