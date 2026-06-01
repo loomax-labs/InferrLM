@@ -66,6 +66,7 @@ export default function AppHeader({
   };
 
   if (isIOS && !isWideScreen) {
+    const iosColor = currentTheme === 'light' ? themeColors.primary : themeColors.text;
     return (
       <View style={[styles.iosContainer, { height: NAV_HEIGHT + insets.top }]}>
         <View style={[styles.iosContent, { paddingTop: insets.top }]}>
@@ -80,13 +81,13 @@ export default function AppHeader({
                 onPress={handleBackPress}
                 hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               >
-                <MaterialCommunityIcons name="chevron-left" size={30} color={themeColors.text} />
+                <MaterialCommunityIcons name="chevron-left" size={30} color={iosColor} />
               </TouchableOpacity>
             ) : null}
           </View>
 
           <Text
-            style={[styles.iosTitle, { color: themeColors.text }, fonts.bold]}
+            style={[styles.iosTitle, { color: iosColor }, fonts.bold]}
             numberOfLines={1}
           >
             {title}
@@ -103,7 +104,7 @@ export default function AppHeader({
                     onPress={handleNewChat}
                     hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   >
-                    <MaterialCommunityIcons name="plus" size={23} color={themeColors.text} />
+                    <MaterialCommunityIcons name="plus" size={23} color={iosColor} />
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -111,7 +112,7 @@ export default function AppHeader({
                   onPress={handleOpenChatHistory}
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 >
-                  <MaterialCommunityIcons name="clock-outline" size={22} color={themeColors.text} />
+                  <MaterialCommunityIcons name="clock-outline" size={22} color={iosColor} />
                 </TouchableOpacity>
               </>
             )}
