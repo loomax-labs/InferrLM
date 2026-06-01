@@ -4,6 +4,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
+import LlamaCppIcon from '../icons/LlamaCppIcon';
+import MlxIcon from '../icons/MlxIcon';
+import LiteRtIcon from '../icons/LiteRtIcon';
 import SettingsSection from './SettingsSection';
 import ModelSettingsCore from './ModelSettingsCore';
 
@@ -91,6 +94,7 @@ const ModelSettingsSection = ({
 }: ModelSettingsSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
+  const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
   const entries = parameterEntries && parameterEntries.length > 0
     ? parameterEntries
     : onModelParametersPress
@@ -121,6 +125,14 @@ const ModelSettingsSection = ({
       />
 
       {entries.map((entry, index) => {
+        const accentColor = entry.accentColor ?? themeColors.primary;
+        const entryIconColor = currentTheme === 'dark' ? '#FFFFFF' : accentColor;
+        const entryIconBackground = currentTheme === 'dark'
+          ? 'rgba(255, 255, 255, 0.2)'
+          : entry.iconKey === 'litert'
+            ? 'rgba(0,0,0,0.06)'
+            : accentColor + '20';
+
         return (
           <React.Fragment key={entry.key}>
             <View style={styles.separator} />
@@ -130,6 +142,17 @@ const ModelSettingsSection = ({
               onPress={entry.onPress}
             >
               <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: entryIconBackground }]}> 
+                  {entry.iconKey === 'llama-cpp' ? (
+                    <LlamaCppIcon size={22} />
+                  ) : entry.iconKey === 'mlx' ? (
+                    <MlxIcon size={22} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} secondaryColor={currentTheme === 'dark' ? '#999999' : undefined} />
+                  ) : entry.iconKey === 'litert' ? (
+                    <LiteRtIcon size={22} />
+                  ) : (
+                    <MaterialCommunityIcons name={entry.iconName ?? 'cog-outline'} size={22} color={entryIconColor} />
+                  )}
+                </View>
                 <View style={styles.settingTextContainer}>
                   <View style={styles.labelRow}>
                     <Text style={[styles.settingText, { color: themeColors.text }]}> 
@@ -165,6 +188,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   settingTextContainer: {
     flex: 1,
