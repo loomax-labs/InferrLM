@@ -22,6 +22,7 @@ export default function TabLayout() {
       backgroundColor={themeColors.tabBarBackground}
       tintColor={themeColors.tabBarActiveText}
       indicatorColor="rgba(255, 255, 255, 0.15)"
+      rippleColor="rgba(255, 255, 255, 0.15)"
       iconColor={{
         default: themeColors.tabBarInactiveText,
         selected: themeColors.tabBarActiveText,
