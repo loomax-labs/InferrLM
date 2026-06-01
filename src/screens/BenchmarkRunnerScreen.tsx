@@ -219,7 +219,7 @@ export default function BenchmarkRunnerScreen() {
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-        <AppHeader title="Benchmark" showBackButton showLogo={false} />
+        <AppHeader title="Benchmark" showBackButton showLogo={false} rightButtons={null} />
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={accent} />
           <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading...</Text>
@@ -231,7 +231,7 @@ export default function BenchmarkRunnerScreen() {
   if (!hasModel) {
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-        <AppHeader title="Benchmark" showBackButton showLogo={false} />
+        <AppHeader title="Benchmark" showBackButton showLogo={false} rightButtons={null} />
         <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={[styles.heroEmpty, { backgroundColor: themeColors.borderColor }]}>
             <View style={[styles.heroIcon, { backgroundColor: accent + '22' }]}>
@@ -293,6 +293,7 @@ export default function BenchmarkRunnerScreen() {
         title="Benchmark"
         showBackButton
         showLogo={false}
+        rightButtons={null}
       />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroCard, { backgroundColor: themeColors.borderColor }]}>
