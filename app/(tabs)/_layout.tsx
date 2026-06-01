@@ -20,6 +20,7 @@ export default function TabLayout() {
       backBehavior="history"
       labelVisibilityMode="labeled"
       backgroundColor={themeColors.tabBarBackground}
+      disableTransparentOnScrollEdge={true}
       tintColor={themeColors.tabBarActiveText}
       indicatorColor="rgba(255, 255, 255, 0.15)"
       rippleColor="rgba(255, 255, 255, 0.15)"
