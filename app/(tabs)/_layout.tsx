@@ -18,6 +18,7 @@ export default function TabLayout() {
   return (
     <NativeTabs
       backBehavior="history"
+      labelVisibilityMode="labeled"
       backgroundColor={themeColors.tabBarBackground}
       iconColor={{
         default: themeColors.tabBarInactiveText,
