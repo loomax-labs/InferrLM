@@ -139,18 +139,20 @@ function InnerLayout() {
 
   return (
     <>
-      <View
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: insets.top,
-          backgroundColor: themeColors.statusBarBg,
-          zIndex: 999,
-        }}
-        pointerEvents="none"
-      />
+      {Platform.OS !== 'ios' && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: insets.top,
+            backgroundColor: themeColors.statusBarBg,
+            zIndex: 999,
+          }}
+          pointerEvents="none"
+        />
+      )}
       <StatusBar style="light" translucent />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
