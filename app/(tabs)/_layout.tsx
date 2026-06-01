@@ -21,7 +21,7 @@ export default function TabLayout() {
       labelVisibilityMode="labeled"
       backgroundColor={themeColors.tabBarBackground}
       disableTransparentOnScrollEdge={true}
-      unstable_nativeProps={{ tabBarControllerMode: 'tabBar' }}
+      unstable_nativeProps={{ ios: { tabBarControllerMode: 'tabBar' } }}
       tintColor={themeColors.tabBarActiveText}
       indicatorColor="rgba(255, 255, 255, 0.15)"
       rippleColor="rgba(255, 255, 255, 0.15)"
