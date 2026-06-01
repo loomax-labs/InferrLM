@@ -10,7 +10,7 @@ import { OpenSansFont } from '../hooks/OpenSansFont';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 const isIOS = Platform.OS === 'ios';
-const NAV_HEIGHT = isIOS ? 44 : 52;
+const NAV_HEIGHT = isIOS ? 53 : 52;
 
 type AppHeaderProps = {
   title?: string;
