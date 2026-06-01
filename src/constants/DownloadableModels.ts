@@ -3,46 +3,6 @@ import { ModelType, ModelFormat } from "../types/models";
 
 export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
   {
-    "name": "Gemma 4 31B Instruct",
-    "description": "Google's flagship Gemma 4 model with 31B parameters, vision capabilities, and 256K context.",
-    "size": "18.3 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/gemma-4-31B-it-Q4_K_M.gguf",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "31 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["vision", "reasoning", "llama.cpp"],
-    "modelType": ModelType.VISION,
-    "capabilities": ["vision", "text"],
-    "supportsMultimodal": true,
-    "additionalFiles": [
-      {
-        "name": "mmproj-BF16.gguf",
-        "url": "https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-        "description": "Multimodal projector for Gemma 4 31B"
-      }
-    ]
-  },
-  {
-    "name": "Gemma 4 26B-A4B Instruct",
-    "description": "Google's Gemma 4 MoE with 26B total and 4B active parameters. Vision-capable with 256K context.",
-    "size": "16.9 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
-    "licenseLink": "https://ai.google.dev/gemma/terms",
-    "modelFamily": "26 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["vision", "reasoning", "llama.cpp"],
-    "modelType": ModelType.VISION,
-    "capabilities": ["vision", "text"],
-    "supportsMultimodal": true,
-    "additionalFiles": [
-      {
-        "name": "mmproj-BF16.gguf",
-        "url": "https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-        "description": "Multimodal projector for Gemma 4 26B"
-      }
-    ]
-  },
-  {
     "name": "Gemma 4 E4B Instruct",
     "description": "Google's Gemma 4 E4B with vision capabilities and built-in reasoning. 256K context length.",
     "size": "4.98 GB",
@@ -299,16 +259,6 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "supportsMultimodal": true
   },
   {
-    "name": "Phi-4 Reasoning Plus",
-    "description": "Microsoft's enhanced reasoning model with 15B parameters for complex problem-solving and logic tasks.",
-    "size": "8.2 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/Phi-4-reasoning-plus-GGUF/resolve/main/Phi-4-reasoning-plus-Q3_K_M.gguf",
-    "licenseLink": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/LICENSE",
-    "modelFamily": "15 Billion",
-    "quantization": "Q3_K_M",
-    "tags": ["reasoning", "llama.cpp"]
-  },
-  {
     "name": "Phi-4 Mini Reasoning",
     "description": "Microsoft's latest mini reasoning model with enhanced logic and problem-solving in a compact 4B parameter size.",
     "size": "2.5 GB",
@@ -421,26 +371,6 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "modelFormat": ModelFormat.LITERT
   },
   {
-    "name": "Llama 3.3 70B Instruct",
-    "description": "Meta's latest Llama 3.3 with 70B parameters featuring improved reasoning and instruction following over 3.1.",
-    "size": "40 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/Llama-3.3-70B-Instruct-GGUF/resolve/main/Llama-3.3-70B-Instruct-Q3_K_M.gguf",
-    "licenseLink": "https://ai.meta.com/llama/license/",
-    "modelFamily": "70 Billion",
-    "quantization": "Q3_K_M",
-    "tags": ["llama.cpp"]
-  },
-  {
-    "name": "QwQ 32B Reasoning",
-    "description": "Qwen's dedicated reasoning model with 32B parameters optimized for complex logical thinking and problem-solving.",
-    "size": "19 GB",
-    "huggingFaceLink": "https://huggingface.co/unsloth/QwQ-32B-GGUF/resolve/main/QwQ-32B-Q4_K_M.gguf",
-    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
-    "modelFamily": "32 Billion",
-    "quantization": "Q4_K_M",
-    "tags": ["reasoning", "llama.cpp"]
-  },
-  {
     "name": "Qwen 2.5 Instruct",
     "description": "Alibaba's general-purpose instruction-tuned model with strong multilingual capabilities.",
     "size": "5.2 GB",
@@ -532,16 +462,6 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "tags": ["llama.cpp"]
   },
   {
-    "name": "Mistral Grok",
-    "description": "Mistral's adaptation of the Grok model with enhanced conversational abilities.",
-    "size": "5.1 GB",
-    "huggingFaceLink": "https://huggingface.co/mradermacher/mistral-7b-grok-GGUF/resolve/main/mistral-7b-grok.Q3_K_L.gguf",
-    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
-    "modelFamily": "7 Billion",
-    "quantization": "Q3_K_L",
-    "tags": ["llama.cpp"]
-  },
-  {
     "name": "CodeLlama",
     "description": "Meta's code-specialized model trained on code repositories with strong programming capabilities.",
     "size": "2.95 GB",
@@ -549,16 +469,6 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.meta.com/llama/license/",
     "modelFamily": "7 Billion",
     "quantization": "Q3_K_S",
-    "tags": ["llama.cpp"]
-  },
-  {
-    "name": "LLaMA 2 Chat",
-    "description": "Meta's larger chat-optimized model with enhanced reasoning and instruction following.",
-    "size": "8.7 GB",
-    "huggingFaceLink": "https://huggingface.co/TheBloke/Llama-2-13B-chat-GGUF/resolve/main/llama-2-13b-chat.Q5_K_M.gguf",
-    "licenseLink": "https://ai.meta.com/llama/license/",
-    "modelFamily": "13 Billion",
-    "quantization": "Q5_K_M",
     "tags": ["llama.cpp"]
   }
 ];
