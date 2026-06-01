@@ -20,6 +20,8 @@ export default function TabLayout() {
       backBehavior="history"
       labelVisibilityMode="labeled"
       backgroundColor={themeColors.tabBarBackground}
+      tintColor={themeColors.tabBarActiveText}
+      indicatorColor="rgba(255, 255, 255, 0.15)"
       iconColor={{
         default: themeColors.tabBarInactiveText,
         selected: themeColors.tabBarActiveText,
