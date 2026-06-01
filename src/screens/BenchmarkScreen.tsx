@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import AppHeader from '../components/AppHeader';
@@ -13,7 +14,7 @@ export default function BenchmarkScreen() {
   const router = useRouter();
 
   return (
-    <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+    <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: themeColors.background }}>
       <AppHeader title="Tools" rightButtons={null} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LabsTasksSection
@@ -25,7 +26,7 @@ export default function BenchmarkScreen() {
           onOpenServer={() => router.push('/local-server')}
         />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

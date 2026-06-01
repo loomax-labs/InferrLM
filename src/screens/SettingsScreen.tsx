@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, ScrollView, Linking, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
@@ -565,7 +566,7 @@ export default function SettingsScreen() {
   };
 
   return (
-      <View style={[styles.container, { backgroundColor: theme[currentTheme].background }]}>
+      <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme[currentTheme].background }]}>
       <AppHeader 
         title="Settings"
         rightButtons={
@@ -660,7 +661,7 @@ export default function SettingsScreen() {
         secondaryButtonText={dialogSecondaryText}
         onSecondaryPress={dialogSecondaryPress}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -751,7 +751,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]} edges={['left', 'right', 'bottom']}>
       <AppHeader 
         onNewChat={startNewChat}
         showLogo={!isWideScreen}

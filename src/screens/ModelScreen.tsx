@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
@@ -124,7 +125,7 @@ export default function ModelScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: themeColors.background }]}>
       <ModelScreenHeader 
         isLoggedIn={logic.isLoggedIn}
         onProfilePress={handleProfilePress}
@@ -205,7 +206,7 @@ export default function ModelScreen() {
         onAccept={handleStorageWarningAccept}
         onCancel={() => logic.setShowStorageWarningDialog(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
