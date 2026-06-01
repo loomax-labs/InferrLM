@@ -238,10 +238,12 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
           </View>
           
           {model.additionalFiles && model.additionalFiles.length > 0 && (
-            <Text style={[styles.additionalFilesNote, { color: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }]}>
+            <View style={styles.additionalFilesRow}>
               <MaterialCommunityIcons name="information-outline" size={14} color={currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'} />
-              {' '}This download includes {model.additionalFiles.length} additional file{model.additionalFiles.length > 1 ? 's' : ''}: {model.additionalFiles.map(file => file.name.replace(/\.(gguf|bin)$/i, '')).join(', ')}
-            </Text>
+              <Text style={[styles.additionalFilesNote, { color: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }]}>
+                {' '}This download includes {model.additionalFiles.length} additional file{model.additionalFiles.length > 1 ? 's' : ''}: {model.additionalFiles.map(file => file.name.replace(/\.(gguf|bin)$/i, '')).join(', ')}
+              </Text>
+            </View>
           )}
           
           {model.licenseLink && (
@@ -418,9 +420,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
   },
-  additionalFilesNote: {
+  additionalFilesRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginTop: 4,
     marginBottom: 6,
+  },
+  additionalFilesNote: {
+    flex: 1,
     fontSize: 14,
     lineHeight: 20,
   },
