@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -69,12 +68,6 @@ export default function AppHeader({
   if (isIOS && !isWideScreen) {
     return (
       <View style={[styles.iosContainer, { height: NAV_HEIGHT + insets.top }]}>
-        {!transparent && (
-          <>
-            <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(102, 8, 128, 0.72)' }]} />
-          </>
-        )}
         <View style={[styles.iosContent, { paddingTop: insets.top }]}>
           <View style={styles.iosLeft}>
             {leftComponent ? (
@@ -87,13 +80,13 @@ export default function AppHeader({
                 onPress={handleBackPress}
                 hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               >
-                <MaterialCommunityIcons name="chevron-left" size={30} color={themeColors.headerText} />
+                <MaterialCommunityIcons name="chevron-left" size={30} color={themeColors.text} />
               </TouchableOpacity>
             ) : null}
           </View>
 
           <Text
-            style={[styles.iosTitle, { color: themeColors.headerText }, fonts.semibold]}
+            style={[styles.iosTitle, { color: themeColors.text }, fonts.semibold]}
             numberOfLines={1}
           >
             {title}
@@ -110,7 +103,7 @@ export default function AppHeader({
                     onPress={handleNewChat}
                     hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   >
-                    <MaterialCommunityIcons name="plus" size={23} color={themeColors.headerText} />
+                    <MaterialCommunityIcons name="plus" size={23} color={themeColors.text} />
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -118,13 +111,13 @@ export default function AppHeader({
                   onPress={handleOpenChatHistory}
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 >
-                  <MaterialCommunityIcons name="clock-outline" size={22} color={themeColors.headerText} />
+                  <MaterialCommunityIcons name="clock-outline" size={22} color={themeColors.text} />
                 </TouchableOpacity>
               </>
             )}
           </View>
         </View>
-        <View style={styles.iosSeparator} />
+        <View style={[styles.iosSeparator, { backgroundColor: themeColors.borderColor }]} />
       </View>
     );
   }
@@ -248,7 +241,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   container: {
     width: '100%',
