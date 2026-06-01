@@ -14,7 +14,7 @@ type AppHeaderProps = {
   showLogo?: boolean;
   onNewChat?: () => void;
   onBackPress?: () => void;
-  rightButtons?: React.ReactNode;
+  rightButtons?: React.ReactNode | null;
   customLeftComponent?: React.ReactNode;
   transparent?: boolean;
   leftComponent?: React.ReactNode;
@@ -108,7 +108,7 @@ export default function AppHeader({
         )}
 
         <View style={styles.rightButtons}>
-          {rightButtons ? (
+          {rightButtons !== undefined ? (
             rightButtons
           ) : (
             <>
@@ -121,7 +121,7 @@ export default function AppHeader({
                   <MaterialCommunityIcons name="plus" size={22} color={themeColors.headerText} />
                 </TouchableOpacity>
               )}
-              
+
               <TouchableOpacity
                 style={styles.headerButton}
                 onPress={handleOpenChatHistory}
