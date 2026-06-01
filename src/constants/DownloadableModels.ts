@@ -3,7 +3,7 @@ import { ModelType, ModelFormat } from "../types/models";
 
 export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
   {
-    "name": "Gemma 4 E2B Instruct",
+    "name": "Gemma 4 E2B Instruct (LiteRT)",
     "description": "Google's Gemma 4 E2B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
     "size": "2.41 GB",
     "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
@@ -17,7 +17,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "supportsMultimodal": true
   },
   {
-    "name": "Gemma 4 E4B Instruct",
+    "name": "Gemma 4 E4B Instruct (LiteRT)",
     "description": "Google's Gemma 4 E4B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
     "size": "3.41 GB",
     "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
