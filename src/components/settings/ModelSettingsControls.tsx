@@ -18,6 +18,12 @@ type ModelSettingsControlsProps = {
   onStopWordsPress: () => void;
   onGrammarDialogOpen: () => void;
   showMlxWarning?: boolean;
+  visibility?: {
+    showStopWords?: boolean;
+    showJinja?: boolean;
+    showGrammar?: boolean;
+    showEnableThinking?: boolean;
+  };
 };
 
 const isArrayDifferent = (current: any[] | undefined, defaultValue: any[] | undefined): boolean => {
@@ -34,129 +40,148 @@ const ModelSettingsControls = ({
   onStopWordsPress,
   onGrammarDialogOpen,
   showMlxWarning,
+  visibility,
 }: ModelSettingsControlsProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
+  const showStopWords = visibility?.showStopWords ?? true;
+  const showJinja = visibility?.showJinja ?? true;
+  const showGrammar = visibility?.showGrammar ?? true;
+  const showEnableThinking = visibility?.showEnableThinking ?? true;
+  const showGenerationControl = showStopWords;
+  const showCoreSettings = showJinja || showGrammar || showEnableThinking;
 
   return (
     <>
-      <View style={[styles.sectionHeader, { borderTopColor: 'rgba(150, 150, 150, 0.1)' }]}>
-        <Text style={[styles.sectionTitle, { color: themeColors.secondaryText }]}>GENERATION CONTROL</Text>
-      </View>
+      {showGenerationControl ? (
+        <View style={[styles.sectionHeader, { borderTopColor: 'rgba(150, 150, 150, 0.1)' }]}> 
+          <Text style={[styles.sectionTitle, { color: themeColors.secondaryText }]}>GENERATION CONTROL</Text>
+        </View>
+      ) : null}
 
-      <TouchableOpacity 
-        style={[styles.settingItem, styles.settingItemBorder]}
-        onPress={onStopWordsPress}
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="stop-circle-outline" size={22} color={iconColor} />
-          </View>
-          <View style={styles.settingTextContainer}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.settingText, { color: themeColors.text }]}>
-                Stop Words
+      {showStopWords ? (
+        <TouchableOpacity 
+          style={[styles.settingItem, styles.settingItemBorder]}
+          onPress={onStopWordsPress}
+        >
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
+              <MaterialCommunityIcons name="stop-circle-outline" size={22} color={iconColor} />
+            </View>
+            <View style={styles.settingTextContainer}>
+              <View style={styles.labelRow}>
+                <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                  Stop Words
+                </Text>
+                <Text style={[styles.valueText, { color: themeColors.text }]}> 
+                  {modelSettings.stopWords?.length || 0}
+                </Text>
+              </View>
+              <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                Words that will cause the model to stop generating. One word per line.
               </Text>
-              <Text style={[styles.valueText, { color: themeColors.text }]}>
-                {modelSettings.stopWords?.length || 0}
+              {isArrayDifferent(modelSettings.stopWords, defaultSettings.stopWords) && (
+                <TouchableOpacity
+                  onPress={() => onSettingsChange({ stopWords: defaultSettings.stopWords || [] })}
+                  style={[styles.resetButton, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}
+                >
+                  <MaterialCommunityIcons name="refresh" size={14} color={iconColor} />
+                  <Text style={[styles.resetText, { color: iconColor }]}>Reset to Default</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
+        </TouchableOpacity>
+      ) : null}
+
+      {showCoreSettings ? (
+        <View style={[styles.sectionHeader, { borderTopColor: 'rgba(150, 150, 150, 0.1)' }]}> 
+          <Text style={[styles.sectionTitle, { color: themeColors.secondaryText }]}>CORE SETTINGS</Text>
+        </View>
+      ) : null}
+
+      {showJinja ? (
+        <View style={[styles.settingItem, styles.settingItemBorder]}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
+              <MaterialCommunityIcons name="code-braces" size={22} color={iconColor} />
+            </View>
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                Jinja Templating
+              </Text>
+              <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                Enable Jinja templating for chat formatting. Better compatibility with modern models.
+              </Text>
+              {showMlxWarning && (
+                <Text style={styles.unsupportedText}>Unsupported on MLX</Text>
+              )}
+            </View>
+          </View>
+          <Switch
+            value={modelSettings.jinja}
+            onValueChange={(value) => onSettingsChange({ jinja: value })}
+            trackColor={{ false: themeColors.borderColor, true: themeColors.primary + '80' }}
+            thumbColor={modelSettings.jinja ? themeColors.primary : themeColors.background}
+          />
+        </View>
+      ) : null}
+
+      {showGrammar ? (
+        <TouchableOpacity 
+          style={[styles.settingItem, styles.settingItemBorder]}
+          onPress={onGrammarDialogOpen}
+        >
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
+              <MaterialCommunityIcons name="format-text" size={22} color={iconColor} />
+            </View>
+            <View style={styles.settingTextContainer}>
+              <View style={styles.labelRow}>
+                <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                  Grammar Rules
+                </Text>
+                <Text style={[styles.valueText, { color: themeColors.text }]}> 
+                  {modelSettings.grammar ? 'Set' : 'None'}
+                </Text>
+              </View>
+              <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                Enforce specific grammar rules to ensure generated text follows a particular structure.
+              </Text>
+              {showMlxWarning && (
+                <Text style={styles.unsupportedText}>Unsupported on MLX</Text>
+              )}
+            </View>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
+        </TouchableOpacity>
+      ) : null}
+
+      {showEnableThinking ? (
+        <View style={[styles.settingItem, styles.settingItemBorder]}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}> 
+              <MaterialCommunityIcons name="brain" size={22} color={iconColor} />
+            </View>
+            <View style={styles.settingTextContainer}>
+              <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                Enable Thinking
+              </Text>
+              <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                Include AI thinking/reasoning parts in context. Disabling saves context space but may impact performance.
               </Text>
             </View>
-            <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Words that will cause the model to stop generating. One word per line.
-            </Text>
-            {isArrayDifferent(modelSettings.stopWords, defaultSettings.stopWords) && (
-              <TouchableOpacity
-                onPress={() => onSettingsChange({ stopWords: defaultSettings.stopWords || [] })}
-                style={[styles.resetButton, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}
-              >
-                <MaterialCommunityIcons name="refresh" size={14} color={iconColor} />
-                <Text style={[styles.resetText, { color: iconColor }]}>Reset to Default</Text>
-              </TouchableOpacity>
-            )}
           </View>
+          <Switch
+            value={modelSettings.enableThinking}
+            onValueChange={(value) => onSettingsChange({ enableThinking: value })}
+            trackColor={{ false: themeColors.borderColor, true: themeColors.primary + '80' }}
+            thumbColor={modelSettings.enableThinking ? themeColors.primary : themeColors.background}
+          />
         </View>
-        <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
-      </TouchableOpacity>
-
-      <View style={[styles.sectionHeader, { borderTopColor: 'rgba(150, 150, 150, 0.1)' }]}>
-        <Text style={[styles.sectionTitle, { color: themeColors.secondaryText }]}>CORE SETTINGS</Text>
-      </View>
-
-      <View style={[styles.settingItem, styles.settingItemBorder]}>
-        <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="code-braces" size={22} color={iconColor} />
-          </View>
-          <View style={styles.settingTextContainer}>
-            <Text style={[styles.settingText, { color: themeColors.text }]}>
-              Jinja Templating
-            </Text>
-            <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Enable Jinja templating for chat formatting. Better compatibility with modern models.
-            </Text>
-            {showMlxWarning && (
-              <Text style={styles.unsupportedText}>Unsupported on MLX</Text>
-            )}
-          </View>
-        </View>
-        <Switch
-          value={modelSettings.jinja}
-          onValueChange={(value) => onSettingsChange({ jinja: value })}
-          trackColor={{ false: themeColors.borderColor, true: themeColors.primary + '80' }}
-          thumbColor={modelSettings.jinja ? themeColors.primary : themeColors.background}
-        />
-      </View>
-
-      <TouchableOpacity 
-        style={[styles.settingItem, styles.settingItemBorder]}
-        onPress={onGrammarDialogOpen}
-      >
-        <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="format-text" size={22} color={iconColor} />
-          </View>
-          <View style={styles.settingTextContainer}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.settingText, { color: themeColors.text }]}>
-                Grammar Rules
-              </Text>
-              <Text style={[styles.valueText, { color: themeColors.text }]}>
-                {modelSettings.grammar ? 'Set' : 'None'}
-              </Text>
-            </View>
-            <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Enforce specific grammar rules to ensure generated text follows a particular structure.
-            </Text>
-            {showMlxWarning && (
-              <Text style={styles.unsupportedText}>Unsupported on MLX</Text>
-            )}
-          </View>
-        </View>
-        <MaterialCommunityIcons name="chevron-right" size={20} color={themeColors.secondaryText} />
-      </TouchableOpacity>
-
-      <View style={[styles.settingItem, styles.settingItemBorder]}>
-        <View style={styles.settingLeft}>
-          <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="brain" size={22} color={iconColor} />
-          </View>
-          <View style={styles.settingTextContainer}>
-            <Text style={[styles.settingText, { color: themeColors.text }]}>
-              Enable Thinking
-            </Text>
-            <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Include AI thinking/reasoning parts in context. Disabling saves context space but may impact performance.
-            </Text>
-          </View>
-        </View>
-        <Switch
-          value={modelSettings.enableThinking}
-          onValueChange={(value) => onSettingsChange({ enableThinking: value })}
-          trackColor={{ false: themeColors.borderColor, true: themeColors.primary + '80' }}
-          thumbColor={modelSettings.enableThinking ? themeColors.primary : themeColors.background}
-        />
-      </View>
+      ) : null}
     </>
   );
 };

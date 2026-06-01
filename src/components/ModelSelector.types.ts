@@ -1,5 +1,3 @@
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
 import type { ProviderType } from '../services/ModelManagementService';
 
 export interface StoredModel {
@@ -45,7 +43,6 @@ export interface ModelSelectorProps {
   preselectedModelPath?: string | null;
   isGenerating?: boolean;
   onModelSelect?: (provider: ProviderType, modelPath?: string, projectorPath?: string) => void | Promise<void>;
-  navigation?: NativeStackNavigationProp<RootStackParamList>;
 }
 
 export interface SectionData {

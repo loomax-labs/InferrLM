@@ -6,13 +6,17 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { EngineId } from '../../managers/inference-manager';
+import InferenceIcon from '../icons/InferenceIcon';
+import LlamaCppIcon from '../icons/LlamaCppIcon';
+import MlxIcon from '../icons/MlxIcon';
+import LiteRtIcon from '../icons/LiteRtIcon';
 
-interface InferenceEngineProps {
+interface RuntimeProps {
   enabled: Record<EngineId, boolean>;
   onToggle: (engine: EngineId, enabled: boolean) => void;
 }
 
-const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
+const RuntimeSection: React.FC<RuntimeProps> = ({
   enabled,
   onToggle,
 }) => {
@@ -38,6 +42,14 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
       requiresMLX: true,
       beta: true,
     },
+    {
+      id: 'litert' as const,
+      name: 'LiteRT-LM',
+      description: 'Google AI Edge Gallery\'s LiteRT-LM runtime for .litertlm and .task models',
+      icon: 'lightning-bolt-outline',
+      enabled: true,
+      beta: true,
+    },
   ], []);
 
   const renderEngineItem = (engine: (typeof engines)[number]) => {
@@ -53,6 +65,15 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
           isDisabled && styles.engineItemDisabled,
         ]}
       >
+        <View style={[styles.engineIconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)' }]}>
+          {engine.id === 'llama' ? (
+            <LlamaCppIcon size={20} />
+          ) : engine.id === 'mlx' ? (
+            <MlxIcon size={20} color={currentTheme === 'dark' ? '#FFFFFF' : undefined} secondaryColor={currentTheme === 'dark' ? '#999999' : undefined} />
+          ) : (
+            <LiteRtIcon size={20} />
+          )}
+        </View>
         <View style={styles.engineInfo}>
           <View style={styles.engineHeader}>
             <Text
@@ -111,12 +132,12 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
       >
         <View style={styles.settingLeft}>
           <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
-            <MaterialCommunityIcons name="engine" size={22} color={iconColor} />
+            <InferenceIcon size={22} color={iconColor} />
           </View>
           <View style={styles.settingTextContainer}>
             <Text style={[styles.settingText, { color: themeColors.text }]}>Inference</Text>
             <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Enable or disable local inference engines
+              Enable or disable local runtimes
             </Text>
           </View>
         </View>
@@ -132,7 +153,7 @@ const InferenceEngineSection: React.FC<InferenceEngineProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: themeColors.background }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable inferences</Text>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable runtimes</Text>
               <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
                 <MaterialCommunityIcons name="close" size={24} color={themeColors.text} />
               </TouchableOpacity>
@@ -221,6 +242,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
   },
+  engineIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
   engineItemDisabled: {
     opacity: 0.5,
   },
@@ -256,4 +285,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default InferenceEngineSection;
+export default RuntimeSection;

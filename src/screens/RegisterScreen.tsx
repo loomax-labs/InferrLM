@@ -11,8 +11,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { useRemoteModel } from '../context/RemoteModelContext';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
@@ -26,18 +25,17 @@ import {
   Checkbox,
 } from 'react-native-paper';
 import Dialog from '../components/Dialog';
-import { registerWithEmail, signInWithGoogle, isEmailFromTrustedProvider, signInWithApple } from '../services/FirebaseService';
+import { registerWithEmail, signInWithGoogle, signInWithApple } from '../services/AuthService';
+import { isEmailFromTrustedProvider } from '../services/SecurityUtils';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { logger } from '../utils/logger';
 
-type RegisterScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-  route: { params: { redirectTo?: string; redirectParams?: any } };
-};
-
-export default function RegisterScreen({ navigation, route }: RegisterScreenProps) {
+export default function RegisterScreen() {
   const { theme: currentTheme } = useTheme();
   const { checkLoginStatus } = useRemoteModel();
   const themeColors = theme[currentTheme];
+  const router = useRouter();
+  const params = useLocalSearchParams<{ redirectTo?: string }>();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -56,25 +54,27 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   const [termsError, setTermsError] = useState<string | null>(null);
   const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
 
-  const redirectAfterRegister = route.params?.redirectTo || 'MainTabs';
-  const redirectParams = route.params?.redirectParams || { screen: 'HomeTab' };
+  const redirectAfterRegister = params.redirectTo || '/(tabs)';
 
   const navigateAfterAuth = () => {
-    if (redirectAfterRegister === 'MainTabs') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs', params: redirectParams as any }],
-      });
-      return;
+    router.replace(redirectAfterRegister as any);
+  };
+
+  const pendingDeletionMessage = (value?: string | null) => {
+    if (!value) {
+      return 'This account is scheduled for deletion. Please try again after 30 days.';
     }
 
-    navigation.reset({
-      index: 1,
-      routes: [
-        { name: 'MainTabs', params: { screen: 'HomeTab' } as any },
-        { name: redirectAfterRegister as any, params: redirectParams as any },
-      ],
-    });
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'This account is scheduled for deletion. Please try again after 30 days.';
+    }
+
+    return `This account is scheduled for deletion. Please try again after ${date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })}.`;
   };
 
   const handleOpenTerms = async () => {
@@ -131,31 +131,37 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
 
   const handleRegister = async () => {
     if (!name.trim()) {
+      logger.warn('ui_register_name', 'auth');
       setError('Full name is required');
       return;
     }
 
     if (!email.trim()) {
+      logger.warn('ui_register_email', 'auth');
       setError('Email is required');
       return;
     }
 
     if (!validateEmail(email.trim().toLowerCase())) {
+      logger.warn('ui_register_format', 'auth');
       setError('Please enter a valid email address');
       return;
     }
 
     if (!password.trim()) {
+      logger.warn('ui_register_password', 'auth');
       setError('Password is required');
       return;
     }
 
     if (password.trim() !== confirmPassword.trim()) {
+      logger.warn('ui_register_match', 'auth');
       setError('Passwords do not match');
       return;
     }
 
     if (!termsAccepted) {
+      logger.warn('ui_register_terms', 'auth');
       setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
       return;
     }
@@ -166,15 +172,38 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
     setTermsError(null);
 
     try {
+      logger.info('ui_register_start', 'auth', {
+        params: {
+          email: `${email.trim().toLowerCase().slice(0, 2)}***`,
+          redirect: redirectAfterRegister,
+        },
+      });
       const result = await registerWithEmail(name.trim(), email.trim().toLowerCase(), password.trim());
       
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_register_state', 'auth', {
+          params: { logged, redirect: redirectAfterRegister },
+        });
         setDialogVisible(true);
+      } else if (
+        result.code === 'account_pending_deletion' ||
+        result.code === 'account_pending_deletion_registration_blocked'
+      ) {
+        logger.warn('ui_register_pending', 'auth', {
+          params: { code: result.code, scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt },
+        });
+        setError(pendingDeletionMessage(result.pendingDeletion?.scheduledDeletionAt));
       } else {
+        logger.warn('ui_register_fail', 'auth', {
+          params: { message: result.error, code: result.code },
+        });
         setError(result.error || 'Registration failed');
       }
     } catch (error: any) {
+      logger.error('ui_register_error', 'auth', {
+        params: { message: error?.message },
+      });
       setError('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -184,10 +213,14 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   const handleGoogleSignIn = async () => {
     try {
       if (!termsAccepted) {
+        logger.warn('ui_google_terms', 'auth');
         setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
         return;
       }
 
+      logger.info('ui_google_start', 'auth', {
+        params: { redirect: redirectAfterRegister },
+      });
       setIsLoading(true);
       setError(null);
       setTermsError(null);
@@ -195,13 +228,27 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
       const result = await signInWithGoogle();
       
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_google_state', 'auth', {
+          params: { logged, redirect: redirectAfterRegister },
+        });
 
         navigateAfterAuth();
+      } else if (result.code === 'account_pending_deletion') {
+        logger.warn('ui_google_pending', 'auth', {
+          params: { scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt },
+        });
+        setError(pendingDeletionMessage(result.pendingDeletion?.scheduledDeletionAt));
       } else {
+        logger.warn('ui_google_fail', 'auth', {
+          params: { message: result.error, code: result.code },
+        });
         setError(result.error || 'Google sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_google_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Google sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -211,12 +258,16 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   const handleAppleSignIn = async () => {
     try {
       if (!termsAccepted) {
+        logger.warn('ui_apple_terms', 'auth');
         setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
         return;
       }
       if (isLoading) {
         return;
       }
+      logger.info('ui_apple_start', 'auth', {
+        params: { redirect: redirectAfterRegister },
+      });
       setIsLoading(true);
       setError(null);
       setTermsError(null);
@@ -224,13 +275,27 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
       const result = await signInWithApple();
 
       if (result.success) {
-        await checkLoginStatus();
+        const logged = await checkLoginStatus();
+        logger.info('ui_apple_state', 'auth', {
+          params: { logged, redirect: redirectAfterRegister },
+        });
 
         navigateAfterAuth();
+      } else if (result.code === 'account_pending_deletion') {
+        logger.warn('ui_apple_pending', 'auth', {
+          params: { scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt },
+        });
+        setError(pendingDeletionMessage(result.pendingDeletion?.scheduledDeletionAt));
       } else {
+        logger.warn('ui_apple_fail', 'auth', {
+          params: { message: result.error, code: result.code },
+        });
         setError(result.error || 'Apple sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_apple_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Apple sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -238,10 +303,7 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
   };
 
   const navigateToLogin = () => {
-    navigation.navigate('Login', {
-      redirectTo: route.params?.redirectTo,
-      redirectParams: route.params?.redirectParams
-    });
+    router.push({ pathname: '/login', params: { redirectTo: params.redirectTo } });
   };
 
   return (
@@ -257,7 +319,7 @@ export default function RegisterScreen({ navigation, route }: RegisterScreenProp
           <View style={styles.headerContainer}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => router.back()}
             >
               <MaterialCommunityIcons 
                 name="arrow-left" 

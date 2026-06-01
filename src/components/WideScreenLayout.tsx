@@ -4,18 +4,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import HomeScreen from '../screens/HomeScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ModelScreen from '../screens/ModelScreen';
-import LocalServerScreen from '../screens/LocalServerScreen';
+import BenchmarkScreen from '../screens/BenchmarkScreen';
 import { useTheme } from '../context/ThemeContext';
 import { LayoutProvider } from '../context/LayoutContext';
 import { theme } from '../constants/theme';
 import { OpenSansFont } from '../hooks/OpenSansFont';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
-type TabType = 'models' | 'server' | 'settings';
+type TabType = 'models' | 'benchmark' | 'settings';
 
 const SIDEBAR_WIDTH_STORAGE_KEY = 'widescreen_sidebar_width';
 
@@ -30,12 +30,11 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
   const { fonts } = OpenSansFont();
   const { screenWidth } = useResponsiveLayout();
   const [activeTab, setActiveTab] = useState<TabType>('models');
-  const navigation = useNavigation();
-  const route = useRoute();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ screen?: string; params?: string }>();
 
-  const routeParams = (route as any)?.params as { screen?: string; params?: any } | undefined;
-  const targetScreen = routeParams?.screen;
-  const modelRoute = targetScreen === 'ModelTab' ? { params: routeParams?.params } : undefined;
+  const targetScreen = params?.screen;
+  const modelRoute = targetScreen === 'ModelTab' ? { params: params?.params ? JSON.parse(params.params as string) : undefined } : undefined;
 
   const [sidebarWidth, setSidebarWidth] = useState(screenWidth * 0.45);
   const [isDragging, setIsDragging] = useState(false);
@@ -91,13 +90,12 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
       return;
     }
 
-    if (targetScreen === 'LocalServerTab') {
-      setActiveTab('server');
-      return;
-    }
-
     if (targetScreen === 'SettingsTab') {
       setActiveTab('settings');
+    }
+
+    if (targetScreen === 'BenchmarkTab') {
+      setActiveTab('benchmark');
     }
   }, [targetScreen]);
 
@@ -184,13 +182,13 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
   const renderSidebarContent = () => {
     switch (activeTab) {
       case 'models':
-        return <ModelScreen navigation={navigation as any} route={modelRoute as any} />;
-      case 'server':
-        return <LocalServerScreen />;
+        return <ModelScreen />;
+      case 'benchmark':
+        return <BenchmarkScreen />;
       case 'settings':
-        return <SettingsScreen navigation={navigation as any} />;
+        return <SettingsScreen />;
       default:
-        return <ModelScreen navigation={navigation as any} route={modelRoute as any} />;
+        return <ModelScreen />;
     }
   };
 
@@ -215,11 +213,10 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
               isActive={activeTab === 'models'}
             />
             <TabButton
-              tab="server"
-              icon={activeTab === 'server' ? 'server' : 'server'}
-              label="Server"
-              isActive={activeTab === 'server'}
-              showBeta
+              tab="benchmark"
+              icon="tools"
+              label="Tools"
+              isActive={activeTab === 'benchmark'}
             />
             <TabButton
               tab="settings"
@@ -281,7 +278,7 @@ export default function WideScreenLayout({}: WideScreenLayoutProps) {
             backgroundColor: themeColors.background,
           }
         ]}>
-          <HomeScreen navigation={navigation as any} route={route as any} />
+          <HomeScreen />
         </View>
       </View>
     </LayoutProvider>

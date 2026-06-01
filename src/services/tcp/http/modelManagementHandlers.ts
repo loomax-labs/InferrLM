@@ -1,5 +1,5 @@
 import { fs as FileSystem } from '../../fs';
-import { engineService } from '../../inference-engine-service';
+import { engineService } from '../../runtime-service';
 import { modelDownloader } from '../../ModelDownloader';
 import type { StoredModel } from '../../ModelDownloaderTypes';
 import { logger } from '../../../utils/logger';

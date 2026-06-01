@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
 import { huggingFaceService, HFModel, HFModelDetails } from '../services/HuggingFaceService';
 import { modelDownloader } from '../services/ModelDownloader';
 import { DownloadableModel } from '../components/model/DownloadableModelItem';
@@ -21,9 +20,7 @@ export const useModelDownloadHandlers = (
   downloadProgress: any,
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  const navigation = useNavigation();
-
-  const handleDownloadFile = async (filename: string, downloadUrl: string) => {
+const handleDownloadFile = async (filename: string, downloadUrl: string) => {
     const modelId = selectedModel?.id || '';
     
     setSelectedModel(null);

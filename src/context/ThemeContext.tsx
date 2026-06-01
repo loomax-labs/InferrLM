@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useColorScheme, Appearance, Platform, ColorSchemeName } from 'react-native';
+import { Appearance, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeType, ThemeColors } from '../types/theme';
 
@@ -16,51 +16,48 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const systemColorScheme = useColorScheme();
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>('system');
-  const [theme, setTheme] = useState<ThemeColors>(systemColorScheme as ThemeColors || 'light');
-
-  useEffect(() => {
-    const updateTheme = (preferences: { colorScheme: ColorSchemeName }) => {
-      if (selectedTheme === 'system') {
-        const newTheme = (preferences.colorScheme as ThemeColors) || 'light';
-        setTheme(newTheme);
-
-        if (Platform.OS === 'android') {
-          Appearance.setColorScheme(newTheme);
-        }
-      }
-    };
-
-    const subscription = Appearance.addChangeListener(updateTheme);
-    
-    updateTheme({ colorScheme: systemColorScheme });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [selectedTheme, systemColorScheme]);
+  const [theme, setTheme] = useState<ThemeColors>(
+    (Appearance.getColorScheme() as ThemeColors) || 'light'
+  );
 
   useEffect(() => {
     loadThemePreference();
   }, []);
 
   useEffect(() => {
-    if (selectedTheme === 'system') {
-      const newTheme = (systemColorScheme as ThemeColors) || 'light';
-      setTheme(newTheme);
-      
-      if (Platform.OS === 'android') {
-        Appearance.setColorScheme(null); 
-      }
-    } else {
+    if (selectedTheme !== 'system') {
       setTheme(selectedTheme as ThemeColors);
-      
       if (Platform.OS === 'android') {
         Appearance.setColorScheme(selectedTheme as ThemeColors);
       }
+      return;
     }
-  }, [selectedTheme, systemColorScheme]);
+
+    const readScheme = () => (Appearance.getColorScheme() as ThemeColors) || 'light';
+
+    if (Platform.OS === 'android') {
+      Appearance.setColorScheme('unspecified');
+    }
+
+    setTheme(readScheme());
+
+    const appearanceSub = Appearance.addChangeListener(({ colorScheme }) => {
+      const next = (colorScheme as ThemeColors) || 'light';
+      setTheme(next);
+    });
+
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        setTheme(readScheme());
+      }
+    });
+
+    return () => {
+      appearanceSub.remove();
+      appStateSub.remove();
+    };
+  }, [selectedTheme]);
 
   const loadThemePreference = async () => {
     try {

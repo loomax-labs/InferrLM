@@ -24,6 +24,7 @@ import { LlamaSettingsManager } from '../services/LlamaSettingsManager';
 import { LLAMA_INIT_CONFIG, TITLE_GENERATION_CONFIG } from '../config/llamaConfig';
 import { gpuSettingsService } from '../services/GpuSettingsService';
 import { checkGpuSupport, type GpuSupport } from './gpuCapabilities';
+import type { BenchmarkSample } from '../managers/inference-manager';
 
 const LlamaManagerModule = NativeModules.LlamaManager as LlamaManagerInterface;
 
@@ -850,6 +851,73 @@ class LlamaManager {
       throw error;
     } finally {
       this.isCancelled = false;
+      this.releaseGenLock();
+    }
+  }
+
+  async benchmark(prompt: string, customSettings?: ModelSettings): Promise<BenchmarkSample> {
+    if (!this.context) {
+      throw new Error('Model not initialized');
+    }
+
+    await this.acquireGenLock();
+
+    const settings = customSettings ?? this.settingsManager.getSettings();
+    const stop = [...settings.stopWords, '\n', '\\n'];
+    const messages = settings.systemPrompt
+      ? [
+          { role: 'system', content: settings.systemPrompt },
+          { role: 'user', content: prompt },
+        ]
+      : [{ role: 'user', content: prompt }];
+
+    try {
+      const result = await this.context.completion({
+        messages,
+        n_predict: settings.maxTokens,
+        stop,
+        temperature: settings.temperature,
+        top_k: settings.topK,
+        top_p: settings.topP,
+        min_p: settings.minP,
+        jinja: settings.jinja,
+        grammar: settings.grammar || undefined,
+        n_probs: settings.nProbs,
+        penalty_last_n: settings.penaltyLastN,
+        penalty_repeat: settings.penaltyRepeat,
+        penalty_freq: settings.penaltyFreq,
+        penalty_present: settings.penaltyPresent,
+        mirostat: settings.mirostat,
+        mirostat_tau: settings.mirostatTau,
+        mirostat_eta: settings.mirostatEta,
+        dry_multiplier: settings.dryMultiplier,
+        dry_base: settings.dryBase,
+        dry_allowed_length: settings.dryAllowedLength,
+        dry_penalty_last_n: settings.dryPenaltyLastN,
+        dry_sequence_breakers: settings.drySequenceBreakers,
+        ignore_eos: settings.ignoreEos,
+        ...(settings.logitBias.length > 0 ? { logit_bias: settings.logitBias } : {}),
+        seed: settings.seed,
+        xtc_probability: settings.xtcProbability,
+        xtc_threshold: settings.xtcThreshold,
+        typical_p: settings.typicalP,
+        enable_thinking: settings.enableThinking,
+      });
+
+      if (result.context_full) {
+        throw new Error('CONTEXT_LENGTH_EXCEEDED');
+      }
+
+      return {
+        promptTokens: result.timings.prompt_n,
+        completionTokens: result.timings.predicted_n,
+        totalTokens: result.timings.prompt_n + result.timings.predicted_n,
+        ttftMs: result.timings.prompt_ms,
+        totalTimeMs: result.timings.prompt_ms + result.timings.predicted_ms,
+        prefillTokensPerSecond: result.timings.prompt_per_second,
+        decodeTokensPerSecond: result.timings.predicted_per_second,
+      };
+    } finally {
       this.releaseGenLock();
     }
   }

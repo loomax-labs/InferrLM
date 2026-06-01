@@ -94,6 +94,20 @@ export class StoredModelsManager extends EventEmitter {
     return { size, fileCount };
   }
 
+  private detectStandaloneModelFormat(fileName: string): ModelFormat | null {
+    const lower = fileName.toLowerCase();
+
+    if (lower.endsWith('.gguf')) {
+      return ModelFormat.GGUF;
+    }
+
+    if (lower.endsWith('.litertlm') || lower.endsWith('.task')) {
+      return ModelFormat.LITERT;
+    }
+
+    return null;
+  }
+
   private async collectModelFiles(baseDir: string): Promise<Array<{ name: string; path: string; size: number }>> {
     const files: Array<{ name: string; path: string; size: number }> = [];
 
@@ -115,6 +129,10 @@ export class StoredModelsManager extends EventEmitter {
 
         if (info.isDirectory) {
           await walk(fullPath, relativePath);
+          continue;
+        }
+
+        if (!this.detectStandaloneModelFormat(relativePath)) {
           continue;
         }
 
@@ -238,6 +256,10 @@ export class StoredModelsManager extends EventEmitter {
               const name = file.name;
               const path = file.path;
               const size = file.size;
+              const modelFormat = this.detectStandaloneModelFormat(name);
+              if (!modelFormat) {
+                continue;
+              }
               const modified = new Date().toISOString();
 
               const capabilities = detectVisionCapabilities(name);
@@ -256,7 +278,7 @@ export class StoredModelsManager extends EventEmitter {
                 isExternal: false,
                 downloaded: true,
                 modelType,
-                modelFormat: ModelFormat.GGUF,
+                modelFormat,
                 isDirectory: false,
                 capabilities: capabilities.capabilities,
                 supportsMultimodal: capabilities.isVision,
@@ -421,17 +443,22 @@ export class StoredModelsManager extends EventEmitter {
         return;
       }
       
+      const hasProjectionPair = modelToDelete?.modelFormat === ModelFormat.GGUF;
       const dir = path.substring(0, path.lastIndexOf('/'));
       const baseName = path.substring(path.lastIndexOf('/') + 1);
-      const projectorName = baseName.replace('.gguf', '-mmproj-f16.gguf');
-      const projectorPath = `${dir}/${projectorName}`;
+      const projectorName = hasProjectionPair
+        ? baseName.replace('.gguf', '-mmproj-f16.gguf')
+        : '';
+      const projectorPath = projectorName ? `${dir}/${projectorName}` : '';
       
       let hasProjector = false;
-      try {
-        const projInfo = await FileSystem.getInfoAsync(projectorPath);
-        hasProjector = projInfo?.exists ?? false;
-      } catch {
-        hasProjector = false;
+      if (projectorPath) {
+        try {
+          const projInfo = await FileSystem.getInfoAsync(projectorPath);
+          hasProjector = projInfo?.exists ?? false;
+        } catch {
+          hasProjector = false;
+        }
       }
       
       let updated = currentModels.filter(m => m.path !== path);
@@ -457,6 +484,10 @@ export class StoredModelsManager extends EventEmitter {
   async registerModel(name: string, path: string, size: number): Promise<StoredModel> {
     return this.lock(async () => {
       const sanitized = name.replace(/\s+/g, '_');
+      const modelFormat = this.detectStandaloneModelFormat(sanitized);
+      if (!modelFormat) {
+        throw new Error('Unsupported model format');
+      }
       const current = await this.getStoredModels();
       const exists = current.some(m => m.name === sanitized || m.path === path);
       if (exists) {
@@ -479,6 +510,7 @@ export class StoredModelsManager extends EventEmitter {
         isExternal: false,
         downloaded: true,
         modelType,
+        modelFormat,
         capabilities: capabilities.capabilities,
         supportsMultimodal: capabilities.isVision,
         compatibleProjectionModels: capabilities.compatibleProjections,
@@ -597,6 +629,10 @@ export class StoredModelsManager extends EventEmitter {
   async linkExternalModel(uri: string, fileName: string): Promise<void> {
     return this.lock(async () => {
       const sanitized = fileName.replace(/\s+/g, '_');
+      const modelFormat = this.detectStandaloneModelFormat(sanitized);
+      if (!modelFormat) {
+        throw new Error('Unsupported model format');
+      }
       const baseDir = this.fileManager.getBaseDir();
       const destPath = `${baseDir}/${sanitized}`;
       
@@ -643,6 +679,7 @@ export class StoredModelsManager extends EventEmitter {
         isExternal: true,
         downloaded: true,
         modelType,
+        modelFormat,
         capabilities: capabilities.capabilities,
         supportsMultimodal: capabilities.isVision,
         compatibleProjectionModels: capabilities.compatibleProjections,

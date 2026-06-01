@@ -10,9 +10,6 @@ import { fs as FileSystem } from '../services/fs';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
 import { modelDownloader } from '../services/ModelDownloader';
 import { useDownloads } from '../context/DownloadContext';
 import AppHeader from '../components/AppHeader';
@@ -64,7 +61,6 @@ interface DownloadItem {
 export default function DownloadsScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { downloadProgress, setDownloadProgress } = useDownloads();
   const buttonProcessingRef = useRef<Set<string>>(new Set());
 

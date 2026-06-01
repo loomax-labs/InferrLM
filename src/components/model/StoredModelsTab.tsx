@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { fs as FileSystem } from '../../services/fs';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import MlxIcon from '../icons/MlxIcon';
 import { getThemeAwareColor, getDocumentIconColor } from '../../utils/ColorUtils';
 import StoredModelItem from './StoredModelItem';
 import { StoredModel } from '../../services/ModelDownloaderTypes';
@@ -168,6 +169,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
   const isMLXModel = (model: StoredModel): boolean => {
     if (model.modelFormat === 'mlx') return true;
     if (model.modelFormat === 'gguf') return false;
+    if (model.modelFormat === 'litert') return false;
 
     const path = model.path.toLowerCase();
     const name = model.name.toLowerCase();
@@ -334,7 +336,9 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
                   {formatBytes(item.size)}
                 </Text>
                 <View style={[styles.mlxBadge, { backgroundColor: getThemeAwareColor('#4a0660', currentTheme) }]}>
-                  <MaterialCommunityIcons name="apple" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <View style={styles.mlxIconWrap}>
+                    <MlxIcon size={12} color="#FFFFFF" />
+                  </View>
                   <Text style={styles.mlxBadgeText}>MLX</Text>
                 </View>
               </View>
@@ -571,6 +575,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '600',
+  },
+  mlxIconWrap: {
+    marginRight: 4,
   },
   groupMetadata: {
     flexDirection: 'row',

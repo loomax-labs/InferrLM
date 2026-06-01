@@ -1,6 +1,4 @@
-import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import * as Device from 'expo-device';
 
 export const TRUSTED_EMAIL_PROVIDERS = [
   'gmail.com',
@@ -212,53 +210,6 @@ export const resetAuthAttempts = async (): Promise<void> => {
   }
 };
 
-export const getIpAddress = async (): Promise<{ip: string | null, error?: string}> => {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    if (response.ok) {
-      const data = await response.json();
-      return { ip: data.ip };
-    } else {
-      return { ip: null, error: 'Failed to fetch IP address' };
-    }
-  } catch (error) {
-    return { ip: null, error: 'Network error when fetching IP' };
-  }
-};
-
-export const getGeoLocationFromIp = async (ip: string): Promise<{geo: any | null, error?: string}> => {
-  try {
-    const response = await fetch(`https://ipinfo.io/${ip}/json`);
-    if (response.ok) {
-      const data = await response.json();
-      const geoData = {
-        city: data.city,
-        region: data.region,
-        country: data.country,
-        loc: data.loc
-      };
-      return { geo: geoData };
-    } else {
-      return { geo: null, error: 'Failed to get location data' };
-    }
-  } catch (error) {
-    return { geo: null, error: 'Network error when fetching location' };
-  }
-};
-
-export const getDeviceInfo = async (): Promise<any> => {
-  try {
-    return {
-      platform: Platform.OS,
-      osVersion: Device.osVersion || Platform.Version.toString(),
-      deviceType: Device.deviceType || 'Unknown',
-      deviceBrand: Device.brand || 'Unknown',
-    };
-  } catch (error) {
-    return { error: 'Failed to get device information' };
-  }
-};
-
 export const validateReportContent = (content: string): { valid: boolean; sanitized?: string; error?: string } => {
   if (!content || typeof content !== 'string') {
     return { valid: false, error: 'Content is required' };
@@ -304,46 +255,4 @@ export const validateCategory = (category: string): { valid: boolean; sanitized?
   }
 
   return { valid: true, sanitized };
-};
-
-export const storeUserSecurityInfo = async (
-  uid: string,
-  ipData: {ip: string | null, error?: string},
-  geoData: {geo: any | null, error?: string},
-  deviceInfo: any
-): Promise<void> => {
-  try {
-    const {
-      doc,
-      setDoc,
-      addDoc,
-      collection,
-      serverTimestamp
-    } = await import('firebase/firestore');
-    const { firestore } = await import('../config/firebase');
-
-    const securityRecord = {
-      ipAddress: ipData.ip,
-      ipError: ipData.error || null,
-      geolocation: geoData.geo,
-      geoError: geoData.error || null,
-      deviceInfo: deviceInfo,
-      timestamp: serverTimestamp(),
-      sessionId: Math.random().toString(36).substring(2, 15),
-    };
-
-    const userDocRef = doc(firestore, 'users', uid);
-
-    await setDoc(userDocRef, {
-      uid: uid,
-      lastLoginAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-
-    await addDoc(collection(firestore, 'users', uid, 'security_info'), securityRecord);
-  } catch (error) {
-    if (__DEV__) {
-      console.error('store_security_info_error', error);
-    }
-  }
 }; 

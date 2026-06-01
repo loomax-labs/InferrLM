@@ -1,5 +1,5 @@
 import type { Embeddings } from 'react-native-rag';
-import { engineService } from '../inference-engine-service';
+import { engineService } from '../runtime-service';
 
 export class LlamaRnEmbeddings implements Embeddings {
   private loaded = false;

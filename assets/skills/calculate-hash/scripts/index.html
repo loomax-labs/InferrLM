@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script>
+      window.runSkill = async function runSkill(input) {
+        const value = typeof input === 'string' ? input : JSON.stringify(input);
+        const bytes = new TextEncoder().encode(value);
+        const digest = await crypto.subtle.digest('SHA-256', bytes);
+        const hash = Array.from(new Uint8Array(digest))
+          .map(part => part.toString(16).padStart(2, '0'))
+          .join('');
+
+        return {
+          result: hash,
+        };
+      };
+    </script>
+  </body>
+</html>

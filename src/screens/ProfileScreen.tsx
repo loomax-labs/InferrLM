@@ -1,36 +1,23 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Linking } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Pressable } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import AppHeader from '../components/AppHeader';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
-import { getCurrentUser, logoutUser, waitForAuthReady, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeFirebase } from '../services/FirebaseAuth';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { getCurrentUser, logoutUser, onAuthStateChange, sendVerificationEmail, getUserProfile, initializeAuth, type UserData } from '../services/AuthService';
 import { getUserFromSecureStorage } from '../services/AuthStorage';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialog } from '../context/DialogContext';
-import { User as FirebaseUser } from 'firebase/auth';
-import * as WebBrowser from 'expo-web-browser';
 
-type ProfileScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-};
-
-const IN_APP_BROWSER_URLS = new Set([
-  'https://inferrlm.app/delete-account',
-]);
-
-const normalizeLink = (url: string) => url.replace(/\/+$/, '');
-
-export default function ProfileScreen({ navigation }: ProfileScreenProps) {
+export default function ProfileScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
   const { checkLoginStatus } = useRemoteModel();
   const { showDialog } = useDialog();
+  const router = useRouter();
   const [userData, setUserData] = useState({
     displayName: '',
     email: '',
@@ -45,32 +32,12 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const verificationCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
-  useEffect(() => {
-    WebBrowser.warmUpAsync();
-    return () => {
-      WebBrowser.coolDownAsync();
-    };
-  }, []);
-  
-  const formatFirestoreDate = (timestamp: any): string => {
-    if (!timestamp) return '';
-    
+  const toDateStr = (val: any): string => {
+    if (!val) return '';
     try {
-      if (timestamp.toDate) {
-        return timestamp.toDate().toISOString();
-      }
-      
-      if (timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000).toISOString();
-      }
-      
-      if (typeof timestamp === 'string') {
-        return timestamp;
-      }
-      
-      return new Date(timestamp).toISOString();
-    } catch (error) {
-
+      if (typeof val === 'string') return val;
+      return new Date(val).toISOString();
+    } catch {
       return '';
     }
   };
@@ -82,27 +49,18 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         setIsLoading(true);
       }
       
-      await waitForAuthReady();
-      
-      const user = getCurrentUser();
-      const profile = user ? await getUserProfile(user.uid) : null;
+      const profile = await getUserProfile();
       
       if (profile) {
         setUserData({
-          displayName: profile.displayName || user?.displayName || 'User',
-          email: profile.email || user?.email || '',
-          emailVerified: user?.emailVerified ?? false,
-          creationTime: formatFirestoreDate(profile.createdAt),
-          lastSignInTime: formatFirestoreDate(profile.lastLoginAt || (user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toISOString() : profile.updatedAt))
+          displayName: profile.displayName || 'User',
+          email: profile.email || '',
+          emailVerified: profile.emailVerified ?? false,
+          creationTime: toDateStr(profile.createdAt),
+          lastSignInTime: toDateStr(profile.lastLoginAt)
         });
-      } else if (user) {
-        setUserData({
-          displayName: user.displayName || 'User',
-          email: user.email || '',
-          emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || '',
-          lastSignInTime: user.metadata.lastSignInTime || ''
-        });
+      } else {
+        await loadUserData(false);
       }
     } catch (error) {
       await loadUserData(false);
@@ -117,7 +75,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   useEffect(() => {
     const handleAppStateChange = async (nextAppState: AppStateStatus) => {
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        await initializeFirebase();
+        await initializeAuth();
         await refreshUserData(false);
       }
       appStateRef.current = nextAppState;
@@ -139,34 +97,26 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   
   useEffect(() => {
     const initializeAndLoad = async () => {
-      await initializeFirebase();
+      await initializeAuth();
       await loadUserData(true);
     };
     
     initializeAndLoad();
     
-    const unsubscribe = onAuthStateChange(async (user: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChange(async (user: UserData | null) => {
       if (user && !loadingRef.current) {
         try {
         } catch (error) {
         }
         
-        const updatedProfile = user ? await getUserProfile(user.uid) : null;
+        const updatedProfile = await getUserProfile();
         if (updatedProfile) {
           setUserData({
-            displayName: updatedProfile.displayName || user.displayName || 'User',
-            email: updatedProfile.email || user.email || '',
-            emailVerified: user.emailVerified,
-            creationTime: formatFirestoreDate(updatedProfile.createdAt),
-            lastSignInTime: formatFirestoreDate(updatedProfile.lastLoginAt || updatedProfile.updatedAt)
-          });
-        } else {
-          setUserData({
-            displayName: user.displayName || 'User',
-            email: user.email || '',
-            emailVerified: user.emailVerified,
-            creationTime: user.metadata.creationTime || '',
-            lastSignInTime: user.metadata.lastSignInTime || ''
+            displayName: updatedProfile.displayName || 'User',
+            email: updatedProfile.email || '',
+            emailVerified: updatedProfile.emailVerified,
+            creationTime: toDateStr(updatedProfile.createdAt),
+            lastSignInTime: toDateStr(updatedProfile.lastLoginAt)
           });
         }
       }
@@ -190,11 +140,13 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       refreshUserData(false);
       
       verificationCheckIntervalRef.current = setInterval(async () => {
-        const user = getCurrentUser();
+        const user = await getCurrentUser();
         if (user && !user.emailVerified) {
           try {
-            await user.reload();
-            refreshUserData(false);
+            const fresh = await getUserProfile();
+            if (fresh) {
+              refreshUserData(false);
+            }
           } catch (error) {
             refreshUserData(false);
           }
@@ -222,44 +174,26 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         setIsLoading(true);
       }
       
-      await waitForAuthReady();
-      
       const profile = await getUserFromSecureStorage();
-      const user = getCurrentUser();
-      
-      if (user) {
-        try {
-          await user.reload();
-        } catch (error) {
-        }
-      }
       
       if (profile) {
         setUserData({
-          displayName: profile.displayName || user?.displayName || 'User',
-          email: profile.email || user?.email || '',
-          emailVerified: user?.emailVerified ?? profile.emailVerified ?? false,
-          creationTime: formatFirestoreDate(profile.createdAt),
-          lastSignInTime: formatFirestoreDate(profile.lastLoginAt || (user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toISOString() : profile.updatedAt))
-        });
-      } else if (user) {
-        setUserData({
-          displayName: user.displayName || 'User',
-          email: user.email || '',
-          emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || '',
-          lastSignInTime: user.metadata.lastSignInTime || ''
+          displayName: profile.displayName || 'User',
+          email: profile.email || '',
+          emailVerified: profile.emailVerified ?? false,
+          creationTime: toDateStr(profile.createdAt),
+          lastSignInTime: toDateStr(profile.lastLoginAt)
         });
       }
     } catch (error) {
-      const user = getCurrentUser();
-      if (user) {
+      const stored = await getUserFromSecureStorage();
+      if (stored) {
         setUserData({
-          displayName: user.displayName || 'User',
-          email: user.email || '',
-          emailVerified: user.emailVerified,
-          creationTime: user.metadata.creationTime || '',
-          lastSignInTime: user.metadata.lastSignInTime || ''
+          displayName: stored.displayName || 'User',
+          email: stored.email || '',
+          emailVerified: stored.emailVerified ?? false,
+          creationTime: toDateStr(stored.createdAt),
+          lastSignInTime: toDateStr(stored.lastLoginAt)
         });
       }
     } finally {
@@ -284,13 +218,14 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
   const [emailSentTimestamp, setEmailSentTimestamp] = useState<number | null>(null);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const EMAIL_COOLDOWN_PERIOD = 60000;
 
   const resendVerificationEmail = async () => {
     if (isResendingEmail) return;
     
     try {
-      const user = getCurrentUser();
+      const user = await getCurrentUser();
       if (!user) {
         showDialog({
           title: 'Error',
@@ -346,24 +281,13 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     }
   };
 
-  const openLink = async (url: string) => {
-    try {
-      const normalizedUrl = normalizeLink(url);
-      if (IN_APP_BROWSER_URLS.has(normalizedUrl)) {
-        await WebBrowser.openBrowserAsync(normalizedUrl);
-        return;
-      }
-      await Linking.openURL(normalizedUrl);
-    } catch (error) {
-      showDialog({
-        title: 'Error',
-        message: 'Failed to open browser'
-      });
-    }
+  const handleDeleteAccount = () => {
+    setMenuVisible(false);
+    router.push('/delete-account');
   };
 
-  const handleDeleteAccount = () => {
-    openLink('https://inferrlm.app/delete-account');
+  const toggleMenu = () => {
+    setMenuVisible((value) => !value);
   };
 
   const handleSignOut = async () => {
@@ -375,18 +299,9 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       onConfirm: async () => {
         const result = await logoutUser();
         if (result.success) {
+          setMenuVisible(false);
           await checkLoginStatus();
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [
-                {
-                  name: 'MainTabs',
-                  params: { screen: 'SettingsTab' }
-                }
-              ]
-            })
-          );
+          router.replace('/(tabs)');
         } else {
           showDialog({
             title: 'Error',
@@ -422,8 +337,35 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         title="My Profile"
         showBackButton={true}
         showLogo={false}
-        rightButtons={[]}
+        rightButtons={
+          <TouchableOpacity
+            style={styles.headerMenuButton}
+            onPress={toggleMenu}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialCommunityIcons name="dots-vertical" size={22} color={themeColors.headerText} />
+          </TouchableOpacity>
+        }
       />
+      {menuVisible && (
+        <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
+          <View
+            style={[
+              styles.menuCard,
+              {
+                backgroundColor: themeColors.background,
+                borderColor: themeColors.borderColor,
+                top: insets.top + 52,
+              },
+            ]}
+          >
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteAccount}>
+              <MaterialCommunityIcons name="account-remove" size={18} color="#FF5252" />
+              <Text style={styles.menuItemText}>Delete Account</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      )}
       <ScrollView contentContainerStyle={[styles.contentContainer, { paddingBottom: insets.bottom + 20 }]}>
         <View style={[styles.profileHeader, { backgroundColor: themeColors.background }]}>
           <View style={[styles.avatarContainer, { backgroundColor: themeColors.primary + '20' }]}>
@@ -500,16 +442,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <MaterialCommunityIcons name="logout" size={20} color="#FF5252" />
           <Text style={[styles.signOutText, { color: '#FF5252' }]}>
             Sign Out
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.deleteAccountButton, { backgroundColor: '#FF5252' + '15', borderColor: '#FF5252' + '30', borderWidth: 1 }]}
-          onPress={handleDeleteAccount}
-        >
-          <MaterialCommunityIcons name="account-remove" size={20} color="#FF5252" />
-          <Text style={[styles.deleteAccountText, { color: '#FF5252' }]}>
-            Delete Account
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -600,16 +532,45 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
-  deleteAccountButton: {
+  headerMenuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 20,
+  },
+  menuCard: {
+    position: 'absolute',
+    right: 16,
+    minWidth: 180,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 8,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 8,
   },
-  deleteAccountText: {
-    fontSize: 16,
+  menuItemText: {
+    color: '#FF5252',
+    fontSize: 15,
     fontWeight: '600',
   },
   signOutButton: {

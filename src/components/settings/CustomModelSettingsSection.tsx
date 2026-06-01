@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View, Switch } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { EngineId } from '../../managers/inference-manager';
 import SettingSlider from '../SettingSlider';
 import { getThemeAwareColor } from '../../utils/ColorUtils';
 import { featureCaps } from '../../services/feature-availability';
@@ -49,7 +50,7 @@ type CustomModelSettingsSectionProps = {
   onSeedPress: () => void;
   onNProbsPress: () => void;
   onLogitBiasPress: () => void;
-  selectedInferenceEngine?: 'llama.cpp' | 'mediapipe' | 'mlc-llm' | 'mlx';
+  selectedRuntime?: 'llama.cpp' | 'mediapipe' | 'mlc-llm' | EngineId;
 };
 
 const CustomModelSettingsSection = ({
@@ -63,11 +64,15 @@ const CustomModelSettingsSection = ({
   onSeedPress,
   onNProbsPress,
   onLogitBiasPress,
-  selectedInferenceEngine,
+  selectedRuntime,
 }: CustomModelSettingsSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const engineKey = selectedInferenceEngine === 'mlx' ? 'mlx' : 'llama';
+  const engineKey: EngineId = selectedRuntime === 'mlx'
+    ? 'mlx'
+    : selectedRuntime === 'litert'
+      ? 'litert'
+      : 'llama';
   const caps = featureCaps[engineKey];
 
   const isDifferent = (current: any, defaultValue: any): boolean => {

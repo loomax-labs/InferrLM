@@ -1,5 +1,3 @@
-const APP_ENV = process.env.APP_ENV;
-
 export default {
   expo: {
     name: "InferrLM",
@@ -24,7 +22,8 @@ export default {
     ios: {
       supportsTablet: true,
       requireFullScreen: false,
-      bundleIdentifier: APP_ENV === 'development' ? "com.gorai.inferra.dev" : "com.gorai.inferra",
+      bundleIdentifier: "com.gorai.inferra",
+      appleTeamId: "GXKD77CCQ6",
       buildNumber: "293",
       runtimeVersion: "0.8.7",
       infoPlist: {
@@ -35,6 +34,10 @@ export default {
         NSCameraUsageDescription: "Camera access enables direct file capture uploads and OCR analysis features inside InferrLM.",
         NSPhotoLibraryUsageDescription: "InferrLM needs access to your photo library to let you select images for analysis and OCR.",
         NSPhotoLibraryAddUsageDescription: "InferrLM needs permission to save captured photos and generated images to your library.",
+        NSMicrophoneUsageDescription: "InferrLM uses your microphone to record audio for on-device transcription and translation.",
+        NSContactsUsageDescription: "InferrLM uses contacts access only when you approve a mobile action to create or update a contact.",
+        NSCalendarsUsageDescription: "InferrLM uses calendar access only when you approve a mobile action to create an event.",
+        NSRemindersUsageDescription: "InferrLM uses reminders access only when you approve a calendar-style action that targets reminders.",
         NSLocalNetworkUsageDescription: "InferrLM uses local network access to share your AI chat interface with other devices on your WiFi network, allowing you to access your assistant from browsers on computers, tablets, or other phones.",
         NSBonjourServices: ["_http._tcp"],
         ITSAppUsesNonExemptEncryption: false,
@@ -52,7 +55,7 @@ export default {
       entitlements: {
         "com.apple.developer.applesignin": ["Default"]
       },
-      scheme: APP_ENV === 'development' ? "com.gorai.inferra.dev" : "com.gorai.inferra"
+      scheme: "com.gorai.inferra"
     },
     android: {
       versionCode: 293,
@@ -63,8 +66,6 @@ export default {
       },
       package: "com.gorai.ragionare",
       runtimeVersion: "0.8.7",
-      googleServicesFile: "./google-services.json",
-      edgeToEdgeEnabled: true,
       resizeableActivity: true,
       supportsFreeform: true,
       permissions: [
@@ -74,6 +75,11 @@ export default {
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_DATA_SYNC",
         "CAMERA",
+        "RECORD_AUDIO",
+        "READ_CONTACTS",
+        "WRITE_CONTACTS",
+        "READ_CALENDAR",
+        "WRITE_CALENDAR",
         "READ_MEDIA_IMAGES",
         "WRITE_EXTERNAL_STORAGE"
       ],
@@ -113,9 +119,15 @@ export default {
       },
     },
     plugins: [
+      "@inferrlm/react-native-litert-lm",
+      "expo-sharing",
+      "expo-status-bar",
       "expo-font",
       "expo-web-browser",
       "expo-asset",
+      "expo-audio",
+      "expo-contacts",
+      "expo-calendar",
       "expo-localization",
       "expo-background-task",
       "expo-router",
@@ -135,6 +147,7 @@ export default {
           }
         }
       ],
+      "./app.plugin",
       [
         "expo-splash-screen",
         {

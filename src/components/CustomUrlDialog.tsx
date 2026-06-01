@@ -12,13 +12,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { modelDownloader } from '../services/ModelDownloader';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { TabParamList } from '../types/navigation';
 import { Text } from 'react-native-paper';
 import Dialog from './Dialog';
 
@@ -26,10 +21,6 @@ interface CustomUrlDialogProps {
   visible: boolean;
   onClose: () => void;
   onDownloadStart: (downloadId: number, modelName: string) => void;
-  navigation: CompositeNavigationProp<
-    BottomTabNavigationProp<TabParamList, 'ModelTab'>,
-    NativeStackNavigationProp<RootStackParamList>
-  >;
 }
 
 interface DownloadState {
@@ -38,9 +29,10 @@ interface DownloadState {
   modelName: string;
 }
 
-const CustomUrlDialog = ({ visible, onClose, onDownloadStart, navigation }: CustomUrlDialogProps) => {
+const CustomUrlDialog = ({ visible, onClose, onDownloadStart }: CustomUrlDialogProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
+  const router = useRouter();
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isValid, setIsValid] = useState(false);
@@ -69,7 +61,7 @@ const CustomUrlDialog = ({ visible, onClose, onDownloadStart, navigation }: Cust
   const handleDownload = async () => {
     if (!isValid) return;
     
-    navigation.navigate('Downloads');
+    router.push('/downloads');
     onClose();
     
     setIsLoading(true);

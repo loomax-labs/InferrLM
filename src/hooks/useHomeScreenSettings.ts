@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { ProviderKeysService } from '../services/ProviderKeysService';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { ChatLifecycleService } from '../services/ChatLifecycleService';
@@ -11,11 +11,11 @@ export const useHomeScreenSettings = (
   activeProvider: ProviderType | null,
   enableRemoteModels: boolean,
   isLoggedIn: boolean,
-  navigation: any,
   showDialog: ShowDialogFn,
   hideDialog: () => void
 ) => {
   const [selectedModelPath, setSelectedModelPath] = useState<string | null>(null);
+  const router = useRouter();
 
   const getEffectiveSettings = useCallback(async () => {
     return await ChatLifecycleService.getEffectiveSettings(activeProvider);
@@ -49,7 +49,7 @@ export const useHomeScreenSettings = (
                 text: 'Go to Settings',
                 onPress: () => {
                   hideDialog();
-                  navigation.navigate('MainTabs', { screen: 'SettingsTab' });
+                  router.push('/(tabs)/settings');
                 }
               }
             ];
@@ -62,7 +62,7 @@ export const useHomeScreenSettings = (
                 text: 'Go to Settings',
                 onPress: () => {
                   hideDialog();
-                  navigation.navigate('MainTabs', { screen: 'SettingsTab' });
+                  router.push('/(tabs)/settings');
                 }
               },
               {

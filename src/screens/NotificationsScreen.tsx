@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-
-type NotificationsScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Notifications'>;
-};
 
 type Notification = {
   id: string;
@@ -20,7 +15,7 @@ type Notification = {
   downloadId?: number;
 };
 
-export default function NotificationsScreen({ navigation }: NotificationsScreenProps) {
+export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const { theme: currentTheme } = useTheme();
@@ -68,13 +63,13 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
 
   useEffect(() => {
     loadNotifications();
-    
-    const unsubscribe = navigation.addListener('focus', () => {
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
       loadNotifications();
-    });
-    
-    return unsubscribe;
-  }, [navigation]);
+    }, [])
+  );
 
   const getIconForNotificationType = (type: string) => {
     switch (type) {

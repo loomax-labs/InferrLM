@@ -1,4 +1,10 @@
-export type EngineId = 'llama' | 'mlx';
+export type EngineId = 'llama' | 'mlx' | 'litert';
+
+export const engineLabels: Record<EngineId, string> = {
+  llama: 'Llama.cpp',
+  mlx: 'MLX',
+  litert: 'LiteRT-LM',
+};
 
 export type Msg = {
   role: string;
@@ -15,6 +21,16 @@ export type EngineCaps = {
   dry: boolean;
   mirostat: boolean;
   xtc: boolean;
+};
+
+export type BenchmarkSample = {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  ttftMs: number;
+  totalTimeMs: number;
+  prefillTokensPerSecond: number;
+  decodeTokensPerSecond: number;
 };
 
 export type GenSettings = {
@@ -54,6 +70,7 @@ export interface InferenceManager {
   init(modelPath: string, projectorPath?: string): Promise<void>;
   gen(messages: Msg[], opts?: GenOpts): Promise<string>;
   embed?(text: string): Promise<number[]>;
+  benchmark?(prompt: string, opts?: GenOpts): Promise<BenchmarkSample>;
   stop?(): void;
   release(): Promise<void>;
   caps(): EngineCaps;

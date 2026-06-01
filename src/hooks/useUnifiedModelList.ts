@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { huggingFaceService, HFModel, HFModelDetails } from '../services/HuggingFaceService';
 import { modelDownloader } from '../services/ModelDownloader';
 import { DownloadableModel } from '../components/model/DownloadableModelItem';
@@ -14,7 +14,7 @@ export const useUnifiedModelList = (
   downloadProgress: any,
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  const navigation = useNavigation();
+  const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [hfModels, setHfModels] = useState<HFModel[]>([]);
@@ -245,7 +245,7 @@ export const useUnifiedModelList = (
 
     const { modelId, files } = pendingMLXDownload;
     hideMLXDirDialog();
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     try {
       await modelDownloader.downloadMLXModel(
@@ -269,7 +269,7 @@ export const useUnifiedModelList = (
       return;
     }
 
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     try {
       setDownloadProgress((prev: any) => ({
@@ -309,7 +309,7 @@ export const useUnifiedModelList = (
   };
 
   const proceedWithMultipleDownloads = async (files: any[], modelId: string) => {
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     const downloadPromises = files.map(async (file) => {
       const fullFilename = file.filename;
@@ -359,21 +359,23 @@ export const useUnifiedModelList = (
   };
 
   const proceedWithCuratedDownload = async (model: DownloadableModel) => {
-    if (isModelDownloaded(model.name)) {
+    const mainFilename = model.huggingFaceLink.split('/').pop() || model.name;
+
+    if (isModelDownloaded(mainFilename)) {
       showDialog('Already Downloaded', 'This model is already in your collection.');
       return;
     }
 
-    navigation.navigate('Downloads' as never);
+    router.push('/downloads');
 
     const filesToDownload = [
-      { filename: model.name, downloadUrl: model.huggingFaceLink }
+      { filename: mainFilename, downloadUrl: model.huggingFaceLink }
     ];
 
     if (model.additionalFiles && model.additionalFiles.length > 0) {
       model.additionalFiles.forEach(file => {
         filesToDownload.push({
-          filename: file.name,
+          filename: file.url.split('/').pop() || file.name,
           downloadUrl: file.url
         });
       });

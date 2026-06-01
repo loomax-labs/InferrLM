@@ -7,14 +7,24 @@ import {
   Switch,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import LiteRtIcon from '../components/icons/LiteRtIcon';
 import { useTheme } from '../context/ThemeContext';
+import { getEngineSettingsMeta, getEngineSettingsRoute } from '../config/engineSettings';
 import { theme } from '../constants/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { llamaManager } from '../utils/LlamaManager';
 import { modelSettingsService, ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
+import { engineService } from '../services/runtime-service';
+import {
+  formatLiteRTBackend,
+  getLiteRTBackendWarning,
+  getLiteRTRecommendedBackend,
+  isLiteRTBackendSelectable,
+  litertBackendOptions,
+  type LiteRTBackend,
+} from '../services/LiteRTBackendService';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import ChatSettingsSection from '../components/settings/ChatSettingsSection';
 import SystemPromptDialog from '../components/SystemPromptDialog';
@@ -22,10 +32,7 @@ import MaxTokensDialog from '../components/MaxTokensDialog';
 import StopWordsDialog from '../components/StopWordsDialog';
 import ModelSettingDialog from '../components/ModelSettingDialog';
 import AppHeader from '../components/AppHeader';
-import { useRoute, useNavigation, RouteProp, NavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation';
-
-type ModelSettingsScreenRouteProp = RouteProp<RootStackParamList, 'ModelSettings'>;
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 type DialogConfig = {
   key?: keyof ModelSettings;
@@ -42,10 +49,8 @@ type DialogConfig = {
 export default function ModelSettingsScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
-  const route = useRoute<ModelSettingsScreenRouteProp>();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  
-  const { modelName, modelPath } = route.params;
+  const router = useRouter();
+  const { modelName, modelPath } = useLocalSearchParams<{ modelName: string; modelPath: string }>();
   
   const [modelSettingsConfig, setModelSettingsConfig] = useState<ModelSettingsConfig>({
     useGlobalSettings: true,
@@ -92,6 +97,18 @@ export default function ModelSettingsScreen() {
       await modelSettingsService.setModelSettings(modelPath, newModelSettings);
       setModelSettingsConfig(newModelSettings);
     } catch (error) {
+    }
+  };
+
+  const handleLiteRTBackendChange = async (backend: LiteRTBackend) => {
+    try {
+      const nextConfig: ModelSettingsConfig = {
+        ...modelSettingsConfig,
+        litertBackend: backend,
+      };
+      await modelSettingsService.setModelSettings(modelPath, nextConfig);
+      setModelSettingsConfig(nextConfig);
+    } catch {
     }
   };
 
@@ -192,6 +209,12 @@ export default function ModelSettingsScreen() {
   }
 
   const displaySettings = getDisplaySettings();
+  const benchmarkEngine = engineService.getEngineForModel(modelPath);
+  const settingsMeta = getEngineSettingsMeta(benchmarkEngine);
+  const displayModelName = modelName.replace(/\.(gguf|litertlm|task)$/i, '');
+  const litertBackend = modelSettingsConfig.litertBackend ?? getLiteRTRecommendedBackend();
+  const recommendedLiteRTBackend = getLiteRTRecommendedBackend();
+  const litertBackendWarning = getLiteRTBackendWarning(litertBackend);
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
@@ -205,9 +228,65 @@ export default function ModelSettingsScreen() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.modelInfo}>
           <Text style={[styles.modelName, { color: themeColors.text }]}>
-            {modelName.replace('.gguf', '')}
+            {displayModelName}
           </Text>
         </View>
+
+        {benchmarkEngine === 'litert' && (
+          <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}> 
+            <View style={styles.backendHeader}>
+              <View style={styles.settingLeft}>
+                <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0,0,0,0.06)' }]}>
+                  <LiteRtIcon size={22} />
+                </View>
+                <View style={styles.settingTextContainer}>
+                  <Text style={[styles.settingText, { color: themeColors.text }]}> 
+                    LiteRT Backend
+                  </Text>
+                  <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
+                    Choose the runtime target for this LiteRT model.
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.backendRow}>
+              {litertBackendOptions.map(option => {
+                const selected = option === litertBackend;
+                const selectable = isLiteRTBackendSelectable(option);
+                const recommended = option === recommendedLiteRTBackend;
+
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.backendChip,
+                      {
+                        backgroundColor: selected ? themeColors.primary : themeColors.background,
+                        borderColor: selected ? themeColors.primary : themeColors.secondaryText + '20',
+                        opacity: selectable ? 1 : 0.45,
+                      },
+                    ]}
+                    disabled={!selectable}
+                    onPress={() => handleLiteRTBackendChange(option)}
+                  >
+                    <Text style={[styles.backendChipText, { color: selected ? '#FFFFFF' : themeColors.text }]}>
+                      {formatLiteRTBackend(option)}
+                    </Text>
+                    {recommended ? (
+                      <Text style={[styles.backendChipMeta, { color: selected ? '#FFFFFF' : themeColors.secondaryText }]}>Recommended</Text>
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.backendHint, { color: themeColors.secondaryText }]}>Recommended backend: {formatLiteRTBackend(recommendedLiteRTBackend)}</Text>
+            {litertBackendWarning ? (
+              <Text style={styles.backendWarning}>{litertBackendWarning}</Text>
+            ) : null}
+          </View>
+        )}
 
         <View style={[styles.settingCard, { backgroundColor: themeColors.borderColor }]}>
           <View style={styles.settingItem}>
@@ -247,7 +326,6 @@ export default function ModelSettingsScreen() {
                 modelSettings={displaySettings}
                 defaultSettings={globalSettings}
                 onOpenSystemPromptDialog={() => setSystemPromptDialogVisible(true)}
-                onResetSystemPrompt={() => handleCustomSettingsChange({ systemPrompt: globalSettings.systemPrompt })}
               />
 
               <ModelSettingsSection
@@ -255,16 +333,19 @@ export default function ModelSettingsScreen() {
                 defaultSettings={globalSettings}
                 error={null}
                 onSettingsChange={handleCustomSettingsChange}
-                onMaxTokensPress={() => setMaxTokensDialogVisible(true)}
-                onStopWordsPress={() => setStopWordsDialogVisible(true)}
-                onGrammarPress={() => {}}
-                onSeedPress={() => {}}
-                onNProbsPress={() => {}}
-                onLogitBiasPress={() => {}}
-                onDrySequenceBreakersPress={() => {}}
                 onDialogOpen={handleDialogOpen}
-                defaultExpanded={false}
-                onModelParametersPress={() => navigation.navigate('ModelParameters', { modelName })}
+                parameterEntries={[
+                  {
+                    key: benchmarkEngine,
+                    label: settingsMeta.entryLabel,
+                    description: settingsMeta.entryDescription,
+                    badgeLabel: settingsMeta.badgeLabel,
+                    iconName: settingsMeta.iconName,
+                    iconKey: settingsMeta.iconKey,
+                    accentColor: settingsMeta.accentColor,
+                    onPress: () => router.push({ pathname: getEngineSettingsRoute(benchmarkEngine), params: { modelName, modelPath } }),
+                  },
+                ]}
               />
             </View>
           </View>
@@ -378,6 +459,46 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 13,
+  },
+  backendHeader: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  backendRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingHorizontal: 16,
+  },
+  backendChip: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minWidth: 92,
+    alignItems: 'center',
+  },
+  backendChipText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  backendChipMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  backendHint: {
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  backendWarning: {
+    color: '#C62828',
+    fontSize: 12,
+    lineHeight: 18,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   customSettingsSection: {
     marginBottom: 20,

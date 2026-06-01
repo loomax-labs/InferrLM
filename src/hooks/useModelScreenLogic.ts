@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'expo-router';
 import { Animated, AppState, AppStateStatus, InteractionManager, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as BackgroundTask from 'expo-background-task';
@@ -11,7 +12,8 @@ import { modelDownloader } from '../services/ModelDownloader';
 import { downloadNotificationService } from '../services/DownloadNotifier';
 import { onlineModelService } from '../services/OnlineModelService';
 import { modelSettingsService } from '../services/ModelSettingsService';
-import { getUserFromSecureStorage, logoutUser } from '../services/FirebaseService';
+import { getUserFromSecureStorage } from '../services/AuthStorage';
+import { logoutUser } from '../services/AuthService';
 import { getActiveDownloadsCount } from '../utils/ModelUtils';
 import { StoredModel } from '../services/ModelDownloaderTypes';
 import { ShowDialogFn } from './useDialog';
@@ -45,10 +47,11 @@ const registerBackgroundTask = async () => {
   }
 };
 
-export const useModelScreenLogic = (navigation: any, routeParams?: ModelRouteParams) => {
+export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
   const { enableRemoteModels, isLoggedIn, checkLoginStatus, toggleRemoteModels } = useRemoteModel();
   const { storedModels, isLoading: isLoadingStoredModels, isRefreshing: isRefreshingStoredModels, refreshStoredModels, rescanStoredModels } = useStoredModels();
   const { downloadProgress, setDownloadProgress } = useDownloads();
+  const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<'stored' | 'downloadable' | 'remote'>('stored');
   const [isDownloadsVisible, setIsDownloadsVisible] = useState(false);
@@ -205,7 +208,7 @@ export const useModelScreenLogic = (navigation: any, routeParams?: ModelRoutePar
   };
 
   const handleCustomDownload = async (downloadId: number, modelName: string) => {
-    navigation.navigate('Downloads');
+    router.push('/downloads');
     
     setDownloadProgress(prev => ({
       ...prev,
@@ -287,7 +290,7 @@ export const useModelScreenLogic = (navigation: any, routeParams?: ModelRoutePar
   };
 
   const handleModelSettings = (modelPath: string, modelName: string) => {
-    navigation.navigate('ModelSettings', { modelName, modelPath });
+    router.push({ pathname: '/model-settings', params: { modelName, modelPath } });
   };
 
   const handleTabPress = (tab: 'stored' | 'downloadable' | 'remote', showDialog: ShowDialogFn, hideDialog: () => void) => {
@@ -340,12 +343,10 @@ export const useModelScreenLogic = (navigation: any, routeParams?: ModelRoutePar
           setActiveTab('remote');
         }
       } finally {
-        if (typeof navigation.setParams === 'function') {
-          navigation.setParams({
-            autoEnableRemoteModels: undefined,
-            openRemoteTab: undefined,
-          });
-        }
+        router.setParams({
+          autoEnableRemoteModels: undefined,
+          openRemoteTab: undefined,
+        });
         applyingRemoteIntent.current = false;
       }
     };

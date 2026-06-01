@@ -1,5 +1,5 @@
 import { ChatMessage } from '../utils/ChatManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
 import chatManager from '../utils/ChatManager';
 import { generateRandomId } from '../utils/homeScreenUtils';
@@ -1144,7 +1144,7 @@ export class MessageProcessingService {
 
   private getLocalModelName(path: string): string {
     const file = path.split('/').pop() || path;
-    return file.replace(/\.(gguf|mlx)$/i, '');
+    return file.replace(/\.(gguf|mlx|litertlm|task)$/i, '');
   }
 
   private shouldSkipRag(messages: Array<{ role: string; content: string }>): boolean {

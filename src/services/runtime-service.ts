@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { EngineId, InferenceManager } from '../managers/inference-manager';
 import { llamaAdapter } from '../managers/llama-manager';
+import { litertManager } from '../managers/litert-manager';
 import { mlxManager } from '../managers/mlx-manager';
 import { featureCaps, isFeatureOn } from './feature-availability';
 
@@ -10,12 +11,28 @@ const keyEnabled = 'inference_engine_enabled';
 
 class EngineService {
   private engine: EngineId = 'llama';
-  private enabled: Record<EngineId, boolean> = { llama: true, mlx: Platform.OS === 'ios' };
+  private enabled: Record<EngineId, boolean> = {
+    llama: true,
+    mlx: Platform.OS === 'ios',
+    litert: true,
+  };
   private activeModelPath: string | null = null;
   private map: Record<EngineId, InferenceManager> = {
     llama: llamaAdapter,
     mlx: mlxManager,
+    litert: litertManager,
   };
+
+  private normalizeEnabled(enabled: Record<EngineId, boolean>) {
+    if (enabled.llama || enabled.mlx || enabled.litert) {
+      return enabled;
+    }
+
+    return {
+      ...enabled,
+      llama: true,
+    };
+  }
 
   async load() {
     const [storedActive, storedEnabled] = await Promise.all([
@@ -23,7 +40,7 @@ class EngineService {
       AsyncStorage.getItem(keyEnabled),
     ]);
 
-    if (storedActive === 'mlx' || storedActive === 'llama') {
+    if (storedActive === 'mlx' || storedActive === 'llama' || storedActive === 'litert') {
       if (storedActive === 'mlx' && Platform.OS === 'android') {
         this.engine = 'llama';
       } else {
@@ -34,10 +51,11 @@ class EngineService {
     if (storedEnabled) {
       try {
         const parsed = JSON.parse(storedEnabled) as Record<EngineId, boolean>;
-        this.enabled = {
+        this.enabled = this.normalizeEnabled({
           llama: parsed.llama !== false,
           mlx: Platform.OS === 'ios' ? (parsed.mlx !== false) : false,
-        };
+          litert: parsed.litert !== false,
+        });
       } catch {
       }
     }
@@ -51,7 +69,7 @@ class EngineService {
   }
 
   async setEnabled(engine: EngineId, value: boolean) {
-    this.enabled = { ...this.enabled, [engine]: value };
+    this.enabled = this.normalizeEnabled({ ...this.enabled, [engine]: value });
     await AsyncStorage.setItem(keyEnabled, JSON.stringify(this.enabled));
   }
 
@@ -74,8 +92,10 @@ class EngineService {
   getEngineForModel(modelPath: string, modelFormat?: string): EngineId {
     if (modelFormat === 'gguf') return 'llama';
     if (modelFormat === 'mlx') return 'mlx';
+    if (modelFormat === 'litert') return 'litert';
     const lower = modelPath.toLowerCase();
     if (lower.endsWith('.gguf')) return 'llama';
+    if (lower.endsWith('.litertlm') || lower.endsWith('.task')) return 'litert';
     if (
       lower.endsWith('.safetensors') ||
       lower.endsWith('.json') ||

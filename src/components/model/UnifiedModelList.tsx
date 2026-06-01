@@ -24,7 +24,7 @@ interface UnifiedModelListProps {
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>;
   filters: FilterOptions;
   onFiltersChange: (filters: FilterOptions) => void;
-  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[] };
+  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[], runtimes: string[] };
   onCustomUrlPress: () => void;
   onGuidancePress: () => void;
 }
@@ -87,7 +87,7 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
                 Download from URL
               </Text>
               <Text style={[styles.customUrlButtonSubtitle, { color: themeColors.secondaryText }]}>
-                Download a custom GGUF model from a URL
+                Download a custom GGUF or LiteRT model from a URL
               </Text>
             </View>
           </View>

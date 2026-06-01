@@ -20,7 +20,7 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundTask from 'expo-background-task';
 import { ThemeColors } from './src/types/theme';
 import { notificationService } from './src/services/NotificationService';
-import { initializeFirebase } from './src/services/FirebaseAuth';
+import { initializeAuth } from './src/services/AuthService';
 import { initGeminiService } from './src/services/GeminiInitializer';
 import { initOpenAIService } from './src/services/OpenAIInitializer';
 import { initClaudeService } from './src/services/ClaudeInitializer';
@@ -29,6 +29,7 @@ import { DialogProvider } from './src/context/DialogContext';
 import { ShowDialog } from './src/components/ShowDialog';
 import { initializeBindings } from './src/utils/llamaBinding';
 import UpdateDialog from './src/components/UpdateDialog';
+import SkillRuntimeHost from './src/components/skills/SkillRuntimeHost';
 import { updateService } from './src/services/UpdateService';
 
 SplashScreen.preventAutoHideAsync();
@@ -37,7 +38,7 @@ initializeBindings().catch(() => {});
 
 const initializeServices = async () => {
   try {
-    await initializeFirebase();
+    await initializeAuth();
   } catch (error) {
   }
   
@@ -327,6 +328,7 @@ export default function App() {
                   <DialogProvider>
                     <Navigation />
                   </DialogProvider>
+                  <SkillRuntimeHost />
                   <UpdateDialog />
                 </GestureHandlerRootView>
               </RemoteModelProvider>

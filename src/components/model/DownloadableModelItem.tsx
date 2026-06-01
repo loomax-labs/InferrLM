@@ -12,7 +12,7 @@ import { theme } from '../../constants/theme';
 import { getThemeAwareColor, getBrowserDownloadTextColor } from '../../utils/ColorUtils';
 import Dialog from '../Dialog';
 
-import { ModelType } from '../../types/models';
+import { ModelType, ModelFormat } from '../../types/models';
 
 export interface DownloadableModel {
   name: string;
@@ -24,6 +24,7 @@ export interface DownloadableModel {
   quantization: string;
   tags?: string[];
   modelType?: ModelType;
+  modelFormat?: ModelFormat;
   capabilities?: string[];
   supportsMultimodal?: boolean;
   additionalFiles?: {
@@ -155,6 +156,16 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#E91E63', currentTheme) }]}>
                     <MaterialCommunityIcons name="brain" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
                     <Text style={styles.modelTagText}>Reasoning</Text>
+                  </View>
+                )}
+                {model.tags?.includes('litert') && (
+                  <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#1a7340', currentTheme) }]}>
+                    <Text style={styles.modelTagText}>LiteRT</Text>
+                  </View>
+                )}
+                {model.tags?.includes('llama.cpp') && (
+                  <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#7b3f00', currentTheme) }]}>
+                    <Text style={styles.modelTagText}>llama.cpp</Text>
                   </View>
                 )}
                 {isDownloaded && (

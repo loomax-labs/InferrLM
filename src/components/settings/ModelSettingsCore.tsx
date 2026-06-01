@@ -3,7 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View, Switch } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
-import InferenceEngineSection from './InferenceEngine';
+import { EngineId } from '../../managers/inference-manager';
+import RuntimeSection from './Runtime';
 
 export type GpuConfig = {
   label: string;
@@ -26,8 +27,8 @@ type ModelSettingsCoreProps = {
   showAppleFoundationToggle?: boolean;
   appleFoundationEnabled?: boolean;
   onToggleAppleFoundation?: (enabled: boolean) => void;
-  engineEnabled?: Record<'llama' | 'mlx', boolean>;
-  onEngineToggle?: (engine: 'llama' | 'mlx', enabled: boolean) => void;
+  engineEnabled?: Record<EngineId, boolean>;
+  onEngineToggle?: (engine: EngineId, enabled: boolean) => void;
   onDialogOpen: (config: any) => void;
 };
 
@@ -127,7 +128,7 @@ const ModelSettingsCore = ({
       )}
 
       {engineEnabled && onEngineToggle && (
-        <InferenceEngineSection
+        <RuntimeSection
           enabled={engineEnabled}
           onToggle={onEngineToggle}
         />

@@ -1,5 +1,5 @@
 import { modelDownloader } from '../../ModelDownloader';
-import { engineService } from '../../inference-engine-service';
+import { engineService } from '../../runtime-service';
 import { logger } from '../../../utils/logger';
 import type { StoredModel } from '../../ModelDownloaderTypes';
 import { parseJsonBody } from './jsonParser';

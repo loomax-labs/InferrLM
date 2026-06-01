@@ -7,7 +7,7 @@ import { Buffer } from 'buffer';
 import { modelDownloader } from './ModelDownloader';
 import { modelSettingsService, type ModelSettings } from './ModelSettingsService';
 import { StoredModel } from './ModelDownloaderTypes';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { logger } from '../utils/logger';
 import type { ApiHandler, StatusHandler } from './tcp/http/apiTypes';
 import { createChatApiHandler } from './tcp/http/chatApiHandler';
@@ -288,14 +288,20 @@ export class TCPServer {
       }
     }
 
-    if (!target && !normalized.endsWith('.gguf')) {
-      const withExt = normalized + '.gguf';
-      target = models.find(item => item.name.toLowerCase() === withExt);
-    }
+    if (!target) {
+      const extensions = ['.gguf', '.litertlm', '.task'];
 
-    if (!target && normalized.endsWith('.gguf')) {
-      const withoutExt = normalized.slice(0, -5);
-      target = models.find(item => item.name.toLowerCase() === withoutExt);
+      for (const extension of extensions) {
+        if (!target && !normalized.endsWith(extension)) {
+          const withExt = normalized + extension;
+          target = models.find(item => item.name.toLowerCase() === withExt);
+        }
+
+        if (!target && normalized.endsWith(extension)) {
+          const withoutExt = normalized.slice(0, -extension.length);
+          target = models.find(item => item.name.toLowerCase() === withoutExt);
+        }
+      }
     }
 
     return target || null;

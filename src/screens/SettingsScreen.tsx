@@ -1,45 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, ScrollView, Linking, TouchableOpacity, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TabParamList } from '../types/navigation';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 import AppHeader from '../components/AppHeader';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { llamaManager } from '../utils/LlamaManager';
 import SystemPromptDialog from '../components/SystemPromptDialog';
 import { fs as FileSystem } from '../services/fs';
-import { useFocusEffect } from '@react-navigation/native';
 import { modelDownloader } from '../services/ModelDownloader';
 import AppearanceSection from '../components/settings/AppearanceSection';
-import { getCurrentUser } from '../services/FirebaseService';
+import { getCurrentUser } from '../services/AuthService';
 import SupportSection from '../components/settings/SupportSection';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import SystemInfoSection from '../components/settings/SystemInfoSection';
 import StorageSection from '../components/settings/StorageSection';
 import Dialog from '../components/Dialog';
 import * as WebBrowser from 'expo-web-browser';
+import { getEngineSettingsMeta, getEngineSettingsRoute } from '../config/engineSettings';
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
+import { EngineId } from '../managers/inference-manager';
 import type { ModelSettings as StoredModelSettings } from '../services/ModelSettingsService';
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { appleFoundationService } from '../services/AppleFoundationService';
 
-type SettingsScreenProps = {
-  navigation: CompositeNavigationProp<
-    BottomTabNavigationProp<TabParamList, 'SettingsTab'>,
-    NativeStackNavigationProp<RootStackParamList>
-  >;
-};
-
 type ThemeOption = 'system' | 'light' | 'dark';
-type InferenceEngine = 'llama' | 'mlx';
 
 type ModelSettingKey = keyof StoredModelSettings;
 
@@ -63,9 +53,23 @@ const IN_APP_BROWSER_URLS = new Set([
 
 const normalizeLink = (url: string) => url.replace(/\/+$/, '');
 
-export default function SettingsScreen({ navigation }: SettingsScreenProps) {
+const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
+  if (enabled.llama) {
+    return 'llama';
+  }
+  if (enabled.litert) {
+    return 'litert';
+  }
+  return 'mlx';
+};
+
+export default function SettingsScreen() {
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
+  const router = useRouter();
+  const parameterEngines: EngineId[] = Platform.OS === 'ios'
+    ? ['llama', 'mlx', 'litert']
+    : ['llama', 'litert'];
   const [systemInfo, setSystemInfo] = useState({
     os: Platform.OS,
     osVersion: Device.osVersion,
@@ -80,11 +84,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     llamaManager.getSettings()
   );
   const [error, setError] = useState<string | null>(null);
-  const [activeInferenceEngine, setActiveInferenceEngine] =
-    useState<InferenceEngine>('llama');
-  const [engineEnabled, setEngineEnabled] = useState<Record<InferenceEngine, boolean>>({
+  const [activeRuntime, setActiveRuntime] =
+    useState<EngineId>('llama');
+  const [engineEnabled, setEngineEnabled] = useState<Record<EngineId, boolean>>({
     llama: true,
     mlx: true,
+    litert: true,
   });
   
   const [dialogConfig, setDialogConfig] = useState<{
@@ -180,7 +185,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     React.useCallback(() => {
       setModelSettings(llamaManager.getSettings());
       loadStorageInfo();
-      loadInferenceEnginePreference();
+      loadRuntimePreference();
     }, [])
   );
 
@@ -209,13 +214,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     getSystemInfo();
   }, []);
 
-  const loadInferenceEnginePreference = async () => {
+  const loadRuntimePreference = async () => {
     try {
       const { active, enabled } = await engineService.load();
       const supportsMLX = Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 16;
       const nextEnabled = {
         llama: enabled.llama,
         mlx: supportsMLX ? enabled.mlx : false,
+        litert: enabled.litert,
       };
       setEngineEnabled(nextEnabled);
 
@@ -223,12 +229,12 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         await engineService.setEnabled('mlx', false);
       }
 
-      const fallback = nextEnabled.llama ? 'llama' : 'mlx';
+      const fallback = pickActiveEngine(nextEnabled);
       const nextActive = nextEnabled[active] ? active : fallback;
       if (nextActive !== active) {
         await engineService.set(nextActive);
       }
-      setActiveInferenceEngine(nextActive);
+      setActiveRuntime(nextActive);
     } catch (error) {
     }
   };
@@ -241,9 +247,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
   };
 
-  const handleInferenceEngineToggle = async (engine: InferenceEngine, enabled: boolean) => {
+  const handleRuntimeToggle = async (engine: EngineId, enabled: boolean) => {
     const next = { ...engineEnabled, [engine]: enabled };
-    if (!next.llama && !next.mlx) {
+    if (!next.llama && !next.mlx && !next.litert) {
       showDialog('Engine Required', 'At least one inference engine must remain enabled.');
       return;
     }
@@ -253,10 +259,10 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
     try {
       await engineService.setEnabled(engine, enabled);
-      if (!enabled && activeInferenceEngine === engine) {
-        const fallback = next.llama ? 'llama' : 'mlx';
+      if (!enabled && activeRuntime === engine) {
+        const fallback = pickActiveEngine(next);
         await engineService.set(fallback);
-        setActiveInferenceEngine(fallback);
+        setActiveRuntime(fallback);
       }
     } catch (error) {
       setEngineEnabled(prev => ({ ...prev, [engine]: previous }));
@@ -459,32 +465,14 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           label: 'Sign In',
           onPress: () => {
             hideDialog();
-            navigation.navigate('Login', {
-              redirectTo: 'MainTabs',
-              redirectParams: {
-                screen: 'ModelTab',
-                params: {
-                  autoEnableRemoteModels: true,
-                  openRemoteTab: true,
-                },
-              }
-            });
+            router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/models' } });
           }
         },
         {
           label: 'Sign Up',
           onPress: () => {
             hideDialog();
-            navigation.navigate('Register', {
-              redirectTo: 'MainTabs',
-              redirectParams: {
-                screen: 'ModelTab',
-                params: {
-                  autoEnableRemoteModels: true,
-                  openRemoteTab: true,
-                },
-              }
-            });
+            router.push({ pathname: '/register', params: { redirectTo: '/(tabs)/models' } });
           }
         }
       );
@@ -492,7 +480,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     }
     
     if (!enableRemoteModels) {
-      const user = getCurrentUser();
+      const user = await getCurrentUser();
       if (user && !user.emailVerified) {
         showDialog(
           'Email Verification Required',
@@ -501,7 +489,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             label: 'Go to Profile',
             onPress: () => {
               hideDialog();
-              navigation.navigate('Profile');
+              router.push('/profile');
             }
           },
           { label: 'Cancel', onPress: hideDialog }
@@ -513,16 +501,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
     const result = await toggleRemoteModels();
     if (!result.success) {
       if (result.requiresLogin) {
-        navigation.navigate('Login', {
-          redirectTo: 'MainTabs',
-          redirectParams: {
-            screen: 'ModelTab',
-            params: {
-              autoEnableRemoteModels: true,
-              openRemoteTab: true,
-            },
-          }
-        });
+        router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/models' } });
       } else if (result.emailNotVerified) {
         showDialog(
           'Email Verification Required',
@@ -531,7 +510,7 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
             label: 'Go to Profile',
             onPress: () => {
               hideDialog();
-              navigation.navigate('Profile');
+              router.push('/profile');
             }
           },
           { label: 'Cancel', onPress: hideDialog }
@@ -569,12 +548,9 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
         style={styles.headerButton}
         onPress={() => {
           if (isLoggedIn) {
-            navigation.navigate('Profile');
+            router.push('/profile');
           } else {
-            navigation.navigate('Login', {
-              redirectTo: 'MainTabs',
-              redirectParams: { screen: 'SettingsTab' }
-            });
+            router.push({ pathname: '/login', params: { redirectTo: '/(tabs)/settings' } });
           }
         }}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -611,16 +587,29 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
           error={error}
           onSettingsChange={handleSettingsChange}
           onDialogOpen={handleOpenDialog}
-          activeEngine={activeInferenceEngine}
+          activeEngine={activeRuntime}
           engineEnabled={engineEnabled}
-          onEngineToggle={handleInferenceEngineToggle}
+          onEngineToggle={handleRuntimeToggle}
           onOpenSystemPromptDialog={() => setShowSystemPromptDialog(true)}
           enableRemoteModels={enableRemoteModels}
           onToggleRemoteModels={handleRemoteModelsToggle}
           showAppleFoundationToggle={isAppleDevice}
           appleFoundationEnabled={appleFoundationEnabled}
           onToggleAppleFoundation={handleAppleFoundationToggle}
-          onModelParametersPress={() => navigation.navigate('ModelParameters')}
+          parameterEntries={parameterEngines.map((engine) => {
+            const meta = getEngineSettingsMeta(engine);
+
+            return {
+              key: engine,
+              label: meta.entryLabel,
+              description: meta.entryDescription,
+              badgeLabel: meta.badgeLabel,
+              iconName: meta.iconName,
+              iconKey: meta.iconKey,
+              accentColor: meta.accentColor,
+              onPress: () => router.push(getEngineSettingsRoute(engine)),
+            };
+          })}
         />
 
         <StorageSection
@@ -632,8 +621,8 @@ export default function SettingsScreen({ navigation }: SettingsScreenProps) {
 
         <SupportSection 
           onOpenLink={openLink} 
-          onNavigateToLicenses={() => navigation.navigate('Licenses')}
-          onNavigateToContentTerms={() => navigation.navigate('ContentTerms')}
+          onNavigateToLicenses={() => router.push('/licenses')}
+          onNavigateToContentTerms={() => router.push('/content-terms')}
         />  
 
         <SystemInfoSection systemInfo={systemInfo} />

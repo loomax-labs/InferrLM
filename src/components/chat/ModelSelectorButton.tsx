@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
-import { engineService } from '../../services/inference-engine-service';
+import { engineService } from '../../services/runtime-service';
 import path from 'path';
 import type { ProviderType } from '../../services/ModelManagementService';
 

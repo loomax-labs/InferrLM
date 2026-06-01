@@ -1,7 +1,96 @@
 import { DownloadableModel } from "../components/model/DownloadableModelItem";
-import { ModelType } from "../types/models";
+import { ModelType, ModelFormat } from "../types/models";
 
 export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
+  {
+    "name": "Gemma 4 E2B Instruct",
+    "description": "Google's Gemma 4 E2B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
+    "size": "2.41 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "2 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "reasoning", "fastest", "recommended", "litert"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 4 E4B Instruct",
+    "description": "Google's Gemma 4 E4B with multimodal input (text, vision, audio), built-in thinking, and speculative decoding. Up to 32K context length.",
+    "size": "3.41 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "4 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "reasoning", "recommended", "litert"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 3n E2B Instruct",
+    "description": "Google's Gemma 3n E2B with multimodal input (text, vision, audio) support and 4096 context length.",
+    "size": "3.41 GB",
+    "huggingFaceLink": "https://huggingface.co/google/gemma-3n-E2B-it-litert-lm/resolve/main/gemma-3n-E2B-it-int4.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "2 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "fastest", "litert"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 3n E4B Instruct",
+    "description": "Google's Gemma 3n E4B with multimodal input (text, vision, audio) support and 4096 context length.",
+    "size": "4.58 GB",
+    "huggingFaceLink": "https://huggingface.co/google/gemma-3n-E4B-it-litert-lm/resolve/main/gemma-3n-E4B-it-int4.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "4 Billion",
+    "quantization": "int4",
+    "tags": ["vision", "litert"],
+    "modelType": ModelType.VISION,
+    "modelFormat": ModelFormat.LITERT,
+    "capabilities": ["vision", "text", "audio"],
+    "supportsMultimodal": true
+  },
+  {
+    "name": "Gemma 3 1B Instruct (LiteRT)",
+    "description": "Compact Gemma 3 1B with 4-bit quantization optimized for fast on-device inference.",
+    "size": "0.54 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.litertlm",
+    "licenseLink": "https://ai.google.dev/gemma/terms",
+    "modelFamily": "1 Billion",
+    "quantization": "int4",
+    "tags": ["fastest", "recommended", "litert"],
+    "modelFormat": ModelFormat.LITERT
+  },
+  {
+    "name": "Qwen 2.5 1.5B Instruct (LiteRT)",
+    "description": "Alibaba's Qwen 2.5 1.5B instruction-tuned model optimized for on-device deployment with LiteRT-LM.",
+    "size": "1.49 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv4096.litertlm",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "1.5 Billion",
+    "quantization": "q8",
+    "tags": ["fastest", "litert"],
+    "modelFormat": ModelFormat.LITERT
+  },
+  {
+    "name": "DeepSeek R1 Distill Qwen 1.5B (LiteRT)",
+    "description": "DeepSeek's R1 reasoning model distilled into Qwen 1.5B, optimized for on-device deployment with LiteRT-LM.",
+    "size": "1.71 GB",
+    "huggingFaceLink": "https://huggingface.co/litert-community/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B_multi-prefill-seq_q8_ekv4096.litertlm",
+    "licenseLink": "https://opensource.org/licenses/MIT",
+    "modelFamily": "1.5 Billion",
+    "quantization": "q8",
+    "tags": ["reasoning", "fastest", "litert"],
+    "modelFormat": ModelFormat.LITERT
+  },
   {
     "name": "Qwen3.5 4B Instruct",
     "description": "Latest Qwen 3.5 instruct model with stronger reasoning and instruction following.",
@@ -10,7 +99,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "4 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["recommended"]
+    "tags": ["recommended", "llama.cpp"]
   },
   {
     "name": "Ministral 3 3B Instruct",
@@ -20,7 +109,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "3 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["vision", "fastest", "recommended"],
+    "tags": ["vision", "fastest", "recommended", "llama.cpp"],
     "modelType": ModelType.VISION,
     "capabilities": ["vision", "text"],
     "supportsMultimodal": true,
@@ -32,7 +121,6 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
       }
     ]
   },
-  
   {
     "name": "Ministral 3 8B Reasoning",
     "description": "Mistral's reasoning model with vision capabilities, optimized for complex multi-step reasoning, math, and coding tasks.",
@@ -41,7 +129,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "8 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["reasoning", "vision"],
+    "tags": ["reasoning", "vision", "llama.cpp"],
     "modelType": ModelType.VISION,
     "capabilities": ["vision", "text"],
     "supportsMultimodal": true,
@@ -61,7 +149,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "4 Billion",
     "quantization": "Q2_K",
-    "tags": ["recommended"]
+    "tags": ["recommended", "llama.cpp"]
   },
   {
     "name": "Granite 4.0 Helper 1B",
@@ -71,7 +159,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "1 Billion",
     "quantization": "Q8_0",
-    "tags": ["fastest", "recommended"]
+    "tags": ["fastest", "recommended", "llama.cpp"]
   },
   {
     "name": "VibeThinker 1.5B",
@@ -81,7 +169,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://opensource.org/licenses/MIT",
     "modelFamily": "1.5 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["reasoning", "fastest"]
+    "tags": ["reasoning", "fastest", "llama.cpp"]
   },
   {
     "name": "MiniCPM4.1 Instruct",
@@ -91,7 +179,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "8 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["reasoning"]
+    "tags": ["reasoning", "llama.cpp"]
   },
   {
     "name": "Gemma 3 Instruct - 1B",
@@ -101,7 +189,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "1 Billion",
     "quantization": "Q8_0",
-    "tags": ["recommended", "fastest"]
+    "tags": ["recommended", "fastest", "llama.cpp"]
   },
   {
     "name": "Qwen3.5 0.8B Instruct",
@@ -111,7 +199,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "800 Million",
     "quantization": "Q4_K_M",
-    "tags": ["fastest"]
+    "tags": ["fastest", "llama.cpp"]
   },
   {
     "name": "Qwen3.5 2B Instruct",
@@ -121,7 +209,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "2 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["fastest"]
+    "tags": ["fastest", "llama.cpp"]
   },
   {
     "name": "SmolVLM2 500M Video Instruct",
@@ -131,7 +219,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "500 Million",
     "quantization": "f16",
-    "tags": ["vision", "video", "fastest"],
+    "tags": ["vision", "video", "fastest", "llama.cpp"],
     "modelType": ModelType.VISION,
     "capabilities": ["vision", "text", "video"],
     "supportsMultimodal": true,
@@ -151,7 +239,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "2.2 Billion",
     "quantization": "Q8_0",
-    "tags": ["vision", "fastest"],
+    "tags": ["vision", "fastest", "llama.cpp"],
     "modelType": ModelType.VISION,
     "capabilities": ["vision", "text"],
     "supportsMultimodal": true,
@@ -171,7 +259,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "4 Billion",
     "quantization": "Q5_K_M",
-    "tags": ["recommended"]
+    "tags": ["recommended", "llama.cpp"]
   },
   {
     "name": "Gemma 3 Vision 4B",
@@ -181,7 +269,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "4 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["vision", "recommended"],
+    "tags": ["vision", "recommended", "llama.cpp"],
     "modelType": ModelType.VISION,
     "capabilities": ["vision", "text"],
     "supportsMultimodal": true,
@@ -201,7 +289,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "4 Billion",
     "quantization": "Q5_K_M",
-    "tags": ["recommended"]
+    "tags": ["recommended", "llama.cpp"]
   },
   {
     "name": "Gemma 3n-E4B Instruct (Q4_K_S)",
@@ -211,6 +299,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "4 Billion",
     "quantization": "Q4_K_S",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "Phi-3 Mini Instruct",
@@ -220,7 +309,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/LICENSE",
     "modelFamily": "3.8 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["fastest"]
+    "tags": ["fastest", "llama.cpp"]
   },
   {
     "name": "Phi-4 Mini Reasoning",
@@ -230,7 +319,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/LICENSE",
     "modelFamily": "4 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["reasoning", "fastest"]
+    "tags": ["reasoning", "fastest", "llama.cpp"]
   },
   {
     "name": "Qwen 2.5 Coder Instruct",
@@ -240,7 +329,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "7 Billion",
     "quantization": "Q5_K_M",
-    "tags": ["fastest"]
+    "tags": ["fastest", "llama.cpp"]
   },
   {
     "name": "Qwen 2.5 Coder 7B Instruct",
@@ -250,7 +339,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "7 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["recommended"]
+    "tags": ["recommended", "llama.cpp"]
   },
   {
     "name": "CodeLlama",
@@ -259,7 +348,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/TheBloke/CodeLlama-7B-GGUF/resolve/main/codellama-7b.Q3_K_S.gguf",
     "licenseLink": "https://ai.meta.com/llama/license/",
     "modelFamily": "7 Billion",
-    "quantization": "Q3_K_S"
+    "quantization": "Q3_K_S",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "Mistral Instruct",
@@ -268,7 +358,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "7 Billion",
-    "quantization": "Q4_K_M"
+    "quantization": "Q4_K_M",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "LLaMA 3.1 Instruct",
@@ -277,7 +368,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
     "licenseLink": "https://ai.meta.com/llama/license/",
     "modelFamily": "8 Billion",
-    "quantization": "Q4_K_M"
+    "quantization": "Q4_K_M",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "CodeGemma Instruct",
@@ -286,7 +378,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/bartowski/codegemma-7b-it-GGUF/resolve/main/codegemma-7b-it-Q6_K.gguf",
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "7 Billion",
-    "quantization": "Q6_K"
+    "quantization": "Q6_K",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "Mistral Grok",
@@ -295,7 +388,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/mradermacher/mistral-7b-grok-GGUF/resolve/main/mistral-7b-grok.Q3_K_L.gguf",
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "7 Billion",
-    "quantization": "Q3_K_L"
+    "quantization": "Q3_K_L",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "Qwen 2.5 Instruct",
@@ -304,7 +398,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q6_K.gguf",
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "7 Billion",
-    "quantization": "Q6_K"
+    "quantization": "Q6_K",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "Qwen3-VL 4B Instruct",
@@ -314,7 +409,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "4 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["vision"],
+    "tags": ["vision", "llama.cpp"],
     "modelType": ModelType.VISION,
     "capabilities": ["vision", "text"],
     "supportsMultimodal": true,
@@ -333,7 +428,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/bartowski/gemma-2-9b-it-GGUF/resolve/main/gemma-2-9b-it-Q4_K_M.gguf",
     "licenseLink": "https://ai.google.dev/gemma/terms",
     "modelFamily": "9 Billion",
-    "quantization": "Q4_K_M"
+    "quantization": "Q4_K_M",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "Qwen3.5 9B Instruct",
@@ -343,7 +439,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "9 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["reasoning"]
+    "tags": ["reasoning", "llama.cpp"]
   },
   {
     "name": "Phi-4 Reasoning Plus",
@@ -353,7 +449,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct/resolve/main/LICENSE",
     "modelFamily": "15 Billion",
     "quantization": "Q3_K_M",
-    "tags": ["reasoning"]
+    "tags": ["reasoning", "llama.cpp"]
   },
   {
     "name": "LLaMA 2 Chat",
@@ -362,7 +458,8 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/TheBloke/Llama-2-13B-chat-GGUF/resolve/main/llama-2-13b-chat.Q5_K_M.gguf",
     "licenseLink": "https://ai.meta.com/llama/license/",
     "modelFamily": "13 Billion",
-    "quantization": "Q5_K_M"
+    "quantization": "Q5_K_M",
+    "tags": ["llama.cpp"]
   },
   {
     "name": "QwQ 32B Reasoning",
@@ -372,7 +469,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
     "modelFamily": "32 Billion",
     "quantization": "Q4_K_M",
-    "tags": ["reasoning"]
+    "tags": ["reasoning", "llama.cpp"]
   },
   {
     "name": "Llama 3.3 70B Instruct",
@@ -381,6 +478,7 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "huggingFaceLink": "https://huggingface.co/unsloth/Llama-3.3-70B-Instruct-GGUF/resolve/main/Llama-3.3-70B-Instruct-Q3_K_M.gguf",
     "licenseLink": "https://ai.meta.com/llama/license/",
     "modelFamily": "70 Billion",
-    "quantization": "Q3_K_M"
+    "quantization": "Q3_K_M",
+    "tags": ["llama.cpp"]
   }
-]; 
+];

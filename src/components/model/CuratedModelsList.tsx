@@ -16,7 +16,7 @@ interface CuratedModelsListProps {
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>;
   filters: FilterOptions;
   onFiltersChange: (filters: FilterOptions) => void;
-  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[] };
+  getAvailableFilterOptions: () => { tags: string[], modelFamilies: string[], quantizations: string[], runtimes: string[] };
   onGuidancePress: () => void;
   onDownload: (model: DownloadableModel) => void;
   forceRender: number;
@@ -38,14 +38,16 @@ export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
 }) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
+  const opts = getAvailableFilterOptions();
 
   return (
     <>
       <ModelFilter
         onFiltersChange={onFiltersChange}
-        availableTags={getAvailableFilterOptions().tags}
-        availableModelFamilies={getAvailableFilterOptions().modelFamilies}
-        availableQuantizations={getAvailableFilterOptions().quantizations}
+        availableTags={opts.tags}
+        availableModelFamilies={opts.modelFamilies}
+        availableQuantizations={opts.quantizations}
+        availableRuntimes={opts.runtimes}
         initialFilters={filters}
         onExpandChange={onFilterExpandChange}
       />
@@ -61,15 +63,15 @@ export const CuratedModelsList: React.FC<CuratedModelsListProps> = ({
           </Text>
         </View>
       </TouchableOpacity>
-      
-      <View style={styles.curatedSection}>
+
+      <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionHeaderTitle, { color: themeColors.text }]}>
-            Curated GGUF Models ({models.length})
+            Models ({models.length})
           </Text>
         </View>
-        
-        <DownloadableModelList 
+
+        <DownloadableModelList
           key={forceRender}
           models={models}
           storedModels={storedModels}
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
   },
-  curatedSection: {
+  section: {
     marginTop: 8,
   },
   sectionHeader: {

@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import MlxIcon from '../icons/MlxIcon';
+import LiteRtIcon from '../icons/LiteRtIcon';
 import { getThemeAwareColor, getDocumentIconColor } from '../../utils/ColorUtils';
 
 interface StoredModelProps {
@@ -31,7 +33,7 @@ const formatBytes = (bytes?: number) => {
 };
 
 const getDisplayName = (filename: string) => {
-  return filename.replace(/\.(gguf|bin)$/i, '');
+  return filename.replace(/\.(gguf|bin|litertlm|task)$/i, '');
 };
 
 const StoredModelItem: React.FC<StoredModelProps> = ({
@@ -50,6 +52,7 @@ const StoredModelItem: React.FC<StoredModelProps> = ({
   const displayName = isMLXGroup ? name : getDisplayName(name);
   const formattedSize = formatBytes(size);
   const isGGUFModel = name.toLowerCase().includes('.gguf');
+  const isLiteRTModel = name.toLowerCase().endsWith('.litertlm') || name.toLowerCase().endsWith('.task');
 
   return (
     <View style={[styles.modelItem, { backgroundColor: themeColors.borderColor }]}>
@@ -67,7 +70,9 @@ const StoredModelItem: React.FC<StoredModelProps> = ({
           </Text>
           {isMLXGroup && (
             <View style={styles.mlxBadgeContainer}>
-              <MaterialCommunityIcons name="apple" size={12} color="white" style={{ marginRight: 4 }} />
+              <View style={styles.mlxIconWrap}>
+                <MlxIcon size={12} color="#FFFFFF" />
+              </View>
               <Text style={styles.mlxBadgeText}>MLX</Text>
             </View>
           )}
@@ -88,6 +93,14 @@ const StoredModelItem: React.FC<StoredModelProps> = ({
           {isGGUFModel && (
             <View style={[styles.llamaBadgeContainer, { backgroundColor: getThemeAwareColor('#4a0660', currentTheme) }]}>
               <Text style={styles.llamaBadgeText}>GGUF</Text>
+            </View>
+          )}
+          {isLiteRTModel && (
+            <View style={styles.litertBadgeContainer}>
+              <View style={styles.litertIconWrap}>
+                <LiteRtIcon size={12} color="#FFFFFF" />
+              </View>
+              <Text style={styles.litertBadgeText}>LiteRT</Text>
             </View>
           )}
         </View>
@@ -173,6 +186,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  mlxIconWrap: {
+    marginRight: 4,
+  },
   llamaBadgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -199,6 +215,23 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 11,
     fontWeight: '600',
+  },
+  litertBadgeContainer: {
+    backgroundColor: '#4285F4',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  litertBadgeText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  litertIconWrap: {
+    marginRight: 4,
   },
   modelMetaInfo: {
     flexDirection: 'row',

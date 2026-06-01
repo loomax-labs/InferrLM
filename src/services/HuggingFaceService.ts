@@ -72,6 +72,47 @@ class HuggingFaceService {
     return headers;
   }
 
+  private async fetchModelsIndex(
+    searchParams: URLSearchParams,
+    filter?: string,
+    strict: boolean = false
+  ): Promise<HFModel[]> {
+    const requestParams = new URLSearchParams(searchParams.toString());
+
+    if (filter) {
+      requestParams.set('filter', filter);
+    } else {
+      requestParams.delete('filter');
+    }
+
+    const response = await fetch(`${this.apiUrl}/models?${requestParams.toString()}`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      if (strict) {
+        const errorText = await response.text();
+        throw new Error(`HuggingFace API Error ${response.status}: ${errorText || response.statusText}`);
+      }
+
+      return [];
+    }
+
+    const models = await response.json();
+    return Array.isArray(models) ? models : [];
+  }
+
+  private isLiteRtFile(filename: string): boolean {
+    const lower = filename.toLowerCase();
+    return lower.endsWith('.litertlm') || lower.endsWith('.task');
+  }
+
+  private isDownloadableModelFile(filename: string): boolean {
+    const lower = filename.toLowerCase();
+    return lower.endsWith('.gguf') || this.isLiteRtFile(lower);
+  }
+
   async searchModels(params: SearchParams = {}): Promise<HFModel[]> {
     try {
       const searchParams = new URLSearchParams();
@@ -90,44 +131,15 @@ class HuggingFaceService {
       searchParams.append('config', 'true');
       searchParams.append('sort', 'downloads');
       searchParams.append('direction', '-1');
-      
-      searchParams.append('filter', 'gguf');
 
-      const url = `${this.apiUrl}/models?${searchParams.toString()}`;
-      const headers = this.getHeaders();
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HuggingFace API Error ${response.status}: ${errorText || response.statusText}`);
-      }
-
-      const models = await response.json();
-      
-      if (!Array.isArray(models)) {
-        throw new Error('Invalid response format from HuggingFace API');
-      }
-
-      const mlxUrl = `${this.apiUrl}/models?${searchParams.toString().replace('filter=gguf', 'filter=mlx')}`;
-      const mlxResponse = await fetch(mlxUrl, {
-        method: 'GET',
-        headers,
-      });
-      
-      let mlxModels: any[] = [];
-      if (mlxResponse.ok) {
-        mlxModels = await mlxResponse.json();
-        if (!Array.isArray(mlxModels)) {
-          mlxModels = [];
-        }
-      }
+      const [ggufModels, mlxModels, generalModels] = await Promise.all([
+        this.fetchModelsIndex(searchParams, 'gguf', true),
+        this.fetchModelsIndex(searchParams, 'mlx'),
+        this.fetchModelsIndex(searchParams),
+      ]);
       
       const deduped = new Map<string, HFModel>();
-      [...models, ...mlxModels].forEach((model: HFModel) => {
+      [...ggufModels, ...mlxModels, ...generalModels].forEach((model: HFModel) => {
         if (!model?.id) {
           return;
         }
@@ -140,6 +152,7 @@ class HuggingFaceService {
       const combinedModels = Array.from(deduped.values());
 
       const filteredModels = combinedModels.filter((model: HFModel) => {
+        const tags = model.tags?.map(tag => tag.toLowerCase()) || [];
         const hasGgufTag = model.tags?.some(tag => 
           tag.toLowerCase().includes('gguf') || 
           tag.toLowerCase().includes('quantized')
@@ -147,17 +160,23 @@ class HuggingFaceService {
         const hasGgufLibrary = model.library_name === 'gguf';
         const nameHasGguf = model.id?.toLowerCase().includes('gguf');
         
-        const hasMlxTag = model.tags?.some(tag => tag.toLowerCase().includes('mlx'));
-        const hasMlxLibrary = model.library_name === 'mlx';
+        const hasMlxTag = tags.some(tag => tag.includes('mlx'));
+        const hasMlxLibrary = model.library_name?.toLowerCase() === 'mlx';
         const nameHasMlx = model.id?.toLowerCase().includes('mlx');
+
+        const hasLiteRtTag = tags.some(tag => tag.includes('litert'));
+        const hasLiteRtLibrary = model.library_name?.toLowerCase().includes('litert') || false;
+        const nameHasLiteRt = model.id?.toLowerCase().includes('litert');
+        const hasLiteRtFile = model.siblings?.some(file => this.isLiteRtFile(file.rfilename)) || false;
         
         const isMLXModel = hasMlxTag || hasMlxLibrary || nameHasMlx;
+        const isLiteRtModel = hasLiteRtTag || hasLiteRtLibrary || nameHasLiteRt || hasLiteRtFile;
         
         if (Platform.OS === 'android' && isMLXModel) {
           return false;
         }
         
-        return hasGgufTag || hasGgufLibrary || nameHasGguf || hasMlxTag || hasMlxLibrary || nameHasMlx;
+        return hasGgufTag || hasGgufLibrary || nameHasGguf || isMLXModel || isLiteRtModel;
       });
       
       const sortedModels = filteredModels.sort((a, b) => {
@@ -206,12 +225,8 @@ class HuggingFaceService {
       if (modelFormat === ModelFormat.MLX) {
         return modelFiles;
       }
-      
-      const ggufFiles = modelFiles.filter((file: HFFile) => {
-        return file.filename.endsWith('.gguf');
-      });
 
-      return ggufFiles;
+      return modelFiles.filter((file: HFFile) => this.isDownloadableModelFile(file.filename));
     } catch (error) {
       throw error;
     }
@@ -295,6 +310,7 @@ class HuggingFaceService {
     const hasSafetensors = files.some(f => f.filename.endsWith('.safetensors'));
     const hasWeightsNpz = files.some(f => f.filename.endsWith('.npz'));
     const hasGguf = files.some(f => f.filename.endsWith('.gguf'));
+    const hasLiteRt = files.some(f => this.isLiteRtFile(f.filename));
     
     const repoName = modelId.toLowerCase();
     const repoNameContainsMlx = repoName.includes('mlx') || repoName.includes('mlx-community');
@@ -302,8 +318,12 @@ class HuggingFaceService {
     const hasMlxStructure = hasConfigJson && hasTokenizerJson && (hasSafetensors || hasWeightsNpz);
     const hasLikelyMlxSignals = (tagsContainMlx || repoNameContainsMlx) && (hasSafetensors || hasWeightsNpz || hasConfigJson);
     
-    if ((hasMlxStructure || hasLikelyMlxSignals) && !hasGguf) {
+    if ((hasMlxStructure || hasLikelyMlxSignals) && !hasGguf && !hasLiteRt) {
       return ModelFormat.MLX;
+    }
+
+    if (hasLiteRt) {
+      return ModelFormat.LITERT;
     }
     
     if (hasGguf) {
@@ -398,8 +418,8 @@ class HuggingFaceService {
       const allSiblings = model.siblings || [];
       const siblingsWithUrl = this.addDownloadUrls(model.id, allSiblings);
       const hasVision = isVisionRepo(siblingsWithUrl);
-      const filteredGGUFSiblings = this.filterGGUFFiles(allSiblings);
-      const ggufSiblingsWithUrl = this.addDownloadUrls(model.id, filteredGGUFSiblings);
+      const filteredDownloadableSiblings = this.filterDownloadableFiles(allSiblings);
+      const downloadableSiblingsWithUrl = this.addDownloadUrls(model.id, filteredDownloadableSiblings);
       const capabilities = hasVision ? ['vision', 'text'] : ['text'];
       
       const hfFiles = allSiblings.map(s => ({
@@ -412,7 +432,7 @@ class HuggingFaceService {
       
       return {
         ...model,
-        siblings: ggufSiblingsWithUrl,
+        siblings: downloadableSiblingsWithUrl,
         hasVision,
         capabilities,
         modelFormat,
@@ -420,11 +440,15 @@ class HuggingFaceService {
     });
   }
 
-  private filterGGUFFiles(siblings: ModelFile[]): ModelFile[] {
+  private filterDownloadableFiles(siblings: ModelFile[]): ModelFile[] {
     const RE_GGUF_SHARD_FILE = /^(.*?)-(\d{5})-of-(\d{5})\.gguf$/;
     
     return siblings.filter(sibling => {
       const filename = sibling.rfilename.toLowerCase();
+      if (this.isLiteRtFile(filename)) {
+        return true;
+      }
+
       return filename.endsWith('.gguf') && !RE_GGUF_SHARD_FILE.test(filename);
     });
   }
@@ -441,7 +465,7 @@ class HuggingFaceService {
     try {
       const urlObj = new URL(url);
       return urlObj.hostname === 'huggingface.co' && 
-             url.includes('.gguf');
+             this.isDownloadableModelFile(urlObj.pathname);
     } catch {
       return false;
     }

@@ -123,7 +123,7 @@ const ModelDownloaderComponent = ({ downloadProgress, onDownloadStart }: ModelDo
             <View style={styles.warningContainer}>
               <Ionicons name="warning-outline" size={20} color={getThemeAwareColor('#4a0660', currentTheme)} />
               <Text style={[styles.warningText, { color: themeColors.secondaryText }]}>
-                Only Georgi Gerganov's GGUF format models are supported.
+                GGUF and LiteRT model files are supported, including .gguf, .litertlm, and .task.
               </Text>
             </View>
             
@@ -131,7 +131,7 @@ const ModelDownloaderComponent = ({ downloadProgress, onDownloadStart }: ModelDo
               <Ionicons name="link" size={20} color={themeColors.secondaryText} />
               <TextInput
                 style={[styles.input, { color: themeColors.text }]}
-                placeholder="Enter model URL"
+                placeholder="Enter model URL (.gguf, .litertlm, .task)"
                 placeholderTextColor={themeColors.secondaryText}
                 value={url}
                 onChangeText={setUrl}

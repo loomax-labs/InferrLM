@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import type { LiteRTBackend } from './LiteRTBackendService';
+
 export interface ModelSettings {
   maxTokens: number;
   temperature: number;
@@ -36,6 +38,7 @@ export interface ModelSettings {
 export interface ModelSettingsConfig {
   useGlobalSettings: boolean;
   customSettings?: ModelSettings;
+  litertBackend?: LiteRTBackend;
 }
 
 const STORAGE_KEY = '@model_settings';

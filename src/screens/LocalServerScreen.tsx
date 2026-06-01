@@ -3,13 +3,10 @@ import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Alert, Switch, Cl
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCodeStyled from 'react-native-qrcode-styled';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import Dialog from '../components/Dialog';
-import { useTheme } from '../context/ThemeContext';
-import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
-import { RootStackParamList } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 import AppHeader from '../components/AppHeader';
 import SettingsSection from '../components/settings/SettingsSection';
 import { localServer } from '../services/LocalServer';
@@ -43,8 +40,7 @@ const parsePortFromURL = (value?: string) => {
 
 export default function LocalServerScreen() {
   const { theme: currentTheme } = useTheme();
-  const { isLoggedIn } = useRemoteModel();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
 
@@ -328,37 +324,9 @@ export default function LocalServerScreen() {
     return `${minutes}m`;
   };
 
-  const ProfileButton = () => {
-    return (
-      <TouchableOpacity
-        style={styles.headerButton}
-        onPress={() => {
-          if (isLoggedIn) {
-            navigation.navigate('Profile');
-          } else {
-            navigation.navigate('Login', {
-              redirectTo: 'MainTabs',
-              redirectParams: { screen: 'LocalServerTab' }
-            });
-          }
-        }}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <MaterialCommunityIcons
-          name={isLoggedIn ? "account-circle" : "login"}
-          size={22}
-          color={themeColors.headerText}
-        />
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <AppHeader
-        title="Server"
-        rightButtons={<ProfileButton />}
-      />
+      <AppHeader title="Server" rightButtons={null} />
 
       <ScrollView
         contentContainerStyle={styles.contentContainer}
@@ -486,7 +454,7 @@ export default function LocalServerScreen() {
         <SettingsSection title="LOGS">
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => navigation.navigate('ServerLogs')}
+            onPress={() => router.push('/server-logs')}
           >
             <View style={styles.settingLeft}>
               <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
@@ -576,7 +544,7 @@ export default function LocalServerScreen() {
         <SettingsSection title="HELP">
           <TouchableOpacity
             style={styles.settingItem}
-            onPress={() => navigation.navigate('APISetup')}
+            onPress={() => router.push('/api-setup')}
           >
             <View style={styles.settingLeft}>
               <View style={[styles.iconContainer, { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.2)' : themeColors.primary + '20' }]}>
@@ -667,14 +635,6 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     marginHorizontal: 16,
-  },
-  headerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   qrDisplayContainer: {
     alignItems: 'center',

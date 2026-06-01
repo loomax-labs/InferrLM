@@ -11,8 +11,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { useRemoteModel } from '../context/RemoteModelContext';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -23,52 +22,132 @@ import {
   HelperText, 
   Divider,
 } from 'react-native-paper';
-import { loginWithEmail, signInWithGoogle, signInWithApple } from '../services/FirebaseService';
+import Dialog from '../components/Dialog';
+import { loginWithEmail, restorePendingAccount, signInWithGoogle, signInWithApple, type AuthResult } from '../services/AuthService';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { logger } from '../utils/logger';
 
-type LoginScreenProps = {
-  navigation: NativeStackNavigationProp<RootStackParamList>;
-  route: { params: { redirectTo?: string; redirectParams?: any } };
-};
-
-export default function LoginScreen({ navigation, route }: LoginScreenProps) {
+export default function LoginScreen() {
   const { theme: currentTheme } = useTheme();
   const { checkLoginStatus } = useRemoteModel();
   const themeColors = theme[currentTheme];
+  const router = useRouter();
+  const params = useLocalSearchParams<{ redirectTo?: string; redirectParams?: string }>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
+  const [restoreDialogVisible, setRestoreDialogVisible] = useState(false);
+  const [restoreToken, setRestoreToken] = useState<string | null>(null);
+  const [scheduledDeletionAt, setScheduledDeletionAt] = useState<string | null>(null);
+  const [restoreProvider, setRestoreProvider] = useState<'email' | 'google' | 'apple'>('email');
 
-  const redirectAfterLogin = route.params?.redirectTo || 'MainTabs';
-  const redirectParams = route.params?.redirectParams || { screen: 'HomeTab' };
+  const redirectAfterLogin = params.redirectTo || '/(tabs)';
 
   const navigateAfterAuth = () => {
-    if (redirectAfterLogin === 'MainTabs') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs', params: redirectParams as any }],
-      });
-      return;
-    }
-
-    navigation.reset({
-      index: 1,
-      routes: [
-        { name: 'MainTabs', params: { screen: 'HomeTab' } as any },
-        { name: redirectAfterLogin as any, params: redirectParams as any },
-      ],
-    });
+    router.replace(redirectAfterLogin as any);
   };
 
   const navigateToRegister = () => {
-    navigation.navigate('Register', {
-      redirectTo: route.params?.redirectTo,
-      redirectParams: route.params?.redirectParams
+    router.push({ pathname: '/register', params: { redirectTo: params.redirectTo } });
+  };
+
+  const formatDeletionDate = (value?: string | null) => {
+    if (!value) {
+      return 'within the 30-day recovery window';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'within the 30-day recovery window';
+    }
+
+    return `until ${date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })}`;
+  };
+
+  const resetRestoreDialog = () => {
+    setRestoreDialogVisible(false);
+    setRestoreToken(null);
+    setScheduledDeletionAt(null);
+    setRestoreProvider('email');
+  };
+
+  const closeRestoreDialog = () => {
+    if (isRestoring) {
+      return;
+    }
+
+    resetRestoreDialog();
+  };
+
+  const promptRestore = (result: AuthResult, provider: 'email' | 'google' | 'apple') => {
+    const nextRestoreToken = result.pendingDeletion?.restoreToken;
+    if (!nextRestoreToken) {
+      setError(result.error || 'This account is scheduled for deletion.');
+      return;
+    }
+
+    logger.info('ui_restore_prompt', 'auth', {
+      params: {
+        provider,
+        scheduledDeletionAt: result.pendingDeletion?.scheduledDeletionAt,
+      },
     });
+    setRestoreToken(nextRestoreToken);
+    setScheduledDeletionAt(result.pendingDeletion?.scheduledDeletionAt || null);
+    setRestoreProvider(provider);
+    setRestoreDialogVisible(true);
+  };
+
+  const completeLogin = async (provider: 'email' | 'google' | 'apple') => {
+    const logged = await checkLoginStatus();
+    logger.info(`ui_${provider}_state`, 'auth', {
+      params: { logged, redirect: redirectAfterLogin },
+    });
+    navigateAfterAuth();
+  };
+
+  const handleRestoreAccount = async () => {
+    if (!restoreToken || isRestoring) {
+      return;
+    }
+
+    try {
+      setIsRestoring(true);
+      setError(null);
+
+      const result = await restorePendingAccount(restoreToken);
+      if (result.success) {
+        resetRestoreDialog();
+        logger.info('ui_restore_done', 'auth', {
+          params: { redirect: redirectAfterLogin, provider: restoreProvider },
+        });
+        await completeLogin(restoreProvider);
+        return;
+      }
+
+      logger.warn('ui_restore_fail', 'auth', {
+        params: { message: result.error, code: result.code },
+      });
+      resetRestoreDialog();
+      setError(result.error || 'Account restore failed. Please try again.');
+    } catch (err: any) {
+      logger.error('ui_restore_error', 'auth', {
+        params: { message: err?.message },
+      });
+      resetRestoreDialog();
+      setError('Account restore failed. Please try again.');
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   useEffect(() => {
@@ -97,29 +176,43 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
 
   const handleLogin = async () => {
     if (!email.trim()) {
+      logger.warn('ui_login_email', 'auth');
       setError('Email is required');
       return;
     }
 
     if (!password.trim()) {
+      logger.warn('ui_login_password', 'auth');
       setError('Password is required');
       return;
     }
 
     try {
+      logger.info('ui_login_start', 'auth', {
+        params: {
+          email: `${email.trim().toLowerCase().slice(0, 2)}***`,
+          redirect: redirectAfterLogin,
+        },
+      });
       setIsLoading(true);
       setError(null);
 
       const result = await loginWithEmail(email.trim().toLowerCase(), password.trim());
       
       if (result.success) {
-        await checkLoginStatus();
-
-        navigateAfterAuth();
+        await completeLogin('email');
+      } else if (result.code === 'account_pending_deletion') {
+        promptRestore(result, 'email');
       } else {
+        logger.warn('ui_login_fail', 'auth', {
+          params: { message: result.error, code: result.code },
+        });
         setError(result.error || 'Login failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_login_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -128,19 +221,28 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
 
   const handleGoogleSignIn = async () => {
     try {
+      logger.info('ui_google_start', 'auth', {
+        params: { redirect: redirectAfterLogin },
+      });
       setIsLoading(true);
       setError(null);
       
       const result = await signInWithGoogle();
       
       if (result.success) {
-        await checkLoginStatus();
-
-        navigateAfterAuth();
+        await completeLogin('google');
+      } else if (result.code === 'account_pending_deletion') {
+        promptRestore(result, 'google');
       } else {
+        logger.warn('ui_google_fail', 'auth', {
+          params: { message: result.error, code: result.code },
+        });
         setError(result.error || 'Google sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_google_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Google sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -152,19 +254,28 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
       if (isLoading) {
         return;
       }
+      logger.info('ui_apple_start', 'auth', {
+        params: { redirect: redirectAfterLogin },
+      });
       setIsLoading(true);
       setError(null);
 
       const result = await signInWithApple();
 
       if (result.success) {
-        await checkLoginStatus();
-
-        navigateAfterAuth();
+        await completeLogin('apple');
+      } else if (result.code === 'account_pending_deletion') {
+        promptRestore(result, 'apple');
       } else {
+        logger.warn('ui_apple_fail', 'auth', {
+          params: { message: result.error, code: result.code },
+        });
         setError(result.error || 'Apple sign-in failed. Please try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
+      logger.error('ui_apple_error', 'auth', {
+        params: { message: err?.message },
+      });
       setError('Apple sign-in failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -184,7 +295,7 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
           <View style={styles.headerContainer}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => router.back()}
             >
               <MaterialCommunityIcons 
                 name="arrow-left" 
@@ -299,6 +410,20 @@ export default function LoginScreen({ navigation, route }: LoginScreenProps) {
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Dialog
+        visible={restoreDialogVisible}
+        onDismiss={closeRestoreDialog}
+        title="Restore account?"
+        description={`This account is still scheduled for deletion ${formatDeletionDate(scheduledDeletionAt)}. Do you want to cancel the scheduled deletion and restore it now?`}
+        primaryButtonText="Restore Account"
+        primaryButtonColor="#8A2BE2"
+        primaryButtonLoading={isRestoring}
+        onPrimaryPress={handleRestoreAccount}
+        secondaryButtonText="No"
+        secondaryButtonColor="#6B6B6B"
+        onSecondaryPress={closeRestoreDialog}
+      />
     </SafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
 import { ChatMessage } from '../utils/ChatManager';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
 import chatManager from '../utils/ChatManager';
 import { generateRandomId } from '../utils/homeScreenUtils';
@@ -702,6 +702,6 @@ export class RegenerationService {
 
   private getLocalModelName(path: string): string {
     const file = path.split('/').pop() || path;
-    return file.replace(/\.(gguf|mlx)$/i, '');
+    return file.replace(/\.(gguf|mlx|litertlm|task)$/i, '');
   }
 }

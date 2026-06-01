@@ -20,9 +20,7 @@ import MarkdownBoundary from './MarkdownBoundary';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import chatManager from '../../utils/ChatManager';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types/navigation';
+import { useRouter } from 'expo-router';
 import * as MediaLibrary from 'expo-media-library';
 
 export type Message = {
@@ -105,7 +103,7 @@ export default function ChatView({
 }: ChatViewProps) {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const router = useRouter();
   
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false);
@@ -139,11 +137,8 @@ export default function ChatView({
   }, [chatId, messages]);
 
   const openReportDialog = useCallback((messageContent: string, provider: string) => {
-    navigation.navigate('Report', {
-      messageContent,
-      provider
-    });
-  }, [navigation]);
+    router.push({ pathname: '/report', params: { messageContent, provider } });
+  }, [router]);
 
   const openImageViewer = useCallback((imageUri: string) => {
     setImgViewSize(null);
@@ -245,6 +240,7 @@ export default function ChatView({
     const showLoadingIndicator = isCurrentlyStreaming && !streamingMessage;
     
     let fileAttachment: { name: string; type?: string } | null = null;
+    let audioAttachment: { name: string } | null = null;
     let multimodalContent: { type: string; uri?: string; text?: string }[] = [];
     let generatedImage: { localUri?: string; url?: string; prompt?: string; revisedPrompt?: string } | null = null;
     
@@ -278,6 +274,23 @@ export default function ChatView({
             revisedPrompt: parsedMessage.revisedPrompt,
           };
           return parsedMessage.revisedPrompt || parsedMessage.prompt || '';
+        }
+
+        if (parsedMessage && parsedMessage.type === 'audio_upload') {
+          const rawName = typeof parsedMessage.fileName === 'string' && parsedMessage.fileName.trim()
+            ? parsedMessage.fileName.trim()
+            : (() => {
+                const match = String(parsedMessage.internalInstruction || '').match(/Audio URI:\s*(.+)/);
+                if (!match?.[1]) {
+                  return 'Audio clip';
+                }
+                const cleaned = match[1].trim().replace(/^file:\/\//, '');
+                const parts = cleaned.split('/');
+                return parts[parts.length - 1] || 'Audio clip';
+              })();
+
+          audioAttachment = { name: rawName };
+          return parsedMessage.userContent || '';
         }
         
         if (parsedMessage && 
@@ -444,6 +457,26 @@ export default function ChatView({
       );
     };
 
+    const renderAudioAttachment = () => {
+      if (!audioAttachment) return null;
+
+      return (
+        <View style={styles.fileAttachmentWrapper}>
+          <View style={[styles.fileAttachment, { backgroundColor: themeColors.borderColor }]}> 
+            <View style={[styles.fileTypeIcon, { backgroundColor: '#f39c12' }]}> 
+              <MaterialCommunityIcons name="file-music-outline" size={16} color="#ffffff" />
+            </View>
+            <View style={styles.fileAttachmentContent}>
+              <Text style={[styles.fileAttachmentName, { color: themeColors.text }]} numberOfLines={1} ellipsizeMode="middle">
+                {audioAttachment.name}
+              </Text>
+              <Text style={[styles.fileAttachmentType, { color: themeColors.secondaryText }]}>Audio attachment</Text>
+            </View>
+          </View>
+        </View>
+      );
+    };
+
     const renderGeneratedImage = () => {
       if (!generatedImage) return null;
       const imageUri = generatedImage.localUri || generatedImage.url;
@@ -511,6 +544,7 @@ export default function ChatView({
         ) : null}
         
         {item.role === 'user' && fileAttachment ? renderFileAttachment() : null}
+        {item.role === 'user' && audioAttachment ? renderAudioAttachment() : null}
         {item.role === 'user' && multimodalContent.length > 0 ? renderMultimodalContent() : null}
         {item.role === 'assistant' && generatedImage ? renderGeneratedImage() : null}
 
@@ -605,7 +639,7 @@ export default function ChatView({
                   {messageContent}
                 </Text>
               </View>
-            ) : item.role === 'user' && fileAttachment ? null : (
+            ) : item.role === 'user' && (fileAttachment || audioAttachment) ? null : (
               <View style={styles.messageContent}>
                 <Text 
                   style={[

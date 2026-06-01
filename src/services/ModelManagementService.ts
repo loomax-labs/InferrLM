@@ -1,6 +1,6 @@
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from './inference-engine-service';
+import { engineService } from './runtime-service';
 import chatManager from '../utils/ChatManager';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Dispatch, SetStateAction } from 'react';
@@ -33,7 +33,7 @@ export class ModelManagementService {
     setSelectedModelPath: (path: string | null) => void,
     showDialog: (title: string, message: string, actions: any[]) => void,
     hideDialog: () => void,
-    navigation: any
+    onNavigateSettings: () => void
   ): Promise<void> {
     const { model, modelPath, projectorPath, isLoading, isRegenerating, enableRemoteModels, isLoggedIn, loadModel, unloadModel } = options;
 
@@ -57,7 +57,7 @@ export class ModelManagementService {
             text: 'Go to Settings',
             onPress: () => {
               hideDialog();
-              navigation.navigate('MainTabs', { screen: 'SettingsTab' });
+              onNavigateSettings();
             }
           }
         ]
@@ -89,7 +89,7 @@ export class ModelManagementService {
                 text: 'Go to Settings', 
                 onPress: () => {
                   hideDialog();
-                  navigation.navigate('MainTabs', { screen: 'SettingsTab' });
+                  onNavigateSettings();
                 }
               },
               { key: 'cancel', text: 'Cancel', onPress: hideDialog }

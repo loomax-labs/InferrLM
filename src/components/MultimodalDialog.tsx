@@ -12,7 +12,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useTheme } from '../context/ThemeContext';
 import { useModel } from '../context/ModelContext';
 import { llamaManager } from '../utils/LlamaManager';
-import { engineService } from '../services/inference-engine-service';
+import { engineService } from '../services/runtime-service';
 
 interface MultimodalDialogProps {
   visible: boolean;

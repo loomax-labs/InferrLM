@@ -3,9 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { useRouter, usePathname } from 'expo-router';
 import chatManager from '../utils/ChatManager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OpenSansFont } from '../hooks/OpenSansFont';
@@ -16,7 +14,7 @@ type AppHeaderProps = {
   showLogo?: boolean;
   onNewChat?: () => void;
   onBackPress?: () => void;
-  rightButtons?: React.ReactNode;
+  rightButtons?: React.ReactNode | null;
   customLeftComponent?: React.ReactNode;
   transparent?: boolean;
   leftComponent?: React.ReactNode;
@@ -35,12 +33,12 @@ export default function AppHeader({
 }: AppHeaderProps) {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute();
+  const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { fonts } = OpenSansFont();
 
-  const isHomeScreen = route.name === 'HomeTab';
+  const isHomeScreen = pathname === '/';
 
   const handleNewChat = async () => {
     if (onNewChat) {
@@ -51,14 +49,14 @@ export default function AppHeader({
   };
 
   const handleOpenChatHistory = () => {
-    navigation.navigate('ChatHistory');
+    router.push('/chat-history');
   };
 
   const handleBackPress = () => {
     if (onBackPress) {
       onBackPress();
     } else {
-      navigation.goBack();
+      router.back();
     }
   };
 
@@ -110,7 +108,7 @@ export default function AppHeader({
         )}
 
         <View style={styles.rightButtons}>
-          {rightButtons ? (
+          {rightButtons !== undefined ? (
             rightButtons
           ) : (
             <>
@@ -123,7 +121,7 @@ export default function AppHeader({
                   <MaterialCommunityIcons name="plus" size={22} color={themeColors.headerText} />
                 </TouchableOpacity>
               )}
-              
+
               <TouchableOpacity
                 style={styles.headerButton}
                 onPress={handleOpenChatHistory}

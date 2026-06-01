@@ -1,5 +1,5 @@
 import { llamaManager } from '../../../utils/LlamaManager';
-import { engineService } from '../../inference-engine-service';
+import { engineService } from '../../runtime-service';
 import { logger } from '../../../utils/logger';
 import { modelDownloader } from '../../ModelDownloader';
 import type { StoredModel } from '../../ModelDownloaderTypes';
