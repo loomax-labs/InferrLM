@@ -8,6 +8,7 @@ import { useRouter, usePathname } from 'expo-router';
 import chatManager from '../utils/ChatManager';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OpenSansFont } from '../hooks/OpenSansFont';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 const isIOS = Platform.OS === 'ios';
 const NAV_HEIGHT = isIOS ? 44 : 52;
@@ -41,6 +42,7 @@ export default function AppHeader({
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { fonts } = OpenSansFont();
+  const { isWideScreen } = useResponsiveLayout();
 
   const isHomeScreen = pathname === '/';
 
@@ -64,7 +66,7 @@ export default function AppHeader({
     }
   };
 
-  if (isIOS) {
+  if (isIOS && !isWideScreen) {
     return (
       <View style={[styles.iosContainer, { height: NAV_HEIGHT + insets.top }]}>
         {!transparent && (
