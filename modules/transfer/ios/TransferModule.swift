@@ -208,12 +208,15 @@ public class TransferModule: Module {
         "totalBytes": 0.0
       ])
     } else {
+      let underlying = (nsErr.userInfo[NSUnderlyingErrorKey] as? NSError) ?? nsErr
+      let isEnospc = underlying.domain == NSPOSIXErrorDomain && underlying.code == Int(ENOSPC)
+      let errorMsg = isEnospc ? "enospc" : error.localizedDescription
       sendEvent("onTransferError", [
         "downloadId": tid,
         "modelName": modelName,
         "destination": stored?.destination ?? "",
         "url": stored?.url ?? "",
-        "error": error.localizedDescription,
+        "error": errorMsg,
         "bytesWritten": 0.0,
         "totalBytes": 0.0
       ])
