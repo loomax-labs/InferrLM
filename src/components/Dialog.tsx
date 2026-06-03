@@ -178,7 +178,7 @@ const AppDialog = (({
         <Animated.View
           style={[
             styles.modalContent,
-            { backgroundColor: themeColors.background, maxWidth },
+            { backgroundColor: themeColors.background, maxWidth, borderWidth: 1, borderColor: themeColors.borderColor },
             style,
             { opacity, transform: [{ scale }] },
           ]}
