@@ -24,6 +24,7 @@ export class BackgroundDownloadService {
   private eventCallbacks: DownloadEventCallbacks = {};
   private expoEventEmitter: InstanceType<typeof ExpoEventEmitter> | null = null;
   private eventSubscriptions: Array<{ remove(): void }> = [];
+  private staleMap: Map<string, number> = new Map();
 
   constructor() {
     this.activeTransfers = new Map();
@@ -426,6 +427,29 @@ export class BackgroundDownloadService {
 
     try {
       const activeTransferList = await TransferModule.getOngoingTransfers();
+
+      const nativeNames = new Set<string>(
+        activeTransferList
+          .map((t: any) => t.modelName || this.extractModelName(t.destination, t.url))
+          .filter(Boolean),
+      );
+
+      const now = Date.now();
+      for (const [modelName, job] of this.activeTransfers.entries()) {
+        if (!nativeNames.has(modelName) && job.state.isDownloading) {
+          const first = this.staleMap.get(modelName);
+          if (!first) {
+            this.staleMap.set(modelName, now);
+          } else if (now - first > 5000) {
+            console.log('stale_transfer_recovery', modelName);
+            this.staleMap.delete(modelName);
+            this.activeTransfers.delete(modelName);
+            this.eventCallbacks.onComplete?.(modelName);
+          }
+        } else {
+          this.staleMap.delete(modelName);
+        }
+      }
 
       for (const transfer of activeTransferList) {
         const modelName = transfer.modelName || this.extractModelName(transfer.destination, transfer.url);
