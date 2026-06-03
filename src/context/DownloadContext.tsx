@@ -10,6 +10,7 @@ interface DownloadProgress {
     status: string;
     downloadId: number;
     isPaused?: boolean;
+    error?: string;
   };
 }
 
@@ -163,7 +164,8 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (newProgress[data.modelName]) {
           newProgress[data.modelName] = {
             ...newProgress[data.modelName],
-            status: 'failed'
+            status: 'failed',
+            error: data.error,
           };
         }
         return newProgress;
