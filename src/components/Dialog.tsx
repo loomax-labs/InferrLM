@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   StyleSheet,
   StyleProp,
@@ -116,27 +117,62 @@ const AppDialog = (({
     hasPrimaryOnly ||
     hasLegacyBtn;
 
-  if (!visible) return null;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.88)).current;
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setShow(true);
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          damping: 22,
+          stiffness: 320,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.88,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setShow(false));
+    }
+  }, [visible]);
 
   return (
     <Modal
-      visible={visible}
+      visible={show}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={close}
     >
       <View style={styles.modalOverlay}>
         <TouchableWithoutFeedback
           onPress={dismissOnBackdropPress ? close : undefined}
         >
-          <View style={styles.backdrop} />
+          <Animated.View style={[styles.backdrop, { opacity }]} />
         </TouchableWithoutFeedback>
 
-        <View
+        <Animated.View
           style={[
             styles.modalContent,
             { backgroundColor: themeColors.background, maxWidth },
             style,
+            { opacity, transform: [{ scale }] },
           ]}
         >
           {isManagedDialog ? (
@@ -252,7 +288,7 @@ const AppDialog = (({
           ) : (
             children
           )}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -297,11 +333,6 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     padding: 24,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
   },
   modalHeader: {
     flexDirection: 'row',
