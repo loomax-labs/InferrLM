@@ -151,10 +151,9 @@ const AppDialog = (({
         duration: 220,
         useNativeDriver: true,
       }),
-      Animated.spring(scale, {
+      Animated.timing(scale, {
         toValue: 1,
-        damping: 22,
-        stiffness: 320,
+        duration: 220,
         useNativeDriver: true,
       }),
     ]).start();
