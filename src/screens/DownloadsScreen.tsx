@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { fs as FileSystem } from '../services/fs';
+import { getStorageInfo } from '../utils/storageUtils';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -64,6 +65,8 @@ export default function DownloadsScreen() {
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const { downloadProgress, setDownloadProgress } = useDownloads();
   const buttonProcessingRef = useRef<Set<string>>(new Set());
+  const prevStatusRef = useRef<Record<string, string>>({});
+  const storageWarnedRef = useRef(false);
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -78,7 +81,7 @@ export default function DownloadsScreen() {
   const [mlxPackageFiles, setMlxPackageFiles] = useState<Record<string, string[]>>({});
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
 
-  const hideDialog = () => setDialogVisible(false);
+  const hideDialog = useCallback(() => setDialogVisible(false), []);
 
   const hideCancelDialog = () => {
     setCancelDialogVisible(false);
@@ -87,7 +90,7 @@ export default function DownloadsScreen() {
 
   interface BtnCfg { label: string; onPress: () => void }
 
-  const showDialog = (title: string, message: string, primary?: BtnCfg, secondary?: BtnCfg) => {
+  const showDialog = useCallback((title: string, message: string, primary?: BtnCfg, secondary?: BtnCfg) => {
     setDialogTitle(title);
     setDialogMessage(message);
     const autoClose = () => setDialogVisible(false);
@@ -96,7 +99,7 @@ export default function DownloadsScreen() {
     setDialogSecondaryText(secondary?.label);
     setDialogSecondaryPress(secondary ? () => secondary.onPress : undefined);
     setDialogVisible(true);
-  };
+  }, []);
 
   const activeDownloads = Object.entries(downloadProgress).filter(([_, data]) => {
     return data.status !== 'completed' &&
@@ -133,6 +136,60 @@ export default function DownloadsScreen() {
 
     return () => clearInterval(id);
   }, [hasActive]);
+
+  const isStorageError = (error?: string): boolean => {
+    if (!error) return false;
+    const msg = error.toLowerCase();
+    return (
+      msg.includes('enospc') ||
+      msg.includes('no space') ||
+      msg.includes('not enough space') ||
+      msg.includes('insufficient storage') ||
+      msg === '28' ||
+      /code[=\s]28\b/.test(msg)
+    );
+  };
+
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+
+    for (const [name, data] of Object.entries(downloadProgress)) {
+      if (data.status === 'failed' && prev[name] && prev[name] !== 'failed') {
+        console.log('download_failed', name, data.error);
+        if (isStorageError(data.error)) {
+          showDialog('Not Enough Storage', 'Download stopped because the device ran out of storage space. Free up storage and try again.');
+        } else {
+          showDialog('Download Failed', `"${name}" could not be downloaded. Please try again.`);
+        }
+      }
+    }
+
+    const next: Record<string, string> = {};
+    for (const [name, data] of Object.entries(downloadProgress)) {
+      next[name] = data.status;
+    }
+    prevStatusRef.current = next;
+  }, [downloadProgress, showDialog]);
+
+  useEffect(() => {
+    if (!hasActive) {
+      storageWarnedRef.current = false;
+      return;
+    }
+
+    const check = async () => {
+      if (storageWarnedRef.current) return;
+      const { hasEnoughSpace } = await getStorageInfo();
+      if (!hasEnoughSpace) {
+        storageWarnedRef.current = true;
+        showDialog('Low Storage', 'Your device is running low on storage space. Active downloads may fail.');
+      }
+    };
+
+    check();
+    const id = setInterval(check, 30000);
+    return () => clearInterval(id);
+  }, [hasActive, showDialog]);
 
   useEffect(() => {
     const loadMlxPackageFiles = async () => {
