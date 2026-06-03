@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -123,20 +123,9 @@ const AppDialog = (({
 
   useEffect(() => {
     if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.88);
       setShow(true);
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          damping: 22,
-          stiffness: 320,
-          useNativeDriver: true,
-        }),
-      ]).start();
     } else {
       Animated.parallel([
         Animated.timing(opacity, {
@@ -149,15 +138,34 @@ const AppDialog = (({
           duration: 160,
           useNativeDriver: true,
         }),
-      ]).start(() => setShow(false));
+      ]).start(({ finished }) => {
+        if (finished) setShow(false);
+      });
     }
   }, [visible]);
+
+  const animateIn = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        damping: 22,
+        stiffness: 320,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   return (
     <Modal
       visible={show}
       transparent
       animationType="none"
+      onShow={animateIn}
       onRequestClose={close}
     >
       <View style={styles.modalOverlay}>
