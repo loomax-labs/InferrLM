@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
-import { AppState, AppStateStatus, Text, TextInput, LogBox, View, BackHandler, ToastAndroid } from 'react-native';
+import { AppState, AppStateStatus, Text, TextInput, LogBox, BackHandler, ToastAndroid } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -18,7 +18,6 @@ import { modelDownloader } from './src/services/ModelDownloader';
 import { engineService } from './src/services/inference-engine-service';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundTask from 'expo-background-task';
-import { ThemeColors } from './src/types/theme';
 import { notificationService } from './src/services/NotificationService';
 import { initializeAuth } from './src/services/AuthService';
 import { initGeminiService } from './src/services/GeminiInitializer';
@@ -92,8 +91,6 @@ async function registerBackgroundFetchAsync() {
 
 function Navigation() {
   const { theme: currentTheme } = useTheme();
-  const themeColors = theme[currentTheme as ThemeColors];
-  const insets = useSafeAreaInsets();
   const appState = useRef(AppState.currentState);
   const navigationRef = useRef<any>(null);
   const lastBackPressRef = useRef(0);
@@ -233,19 +230,7 @@ function Navigation() {
         ref={navigationRef}
         theme={currentTheme === 'dark' ? customDarkTheme : customDefaultTheme}
       >
-        {/* Status Bar Background View for edge-to-edge display */}
-        <View 
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: insets.top,
-            backgroundColor: themeColors.statusBarBg,
-            zIndex: 999,
-          }}
-        />
-        <StatusBar style="light" translucent />
+        <StatusBar style="light" translucent backgroundColor="transparent" />
         <RootNavigator />
         <ShowDialog />
       </NavigationContainer>
