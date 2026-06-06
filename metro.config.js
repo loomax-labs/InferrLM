@@ -7,9 +7,15 @@ const litertLmRoot = path.resolve(__dirname, '../react-native-litert-lm');
 
 defaultConfig.watchFolders = [litertLmRoot];
 
-defaultConfig.resolver.extraNodeModules = {
-  '@inferrlm/react-native-litert-lm': litertLmRoot,
-};
+defaultConfig.resolver.extraNodeModules = new Proxy(
+  { '@inferrlm/react-native-litert-lm': litertLmRoot },
+  {
+    get: (target, name) =>
+      Object.prototype.hasOwnProperty.call(target, name)
+        ? target[name]
+        : path.join(__dirname, 'node_modules', String(name)),
+  }
+);
 
 defaultConfig.resolver.assetExts.push(
   'woff',
