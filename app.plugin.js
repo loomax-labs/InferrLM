@@ -49,28 +49,20 @@ function injectSpmRootFix(contents) {
   return contents.replace(anchor, `${block}\n\n${anchor}`);
 }
 
-function injectModularHeadersPostInstall(contents) {
-  const code = [
-    '',
-    "    installer.pods_project.targets.each do |target|",
-    "      if ['GoogleUtilities', 'RecaptchaInterop'].include?(target.name)",
-    '        target.build_configurations.each do |config|',
-    "          config.build_settings['DEFINES_MODULE'] = 'YES'",
-    '        end',
-    '      end',
-    '    end',
-  ].join('\n');
+function injectUseModularHeaders(contents) {
+  const line = 'use_modular_headers!';
 
-  const anchor = ':ccache_enabled => ccache_enabled?(podfile_properties),';
-
-  if (!contents.includes(anchor) || contents.includes("'DEFINES_MODULE'")) {
+  if (contents.includes(line)) {
     return contents;
   }
 
-  return contents.replace(
-    `${anchor}\n    )\n  end`,
-    `${anchor}\n    )${code}\n  end`,
-  );
+  const anchor = 'target \'InferrLM\' do';
+
+  if (!contents.includes(anchor)) {
+    return contents;
+  }
+
+  return contents.replace(anchor, `${line}\n\n${anchor}`);
 }
 
 function stripProjectBuildSettings(project) {
@@ -98,7 +90,7 @@ function withIos(config) {
   config = withPodfile(config, (modConfig) => {
     modConfig.modResults.contents = disableDeterministicPodUuids(modConfig.modResults.contents);
     modConfig.modResults.contents = injectSpmRootFix(modConfig.modResults.contents);
-    modConfig.modResults.contents = injectModularHeadersPostInstall(modConfig.modResults.contents);
+    modConfig.modResults.contents = injectUseModularHeaders(modConfig.modResults.contents);
     return modConfig;
   });
 
