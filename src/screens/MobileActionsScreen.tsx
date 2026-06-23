@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import { useModel } from '../context/ModelContext';
 import { skillManager } from '../services/SkillManager';
@@ -115,6 +116,7 @@ export default function MobileActionsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <GradientBg />
       <AppHeader title="Mobile Actions" showBackButton showLogo={false} rightButtons={[]} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 

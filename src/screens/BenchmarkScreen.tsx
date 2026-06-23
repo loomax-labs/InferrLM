@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 
 import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import LabsTasksSection from '../components/settings/LabsTasksSection';
@@ -39,6 +40,7 @@ export default function BenchmarkScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <GradientBg />
       <AppHeader title="Tools" rightButtons={profileButton} />
       <ScrollView style={styles.container} contentContainerStyle={[styles.content, Platform.OS === 'ios' && { paddingBottom: insets.bottom }]} showsVerticalScrollIndicator={false}>
         <LabsTasksSection
