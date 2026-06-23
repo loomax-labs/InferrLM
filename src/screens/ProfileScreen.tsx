@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Pressable, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -315,6 +316,7 @@ export default function ProfileScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <GradientBg />
         <AppHeader 
           title="My Profile"
           showBackButton={true}
@@ -333,6 +335,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <AppHeader 
         title="My Profile"
         showBackButton={true}

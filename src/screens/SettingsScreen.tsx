@@ -6,6 +6,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { engineService } from '../services/runtime-service';
 import AppHeader from '../components/AppHeader';
@@ -568,6 +569,7 @@ export default function SettingsScreen() {
 
   return (
       <View style={[styles.container, { backgroundColor: theme[currentTheme].background }]}>
+      <GradientBg />
       <AppHeader 
         title="Settings"
         rightButtons={

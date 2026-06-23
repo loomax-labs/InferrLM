@@ -11,6 +11,7 @@ import { fs as FileSystem } from '../services/fs';
 import { getStorageInfo } from '../utils/storageUtils';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { modelDownloader } from '../services/ModelDownloader';
 import { useDownloads } from '../context/DownloadContext';
@@ -449,6 +450,7 @@ export default function DownloadsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <GradientBg />
       <AppHeader
         title="Active Downloads"
         showBackButton
