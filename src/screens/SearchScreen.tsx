@@ -1,6 +1,13 @@
 import { StyleSheet, Text, View, TextInput, FlatList } from 'react-native';
 import { useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
+
 export default function SearchScreen() {
+  const { theme: currentTheme } = useTheme();
+  const colors = theme[currentTheme as 'light' | 'dark'];
+  const isDark = currentTheme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
   const [results] = useState([
     { id: '1', title: 'Result 1' },
@@ -9,10 +16,15 @@ export default function SearchScreen() {
   ]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <GradientBg />
       <TextInput
-        style={styles.searchInput}
+        style={[styles.searchInput, {
+          borderColor: colors.borderColor,
+          color: colors.text,
+        }]}
         placeholder="Search..."
+        placeholderTextColor={colors.secondaryText}
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
@@ -20,8 +32,8 @@ export default function SearchScreen() {
         data={results}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.resultItem}>
-            <Text>{item.title}</Text>
+          <View style={[styles.resultItem, { borderBottomColor: colors.borderColor }]}>
+            <Text style={{ color: colors.text }}>{item.title}</Text>
           </View>
         )}
       />
@@ -32,13 +44,11 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     padding: 15,
   },
   searchInput: {
     height: 40,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     paddingHorizontal: 10,
     marginBottom: 15,
@@ -46,6 +56,5 @@ const styles = StyleSheet.create({
   resultItem: {
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
 }); 

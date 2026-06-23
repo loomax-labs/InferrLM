@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import chatManager, { Chat } from '../utils/ChatManager';
@@ -223,6 +224,7 @@ export default function ChatHistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <GradientBg />
       <AppHeader 
         title="Chat History"
         showBackButton
