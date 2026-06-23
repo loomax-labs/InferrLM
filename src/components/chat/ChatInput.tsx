@@ -43,7 +43,6 @@ import { OnlineModelService } from '../../services/OnlineModelService';
 import { getMimeType, isOpenAIUploadable } from '../../services/adapters/OpenAIFileAdapter';
 import { isClaudeUploadable } from '../../services/adapters/ClaudeFileAdapter';
 import { isGeminiUploadable } from '../../services/adapters/GeminiFileAdapter';
-import { skillManager } from '../../services/SkillManager';
 
 type ChatInputProps = {
   onSend: (text: string) => void;
@@ -121,7 +120,6 @@ export default function ChatInput({
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [useRagForUpload, setUseRagForUpload] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<PendingAttachment | null>(null);
-  const [skillsModeEnabled, setSkillsModeEnabled] = useState(true);
   
   const inputRef = useRef<TextInput>(null);
   const attachmentMenuAnim = useRef(new Animated.Value(0)).current;
@@ -163,20 +161,6 @@ export default function ChatInput({
     loadTermsAcceptance();
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    skillManager.isModeEnabled().then(enabled => {
-      if (!cancelled) {
-        setSkillsModeEnabled(enabled);
-      }
-    }).catch(() => {
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (isEditing && editingText !== undefined) {
@@ -488,15 +472,6 @@ export default function ChatInput({
     return engine === 'llama' || (engine === 'litert' && Platform.OS !== 'ios');
   }, [selectedModelPath]);
 
-  const toggleSkillsMode = useCallback(async () => {
-    const next = !skillsModeEnabled;
-    setSkillsModeEnabled(next);
-    try {
-      await skillManager.setModeEnabled(next);
-    } catch {
-      setSkillsModeEnabled(!next);
-    }
-  }, [skillsModeEnabled]);
 
   const handleSend = useCallback(() => {
     if (!hasText && !pendingAttachment) return;
@@ -1124,25 +1099,6 @@ export default function ChatInput({
     return isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)';
   }, [showAttachmentMenu, isDark, useGlassEffect, currentTheme]);
 
-  const skillsButtonStyle = useMemo(() => [
-    styles.modeButton,
-    useGlassEffect
-      ? {}
-      : {
-          backgroundColor: skillsModeEnabled
-            ? getThemeAwareColor('#4a0660', currentTheme)
-            : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-        },
-  ], [currentTheme, isDark, skillsModeEnabled, useGlassEffect]);
-
-  const skillsIconColor = useMemo(() => {
-    if (skillsModeEnabled) {
-      return useGlassEffect && !isDark
-        ? getThemeAwareColor('#4a0660', currentTheme)
-        : '#ffffff';
-    }
-    return isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)';
-  }, [isDark, skillsModeEnabled, useGlassEffect, currentTheme]);
 
   return (
     <View style={styles.wrapper}>
@@ -1358,40 +1314,6 @@ export default function ChatInput({
               )
             )}
 
-            {!isEditing && (
-              useGlassEffect ? (
-                <GlassView
-                  style={[skillsButtonStyle, styles.glassCircle]}
-                  glassEffectStyle={glassEffectStyle}
-                  isInteractive
-                  colorScheme={isDark ? 'dark' : 'light'}
-                >
-                  <TouchableOpacity
-                    style={[styles.modeButton, { backgroundColor: 'transparent' }]}
-                    onPress={toggleSkillsMode}
-                    disabled={disabled}
-                  >
-                    <MaterialCommunityIcons
-                      name="auto-fix"
-                      size={18}
-                      color={skillsIconColor}
-                    />
-                  </TouchableOpacity>
-                </GlassView>
-              ) : (
-                <TouchableOpacity
-                  style={skillsButtonStyle}
-                  onPress={toggleSkillsMode}
-                  disabled={disabled}
-                >
-                  <MaterialCommunityIcons
-                    name="auto-fix"
-                    size={18}
-                    color={skillsIconColor}
-                  />
-                </TouchableOpacity>
-              )
-            )}
 
             {useGlassEffect ? (
               <GlassView
@@ -1770,13 +1692,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
