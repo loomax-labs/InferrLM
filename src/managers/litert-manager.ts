@@ -3,7 +3,7 @@ import {
   createLLM,
   type LLMConfig,
   type LiteRTLMInstance,
-} from '@inferrlm/react-native-litert-lm';
+} from 'react-native-litert-lm';
 
 import { BenchmarkSample, EngineCaps, GenOpts, GenSettings, InferenceManager, Msg } from './inference-manager';
 import { getLiteRTRecommendedBackend, type LiteRTBackend } from '../services/LiteRTBackendService';
@@ -372,8 +372,9 @@ class LiteRTManager implements InferenceManager {
     messages.push({ role: 'user', content: prompt });
 
     const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings));
-    const samples = await instance.runBenchmark(prompt, 0, 1);
-    const stats = samples[0] || instance.getStats();
+    await instance.resetConversation();
+    await instance.sendMessage(prompt);
+    const stats = instance.getStats();
     const promptTokens = stats.promptTokens || Math.max(prompt.length / 4, 1);
     const completionTokens = stats.completionTokens || Math.max(stats.totalTokens - promptTokens, 1);
     const ttftMs = stats.timeToFirstToken || 0;

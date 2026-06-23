@@ -2,7 +2,7 @@ import {
   checkBackendSupport,
   getRecommendedBackend,
   type Backend,
-} from '@inferrlm/react-native-litert-lm';
+} from 'react-native-litert-lm';
 
 export type LiteRTBackend = Backend;
 
