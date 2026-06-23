@@ -1049,7 +1049,10 @@ export default function ChatInput({
   const inputContainerStyle = useMemo(() => [
     styles.inputContainer,
     useGlassEffect
-      ? { borderWidth: 0 }
+      ? {
+          borderWidth: isDark ? 0 : 0.5,
+          borderColor: isDark ? undefined : 'rgba(0, 0, 0, 0.12)',
+        }
       : {
           backgroundColor: isDark ? themeColors.background : '#ffffff',
           borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
@@ -1092,9 +1095,14 @@ export default function ChatInput({
         },
   ], [canSend, currentTheme, isDark, useGlassEffect]);
 
-  const sendIconColor = useMemo(() => 
-    canSend ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)'
-  , [canSend, isDark]);
+  const sendIconColor = useMemo(() => {
+    if (canSend) {
+      return useGlassEffect && !isDark
+        ? getThemeAwareColor('#4a0660', currentTheme)
+        : '#ffffff';
+    }
+    return isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)';
+  }, [canSend, isDark, useGlassEffect, currentTheme]);
 
   const attachmentButtonStyle = useMemo(() => [
     styles.attachmentButton,
@@ -1107,9 +1115,14 @@ export default function ChatInput({
         },
   ], [showAttachmentMenu, currentTheme, isDark, useGlassEffect]);
 
-  const attachmentIconColor = useMemo(() => 
-    showAttachmentMenu ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
-  , [showAttachmentMenu, isDark]);
+  const attachmentIconColor = useMemo(() => {
+    if (showAttachmentMenu) {
+      return useGlassEffect && !isDark
+        ? getThemeAwareColor('#4a0660', currentTheme)
+        : '#ffffff';
+    }
+    return isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)';
+  }, [showAttachmentMenu, isDark, useGlassEffect, currentTheme]);
 
   const skillsButtonStyle = useMemo(() => [
     styles.modeButton,
@@ -1122,9 +1135,14 @@ export default function ChatInput({
         },
   ], [currentTheme, isDark, skillsModeEnabled, useGlassEffect]);
 
-  const skillsIconColor = useMemo(() => 
-    skillsModeEnabled ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
-  , [isDark, skillsModeEnabled]);
+  const skillsIconColor = useMemo(() => {
+    if (skillsModeEnabled) {
+      return useGlassEffect && !isDark
+        ? getThemeAwareColor('#4a0660', currentTheme)
+        : '#ffffff';
+    }
+    return isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)';
+  }, [isDark, skillsModeEnabled, useGlassEffect, currentTheme]);
 
   return (
     <View style={styles.wrapper}>
