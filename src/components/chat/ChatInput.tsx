@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   RecordingPresets,
@@ -1047,12 +1048,16 @@ export default function ChatInput({
 
   const inputContainerStyle = useMemo(() => [
     styles.inputContainer,
+    useGlassEffect
+      ? { borderWidth: 0 }
+      : {
+          backgroundColor: isDark ? themeColors.background : '#ffffff',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        },
     {
-      backgroundColor: isDark ? themeColors.background : '#ffffff',
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
       minHeight: inputHeight,
     },
-  ], [inputHeight, isDark, themeColors.background]);
+  ], [inputHeight, isDark, themeColors.background, useGlassEffect]);
 
   const inputStyle = useMemo(() => [
     styles.input,
@@ -1068,14 +1073,24 @@ export default function ChatInput({
 
   const canSend = hasText || !!pendingAttachment;
 
+  const useGlassEffect = useMemo(() => 
+    Platform.OS === 'ios' && isLiquidGlassAvailable()
+  , []);
+
+  const glassEffectStyle = useMemo(() => 
+    isDark ? 'clear' as const : 'regular' as const
+  , [isDark]);
+
   const sendButtonStyle = useMemo(() => [
     styles.sendButton,
-    {
-      backgroundColor: canSend 
-        ? getThemeAwareColor('#4a0660', currentTheme)
-        : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    }
-  ], [canSend, currentTheme, isDark]);
+    useGlassEffect
+      ? {}
+      : {
+          backgroundColor: canSend 
+            ? getThemeAwareColor('#4a0660', currentTheme)
+            : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+        },
+  ], [canSend, currentTheme, isDark, useGlassEffect]);
 
   const sendIconColor = useMemo(() => 
     canSend ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.3)'
@@ -1083,12 +1098,14 @@ export default function ChatInput({
 
   const attachmentButtonStyle = useMemo(() => [
     styles.attachmentButton,
-    {
-      backgroundColor: showAttachmentMenu 
-        ? getThemeAwareColor('#4a0660', currentTheme)
-        : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    }
-  ], [showAttachmentMenu, currentTheme, isDark]);
+    useGlassEffect
+      ? {}
+      : {
+          backgroundColor: showAttachmentMenu 
+            ? getThemeAwareColor('#4a0660', currentTheme)
+            : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+        },
+  ], [showAttachmentMenu, currentTheme, isDark, useGlassEffect]);
 
   const attachmentIconColor = useMemo(() => 
     showAttachmentMenu ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
@@ -1096,12 +1113,14 @@ export default function ChatInput({
 
   const skillsButtonStyle = useMemo(() => [
     styles.modeButton,
-    {
-      backgroundColor: skillsModeEnabled
-        ? getThemeAwareColor('#4a0660', currentTheme)
-        : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-    },
-  ], [currentTheme, isDark, skillsModeEnabled]);
+    useGlassEffect
+      ? {}
+      : {
+          backgroundColor: skillsModeEnabled
+            ? getThemeAwareColor('#4a0660', currentTheme)
+            : isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+        },
+  ], [currentTheme, isDark, skillsModeEnabled, useGlassEffect]);
 
   const skillsIconColor = useMemo(() => 
     skillsModeEnabled ? '#ffffff' : isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'
@@ -1287,49 +1306,115 @@ export default function ChatInput({
 
           <View style={styles.inputWrapper}>
             {!isEditing && (
-              <TouchableOpacity 
-                style={attachmentButtonStyle} 
-                onPress={toggleAttachmentMenu}
-                disabled={disabled}
-              >
-                <MaterialCommunityIcons 
-                  name={showAttachmentMenu ? "close" : "plus"} 
-                  size={20} 
-                  color={attachmentIconColor} 
-                />
-              </TouchableOpacity>
+              useGlassEffect ? (
+                <GlassView
+                  style={[attachmentButtonStyle, styles.glassCircle]}
+                  glassEffectStyle={glassEffectStyle}
+                  isInteractive
+                  colorScheme={isDark ? 'dark' : 'light'}
+                >
+                  <TouchableOpacity 
+                    style={[styles.attachmentButton, { backgroundColor: 'transparent' }]}
+                    onPress={toggleAttachmentMenu}
+                    disabled={disabled}
+                  >
+                    <MaterialCommunityIcons 
+                      name={showAttachmentMenu ? "close" : "plus"} 
+                      size={20} 
+                      color={attachmentIconColor} 
+                    />
+                  </TouchableOpacity>
+                </GlassView>
+              ) : (
+                <TouchableOpacity 
+                  style={attachmentButtonStyle} 
+                  onPress={toggleAttachmentMenu}
+                  disabled={disabled}
+                >
+                  <MaterialCommunityIcons 
+                    name={showAttachmentMenu ? "close" : "plus"} 
+                    size={20} 
+                    color={attachmentIconColor} 
+                  />
+                </TouchableOpacity>
+              )
             )}
 
             {!isEditing && (
-              <TouchableOpacity
-                style={skillsButtonStyle}
-                onPress={toggleSkillsMode}
-                disabled={disabled}
-              >
-                <MaterialCommunityIcons
-                  name="auto-fix"
-                  size={18}
-                  color={skillsIconColor}
-                />
-              </TouchableOpacity>
+              useGlassEffect ? (
+                <GlassView
+                  style={[skillsButtonStyle, styles.glassCircle]}
+                  glassEffectStyle={glassEffectStyle}
+                  isInteractive
+                  colorScheme={isDark ? 'dark' : 'light'}
+                >
+                  <TouchableOpacity
+                    style={[styles.modeButton, { backgroundColor: 'transparent' }]}
+                    onPress={toggleSkillsMode}
+                    disabled={disabled}
+                  >
+                    <MaterialCommunityIcons
+                      name="auto-fix"
+                      size={18}
+                      color={skillsIconColor}
+                    />
+                  </TouchableOpacity>
+                </GlassView>
+              ) : (
+                <TouchableOpacity
+                  style={skillsButtonStyle}
+                  onPress={toggleSkillsMode}
+                  disabled={disabled}
+                >
+                  <MaterialCommunityIcons
+                    name="auto-fix"
+                    size={18}
+                    color={skillsIconColor}
+                  />
+                </TouchableOpacity>
+              )
             )}
 
-            <View style={inputContainerStyle}>
-              <TextInput
-                ref={inputRef}
-                style={inputStyle}
-                placeholder={isEditing ? "Edit your message..." : "Type a message..."}
-                placeholderTextColor={placeholderColor || defaultPlaceholderColor}
-                value={text}
-                onChangeText={setText}
-                onContentSizeChange={handleContentSizeChange}
-                multiline
-                maxLength={10000}
-                editable={!disabled}
-                returnKeyType="default"
-                textAlignVertical="center"
-              />
-            </View>
+            {useGlassEffect ? (
+              <GlassView
+                style={inputContainerStyle}
+                glassEffectStyle={glassEffectStyle}
+                isInteractive
+                colorScheme={isDark ? 'dark' : 'light'}
+              >
+                <TextInput
+                  ref={inputRef}
+                  style={inputStyle}
+                  placeholder={isEditing ? "Edit your message..." : "Type a message..."}
+                  placeholderTextColor={placeholderColor || defaultPlaceholderColor}
+                  value={text}
+                  onChangeText={setText}
+                  onContentSizeChange={handleContentSizeChange}
+                  multiline
+                  maxLength={10000}
+                  editable={!disabled}
+                  returnKeyType="default"
+                  textAlignVertical="center"
+                />
+              </GlassView>
+            ) : (
+              <View style={inputContainerStyle}>
+                <TextInput
+                  ref={inputRef}
+                  style={inputStyle}
+                  placeholder={isEditing ? "Edit your message..." : "Type a message..."}
+                  placeholderTextColor={placeholderColor || defaultPlaceholderColor}
+                  value={text}
+                  onChangeText={setText}
+                  onContentSizeChange={handleContentSizeChange}
+                  multiline
+                  maxLength={10000}
+                  editable={!disabled}
+                  returnKeyType="default"
+                  textAlignVertical="center"
+                />
+              </View>
+            )}
 
             {isEditing ? (
               <View style={styles.editingActions}>
@@ -1344,41 +1429,103 @@ export default function ChatInput({
                     color={isDark ? '#fff' : '#666'} 
                   />
                 </TouchableOpacity>
+                {useGlassEffect ? (
+                  <GlassView
+                    style={[sendButtonStyle, styles.glassCircle]}
+                    glassEffectStyle={glassEffectStyle}
+                    isInteractive
+                    colorScheme={isDark ? 'dark' : 'light'}
+                  >
+                    <TouchableOpacity 
+                      style={[styles.sendButton, { backgroundColor: 'transparent' }]}
+                      onPress={handleSend}
+                      disabled={!hasText || disabled}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons 
+                        name="check" 
+                        size={20} 
+                        color={sendIconColor} 
+                      />
+                    </TouchableOpacity>
+                  </GlassView>
+                ) : (
+                  <TouchableOpacity 
+                    style={sendButtonStyle} 
+                    onPress={handleSend}
+                    disabled={!hasText || disabled}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons 
+                      name="check" 
+                      size={20} 
+                      color={sendIconColor} 
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : isGenerating ? (
+              useGlassEffect ? (
+                <GlassView
+                  style={[styles.stopButton, styles.glassCircle]}
+                  glassEffectStyle={glassEffectStyle}
+                  isInteractive
+                  colorScheme={isDark ? 'dark' : 'light'}
+                >
+                  <StopButton 
+                    onPress={handleStop}
+                    color="#ff4444"
+                    size={24}
+                    touchableOpacityProps={{
+                      style: [styles.stopButton, { backgroundColor: 'transparent' }]
+                    }}
+                  />
+                </GlassView>
+              ) : (
+                <StopButton 
+                  onPress={handleStop}
+                  color="#ff4444"
+                  size={24}
+                  touchableOpacityProps={{
+                    style: styles.stopButton
+                  }}
+                />
+              )
+            ) : (
+              useGlassEffect ? (
+                <GlassView
+                  style={[sendButtonStyle, styles.glassCircle]}
+                  glassEffectStyle={glassEffectStyle}
+                  isInteractive
+                  colorScheme={isDark ? 'dark' : 'light'}
+                >
+                  <TouchableOpacity 
+                    style={[styles.sendButton, { backgroundColor: 'transparent' }]}
+                    onPress={handleSend}
+                    disabled={!canSend || disabled}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons 
+                      name="send" 
+                      size={20} 
+                      color={sendIconColor} 
+                    />
+                  </TouchableOpacity>
+                </GlassView>
+              ) : (
                 <TouchableOpacity 
                   style={sendButtonStyle} 
                   onPress={handleSend}
-                  disabled={!hasText || disabled}
+                  disabled={!canSend || disabled}
                   activeOpacity={0.7}
                 >
                   <MaterialCommunityIcons 
-                    name="check" 
+                    name="send" 
                     size={20} 
                     color={sendIconColor} 
                   />
                 </TouchableOpacity>
-              </View>
-            ) : isGenerating ? (
-              <StopButton 
-                onPress={handleStop}
-                color="#ff4444"
-                size={24}
-                touchableOpacityProps={{
-                  style: styles.stopButton
-                }}
-              />
-            ) : (
-              <TouchableOpacity 
-                style={sendButtonStyle} 
-                onPress={handleSend}
-                disabled={!canSend || disabled}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons 
-                  name="send" 
-                  size={20} 
-                  color={sendIconColor} 
-                />
-              </TouchableOpacity>
+              )
             )}
           </View>
         </View>
@@ -1622,6 +1769,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     justifyContent: 'center',
+  },
+  glassCircle: {
+    overflow: 'hidden',
   },
   input: {
     fontSize: 16,
