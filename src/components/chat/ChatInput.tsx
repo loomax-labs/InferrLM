@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView, isLiquidGlassAvailable, glassStyle } from '../../services/adapters/GlassEffectAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   RecordingPresets,
@@ -1074,11 +1074,11 @@ export default function ChatInput({
   const canSend = hasText || !!pendingAttachment;
 
   const useGlassEffect = useMemo(() => 
-    Platform.OS === 'ios' && isLiquidGlassAvailable()
+    isLiquidGlassAvailable()
   , []);
 
   const glassEffectStyle = useMemo(() => 
-    isDark ? 'clear' as const : 'regular' as const
+    glassStyle(isDark)
   , [isDark]);
 
   const sendButtonStyle = useMemo(() => [
