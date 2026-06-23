@@ -20,6 +20,7 @@ import ModelSettingsSampling from '../components/settings/ModelSettingsSampling'
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
 import { getEngineSettingsMeta } from '../config/engineSettings';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import type { EngineId } from '../managers/inference-manager';
 import type { GpuConfig } from '../components/settings/ModelSettingsCore';
@@ -342,6 +343,7 @@ function EngineSettingsView({ engine }: EngineSettingsProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <AppHeader title={meta.title} showBackButton showLogo={false} rightButtons={[]} />
 
       <ScrollView contentContainerStyle={styles.content}>

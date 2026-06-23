@@ -5,6 +5,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
 import { logger } from '../utils/logger';
 import type { LogMetadata } from '../utils/logger';
@@ -287,6 +288,7 @@ export default function ServerLogsScreen() {
 
   return (
     <View style={s.container}>
+      <GradientBg />
       <AppHeader
         title="Server Logs"
         showBackButton
