@@ -16,7 +16,7 @@
   "dependencies": {
     "@expo/plist": "^0.7.0",
     "@expo/vector-icons": "^15.1.1",
-    "@inferrlm/react-native-litert-lm": "0.3.5",
+    "react-native-litert-lm": "0.4.2",
     "@inferrlm/react-native-mlx": "0.4.8",
     "@op-engineering/op-sqlite": "^15.2.7",
     "@react-native-ai/apple": "0.12.0",

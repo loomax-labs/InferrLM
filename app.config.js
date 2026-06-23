@@ -119,7 +119,7 @@ export default {
       },
     },
     plugins: [
-      "@inferrlm/react-native-litert-lm",
+      "react-native-litert-lm",
       "expo-sharing",
       "expo-status-bar",
       "expo-font",
