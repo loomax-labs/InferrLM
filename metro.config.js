@@ -1,21 +1,6 @@
 const { getDefaultConfig } = require('@expo/metro-config');
-const path = require('path');
 
 const defaultConfig = getDefaultConfig(__dirname);
-
-const litertLmRoot = path.resolve(__dirname, '../react-native-litert-lm');
-
-defaultConfig.watchFolders = [litertLmRoot];
-
-defaultConfig.resolver.extraNodeModules = new Proxy(
-  { '@inferrlm/react-native-litert-lm': litertLmRoot },
-  {
-    get: (target, name) =>
-      Object.prototype.hasOwnProperty.call(target, name)
-        ? target[name]
-        : path.join(__dirname, 'node_modules', String(name)),
-  }
-);
 
 defaultConfig.resolver.assetExts.push(
   'woff',
