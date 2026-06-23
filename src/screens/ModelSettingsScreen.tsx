@@ -13,6 +13,7 @@ import LiteRtIcon from '../components/icons/LiteRtIcon';
 import { useTheme } from '../context/ThemeContext';
 import { getEngineSettingsMeta, getEngineSettingsRoute } from '../config/engineSettings';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { llamaManager } from '../utils/LlamaManager';
 import { modelSettingsService, ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
@@ -193,6 +194,7 @@ export default function ModelSettingsScreen() {
   if (isLoading || !globalSettings) {
     return (
       <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+        <GradientBg />
         <AppHeader 
           title="Model Settings"
           showBackButton
@@ -218,6 +220,7 @@ export default function ModelSettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <GradientBg />
       <AppHeader 
         title="Model Settings"
         showBackButton

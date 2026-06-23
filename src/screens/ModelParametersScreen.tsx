@@ -9,6 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { llamaManager } from '../utils/LlamaManager';
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
 import type { ModelSettings } from '../services/ModelSettingsService';
@@ -233,6 +234,7 @@ export default function ModelParametersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <AppHeader         
       title="AI Content Terms"
               leftComponent={
