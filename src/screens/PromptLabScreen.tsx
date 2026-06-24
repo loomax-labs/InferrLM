@@ -15,7 +15,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import { useModel } from '../context/ModelContext';
 import { engineLabels } from '../managers/inference-manager';
@@ -272,7 +271,6 @@ export default function PromptLabScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: themeColors.background }]}>
-      <GradientBg />
       <AppHeader title="Prompt Lab" showBackButton showLogo={false} rightButtons={[]} />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

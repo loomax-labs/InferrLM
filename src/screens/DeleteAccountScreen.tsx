@@ -7,7 +7,6 @@ import AppHeader from '../components/AppHeader';
 import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { deleteAccount } from '../services/AuthService';
 export default function DeleteAccountScreen() {
@@ -80,7 +79,6 @@ export default function DeleteAccountScreen() {
   return (
     <>
       <View style={[styles.container, { backgroundColor: themeColors.background }]}> 
-      <GradientBg />
         <AppHeader
           title="Delete Account"
           showBackButton={true}

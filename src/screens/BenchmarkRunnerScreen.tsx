@@ -15,7 +15,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import type { ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
 import { modelSettingsService } from '../services/ModelSettingsService';
@@ -290,7 +289,6 @@ export default function BenchmarkRunnerScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
-      <GradientBg />
       <AppHeader
         title="Benchmark"
         showBackButton

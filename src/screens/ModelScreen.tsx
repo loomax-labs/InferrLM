@@ -5,7 +5,6 @@ import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ShowDialogFn } from '../hooks/useDialog';
 import Dialog from '../components/Dialog';
@@ -131,7 +130,6 @@ export default function ModelScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <GradientBg />
       <ModelScreenHeader 
         isLoggedIn={logic.isLoggedIn}
         onProfilePress={handleProfilePress}

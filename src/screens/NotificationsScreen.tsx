@@ -5,7 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 
 type Notification = {
   id: string;
@@ -93,7 +92,6 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <GradientBg />
       {notifications.length > 0 ? (
         <>
           <View style={styles.header}>

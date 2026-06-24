@@ -6,7 +6,6 @@ import QRCodeStyled from 'react-native-qrcode-styled';
 import { useRouter } from 'expo-router';
 import Dialog from '../components/Dialog';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import AppHeader from '../components/AppHeader';
 import SettingsSection from '../components/settings/SettingsSection';
@@ -327,7 +326,6 @@ export default function LocalServerScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <GradientBg />
       <AppHeader title="Server" rightButtons={null} />
 
       <ScrollView

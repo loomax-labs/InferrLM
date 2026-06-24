@@ -2,7 +2,6 @@ import { StyleSheet, Text, View, TextInput, FlatList } from 'react-native';
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 
 export default function SearchScreen() {
   const { theme: currentTheme } = useTheme();
@@ -17,7 +16,6 @@ export default function SearchScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <GradientBg />
       <TextInput
         style={[styles.searchInput, {
           borderColor: colors.borderColor,

@@ -3,7 +3,6 @@ import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Clipboard } from 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
 import { useStoredModels } from '../hooks/useStoredModels';
 import { ModelType } from '../types/models';
@@ -51,7 +50,6 @@ export default function APISetupScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <GradientBg />
       <AppHeader title="API Setup" showBackButton rightButtons={[]} />
 
       <ScrollView

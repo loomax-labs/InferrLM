@@ -16,7 +16,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import SkillResultRenderer from '../components/chat/SkillResultRenderer';
 import { theme } from '../constants/theme';
-import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import { skillExecutor } from '../services/SkillExecutor';
 import { skillManager } from '../services/SkillManager';
@@ -212,7 +211,6 @@ export default function SkillManagerScreen() {
               const selected = skill.id === selectedSkillId;
               return (
                 <View key={skill.id} style={[styles.skillCard, { borderColor: themeColors.secondaryText + '20' }]}>
-      <GradientBg />
                   <TouchableOpacity style={styles.skillHeader} onPress={() => setSelectedSkillId(selected ? null : skill.id)}>
                     <View style={styles.skillInfo}>
                       <Text style={[styles.skillName, { color: themeColors.text }]}>{skill.name}</Text>
