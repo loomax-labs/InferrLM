@@ -3,6 +3,7 @@ import {
   createLLM,
   type LLMConfig,
   type LiteRTLMInstance,
+  type MemoryUsage,
 } from 'react-native-litert-lm';
 
 import { BenchmarkSample, EngineCaps, GenOpts, GenSettings, InferenceManager, Msg } from './inference-manager';
@@ -13,6 +14,13 @@ type ParsedInput = {
   text: string;
   imagePath?: string;
   audioPath?: string;
+};
+
+/** Matches react-native-litert-lm ToolDefinition shape. */
+type LitertTool = {
+  name: string;
+  description: string;
+  parametersJson: string;
 };
 
 const caps: EngineCaps = {
@@ -59,13 +67,23 @@ class LiteRTManager implements InferenceManager {
   }
 
   private async createConfig(): Promise<LLMConfig> {
-    return {
+    const config: LLMConfig = {
       backend: await this.resolveBackend(),
       maxTokens: 1024,
       temperature: 0.7,
       topK: 40,
       topP: 0.95,
     };
+
+    // Explicit multimodal flag: enable when model filename suggests multimodal
+    if (this.modelPath) {
+      const name = this.modelPath.toLowerCase();
+      if (name.includes('3n') || name.includes('gemma3') || name.includes('gemma-4')) {
+        config.multimodal = true;
+      }
+    }
+
+    return config;
   }
 
   private getConfigKey(config: LLMConfig): string {
@@ -79,7 +97,7 @@ class LiteRTManager implements InferenceManager {
     });
   }
 
-  private async buildConfig(messages: Msg[], settings?: Partial<GenSettings>): Promise<LLMConfig> {
+  private async buildConfig(messages: Msg[], settings?: Partial<GenSettings>, tools?: LitertTool[]): Promise<LLMConfig> {
     const config = await this.createConfig();
     const systemPrompt = this.extractSystemPrompt(messages, settings);
 
@@ -97,6 +115,15 @@ class LiteRTManager implements InferenceManager {
     }
     if (systemPrompt) {
       config.systemPrompt = systemPrompt;
+    }
+    if (tools && tools.length > 0) {
+      config.tools = tools;
+    }
+    if (typeof settings?.validate === 'boolean') {
+      config.validate = settings.validate;
+    }
+    if (typeof settings?.enableSpeculativeDecoding === 'boolean') {
+      config.enableSpeculativeDecoding = settings.enableSpeculativeDecoding;
     }
 
     return config;
@@ -326,34 +353,58 @@ class LiteRTManager implements InferenceManager {
       return '';
     }
 
-    const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings));
+    const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings, opts?.tools as LitertTool[] | undefined));
     const prompt = input.text || 'Describe this input.';
+    const onToken = opts?.onToken;
 
+    // Streaming multimodal
+    if (onToken && input.imagePath && caps.vision) {
+      return this.streamAsync(onToken, (cb) => {
+        instance.sendMessageWithImageAsync(prompt, input.imagePath!, cb);
+      });
+    }
+
+    if (onToken && input.audioPath && caps.audio) {
+      return this.streamAsync(onToken, (cb) => {
+        instance.sendMessageWithAudioAsync(prompt, input.audioPath!, cb);
+      });
+    }
+
+    // Blocking multimodal
     if (input.imagePath && caps.vision) {
       const response = await instance.sendMessageWithImage(prompt, input.imagePath);
-      opts?.onToken?.(response);
+      onToken?.(response);
       return response;
     }
 
     if (input.audioPath && caps.audio) {
       const response = await instance.sendMessageWithAudio(prompt, input.audioPath);
-      opts?.onToken?.(response);
+      onToken?.(response);
       return response;
     }
 
-    if (!opts?.onToken) {
+    // Text only
+    if (!onToken) {
       return instance.sendMessage(prompt);
     }
 
-    return await new Promise<string>((resolve, reject) => {
+    return this.streamAsync(onToken, (cb) => {
+      instance.sendMessageAsync(prompt, cb);
+    });
+  }
+
+  /** Wrap a streaming inference call into a Promise that resolves with the full response. */
+  private streamAsync(
+    onToken: (token: string) => boolean | void,
+    call: (cb: (token: string, done: boolean) => void) => void,
+  ): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
       let output = '';
       try {
-        instance.sendMessageAsync(prompt, (token, done) => {
+        call((token, done) => {
           output += token;
-          opts.onToken?.(token);
-          if (done) {
-            resolve(output);
-          }
+          onToken(token);
+          if (done) resolve(output);
         });
       } catch (error) {
         reject(error);
@@ -416,6 +467,28 @@ class LiteRTManager implements InferenceManager {
 
   ready() {
     return Boolean(this.instance?.isReady());
+  }
+
+  /**
+   * Count tokens in a text string using the native tokenizer.
+   * Returns -1 if no model is loaded or tokenizer is unavailable.
+   */
+  countTokens(text: string): number {
+    if (!this.instance?.isReady()) {
+      return -1;
+    }
+    return this.instance.countTokens(text);
+  }
+
+  /**
+   * Get real memory usage from the native runtime.
+   * Returns null if no model is loaded.
+   */
+  getMemoryUsage(): MemoryUsage | null {
+    if (!this.instance?.isReady()) {
+      return null;
+    }
+    return this.instance.getMemoryUsage();
   }
 }
 
