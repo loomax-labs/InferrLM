@@ -470,5 +470,65 @@ export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
     "modelFamily": "7 Billion",
     "quantization": "Q3_K_S",
     "tags": ["llama.cpp"]
+  },
+  {
+    "name": "Qwen3.5 Coder 7B",
+    "description": "Alibaba's Qwen 3.5 fine-tuned for code generation with 128K context and built-in reasoning for complex programming tasks.",
+    "size": "5.68 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/Qwen3.5-Coder-7B-GGUF/resolve/main/Qwen3.5-Coder-7B-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "7 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["recommended", "llama.cpp"]
+  },
+  {
+    "name": "Qwen3.5 Coder 3B",
+    "description": "Alibaba's compact coding model with 3B parameters, optimized for on-device code completion and generation with 128K context.",
+    "size": "2.19 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/Qwen3.5-Coder-3B-GGUF/resolve/main/Qwen3.5-Coder-3B-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "3 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["fastest", "llama.cpp"]
+  },
+  {
+    "name": "Qwen3.5 VL 2B",
+    "description": "Alibaba's compact vision-language model with 2B parameters for on-device multimodal understanding, image analysis and OCR.",
+    "size": "1.78 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/Qwen3.5-VL-2B-GGUF/resolve/main/Qwen3.5-VL-2B-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "2 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "fastest", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-Qwen3.5-VL-2B-Q4_K_M.gguf",
+        "url": "https://huggingface.co/unsloth/Qwen3.5-VL-2B-GGUF/resolve/main/mmproj-Qwen3.5-VL-2B-Q4_K_M.gguf",
+        "description": "Multimodal projector for Qwen3.5 VL 2B"
+      }
+    ]
+  },
+  {
+    "name": "Granite 4.0 Vision 2B",
+    "description": "IBM's compact vision-language model with visual reasoning, document understanding, and instruction following in a 2B form factor.",
+    "size": "1.65 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/granite-4.0-vision-2b-GGUF/resolve/main/granite-4.0-vision-2b-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "2 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "fastest", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-granite-4.0-vision-2b.gguf",
+        "url": "https://huggingface.co/unsloth/granite-4.0-vision-2b-GGUF/resolve/main/mmproj-granite-4.0-vision-2b.gguf",
+        "description": "Multimodal projector for Granite 4.0 Vision 2B"
+      }
+    ]
   }
 ];
