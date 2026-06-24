@@ -39,7 +39,6 @@ function summarizeBody(body: any): Record<string, unknown> | undefined {
   return {
     email: typeof body.email === 'string' ? maskEmail(body.email) : undefined,
     hasPassword: typeof body.password === 'string',
-    passwordLength: typeof body.password === 'string' ? body.password.length : undefined,
     hasDisplayName: typeof body.displayName === 'string' && body.displayName.length > 0,
     hasIdToken: typeof body.idToken === 'string' && body.idToken.length > 0,
     hasIdentityToken: typeof body.identityToken === 'string' && body.identityToken.length > 0,
