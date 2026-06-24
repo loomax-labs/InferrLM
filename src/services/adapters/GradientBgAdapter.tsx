@@ -4,16 +4,25 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 
+function expandHex(hex: string): string {
+  if (hex.length === 4 && hex.startsWith('#')) {
+    return '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+  }
+  return hex;
+}
+
 export function GradientBg() {
   const { theme: currentTheme } = useTheme();
   const colors = theme[currentTheme as 'light' | 'dark'];
 
+  const alpha = Platform.OS === 'web' ? 'FF' : '80';
+
   return (
     <LinearGradient
       colors={[
-        colors.bgGradStart + '40',
-        colors.bgGradEnd + '30',
-        colors.background + (Platform.OS === 'web' ? 'FF' : '80'),
+        expandHex(colors.bgGradStart) + '40',
+        expandHex(colors.bgGradEnd) + '30',
+        expandHex(colors.background) + alpha,
       ]}
       style={styles.gradient}
       start={{ x: 0, y: 0 }}
