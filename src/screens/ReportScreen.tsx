@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { fs as FileSystem } from '../services/fs';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { submitReport } from '../services/ReportService';
 
@@ -184,6 +185,7 @@ export default function ReportScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <KeyboardAvoidingView 
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

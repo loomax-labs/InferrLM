@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   StyleSheet,
   StyleProp,
@@ -116,27 +117,69 @@ const AppDialog = (({
     hasPrimaryOnly ||
     hasLegacyBtn;
 
-  if (!visible) return null;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.88)).current;
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      scale.setValue(0.88);
+      setShow(true);
+    } else {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.88,
+          duration: 160,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished) setShow(false);
+      });
+    }
+  }, [visible]);
+
+  const animateIn = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   return (
     <Modal
-      visible={visible}
+      visible={show}
       transparent
-      animationType="fade"
+      animationType="none"
+      onShow={animateIn}
       onRequestClose={close}
     >
       <View style={styles.modalOverlay}>
         <TouchableWithoutFeedback
           onPress={dismissOnBackdropPress ? close : undefined}
         >
-          <View style={styles.backdrop} />
+          <Animated.View style={[styles.backdrop, { opacity }]} />
         </TouchableWithoutFeedback>
 
-        <View
+        <Animated.View
           style={[
             styles.modalContent,
-            { backgroundColor: themeColors.background, maxWidth },
+            { backgroundColor: themeColors.background, maxWidth, borderWidth: 1, borderColor: themeColors.borderColor },
             style,
+            { opacity, transform: [{ scale }] },
           ]}
         >
           {isManagedDialog ? (
@@ -252,7 +295,7 @@ const AppDialog = (({
           ) : (
             children
           )}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -297,11 +340,11 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     padding: 24,
-    elevation: 5,
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   modalHeader: {
     flexDirection: 'row',

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Pressable } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus, ActivityIndicator, Pressable, Platform } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -315,6 +316,7 @@ export default function ProfileScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <GradientBg />
         <AppHeader 
           title="My Profile"
           showBackButton={true}
@@ -333,6 +335,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <AppHeader 
         title="My Profile"
         showBackButton={true}
@@ -343,7 +346,7 @@ export default function ProfileScreen() {
             onPress={toggleMenu}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialCommunityIcons name="dots-vertical" size={22} color={themeColors.headerText} />
+            <MaterialCommunityIcons name="dots-vertical" size={22} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
           </TouchableOpacity>
         }
       />
@@ -533,10 +536,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   headerMenuButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    width: Platform.OS === 'ios' ? 44 : 36,
+    height: Platform.OS === 'ios' ? 44 : 36,
+    borderRadius: Platform.OS === 'ios' ? 0 : 18,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },

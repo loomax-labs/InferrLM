@@ -1,15 +1,6 @@
 const { getDefaultConfig } = require('@expo/metro-config');
-const path = require('path');
 
 const defaultConfig = getDefaultConfig(__dirname);
-
-const litertLmRoot = path.resolve(__dirname, '../react-native-litert-lm');
-
-defaultConfig.watchFolders = [litertLmRoot];
-
-defaultConfig.resolver.extraNodeModules = {
-  '@inferrlm/react-native-litert-lm': litertLmRoot,
-};
 
 defaultConfig.resolver.assetExts.push(
   'woff',

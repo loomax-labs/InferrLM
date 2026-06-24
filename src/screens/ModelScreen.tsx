@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Animated, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ShowDialogFn } from '../hooks/useDialog';
 import Dialog from '../components/Dialog';
@@ -20,6 +23,8 @@ import { StoredModel } from '../services/ModelDownloaderTypes';
 
 export default function ModelScreen() {
   const { theme: currentTheme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { isWideScreen } = useResponsiveLayout();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const router = useRouter();
   const params = useLocalSearchParams<{ autoEnableRemoteModels?: string; openRemoteTab?: string }>();
@@ -104,10 +109,11 @@ export default function ModelScreen() {
     if (activeCount === 0) return null;
 
     return (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.floatingButton,
-          { transform: [{ scale: logic.buttonScale }] }
+          { transform: [{ scale: logic.buttonScale }] },
+          Platform.OS === 'ios' && !isWideScreen && { bottom: 20 + insets.bottom },
         ]}
       >
         <TouchableOpacity
@@ -125,6 +131,7 @@ export default function ModelScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <ModelScreenHeader 
         isLoggedIn={logic.isLoggedIn}
         onProfilePress={handleProfilePress}

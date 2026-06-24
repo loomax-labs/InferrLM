@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ModelSelectorRef } from '../components/ModelSelector';
 import { llamaManager } from '../utils/LlamaManager';
@@ -751,7 +752,8 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]} edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : ['left', 'right']}>
+      <GradientBg />
       <AppHeader 
         onNewChat={startNewChat}
         showLogo={!isWideScreen}
@@ -763,15 +765,15 @@ export default function HomeScreen() {
               onPress={startNewChat}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons name="plus" size={22} color={themeColors.headerText} />
+              <MaterialCommunityIcons name="plus" size={22} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.headerButton}
               onPress={() => router.push('/chat-history')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons name="clock-outline" size={22} color={themeColors.headerText} />
+              <MaterialCommunityIcons name="clock-outline" size={22} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
             </TouchableOpacity>
           </View>
         } 

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, ScrollView, Linking, TouchableOpacity, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { engineService } from '../services/runtime-service';
 import AppHeader from '../components/AppHeader';
@@ -64,6 +66,7 @@ const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
 };
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
   const router = useRouter();
@@ -558,7 +561,7 @@ export default function SettingsScreen() {
         <MaterialCommunityIcons 
           name={isLoggedIn ? "account-circle" : "login"}
           size={22} 
-          color={theme[currentTheme].headerText} 
+          color={Platform.OS === 'ios' && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
         />
       </TouchableOpacity>
     );
@@ -566,6 +569,7 @@ export default function SettingsScreen() {
 
   return (
       <View style={[styles.container, { backgroundColor: theme[currentTheme].background }]}>
+      <GradientBg />
       <AppHeader 
         title="Settings"
         rightButtons={
@@ -574,7 +578,7 @@ export default function SettingsScreen() {
           </View>
         } 
       />
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView contentContainerStyle={[styles.contentContainer, Platform.OS === 'ios' && { paddingBottom: insets.bottom }]}>
         
        <AppearanceSection
         selectedTheme={selectedTheme}
@@ -673,10 +677,10 @@ const styles = StyleSheet.create({
     paddingTop: 22
   },
   headerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    width: Platform.OS === 'ios' ? 44 : 36,
+    height: Platform.OS === 'ios' ? 44 : 36,
+    borderRadius: Platform.OS === 'ios' ? 0 : 18,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },

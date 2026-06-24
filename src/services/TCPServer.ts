@@ -41,7 +41,7 @@ interface ServerStatus {
 
 type ConnectionState = {
   isHTTP: boolean;
-  buffer: string;
+  buffer: Buffer;
   continueSent: boolean;
 };
 
@@ -182,7 +182,7 @@ export class TCPServer {
   private handleConnection(socket: any): void {
     const peerId = this.generatePeerId();
     this.clients.set(peerId, socket);
-    const state: ConnectionState = { isHTTP: false, buffer: '', continueSent: false };
+    const state: ConnectionState = { isHTTP: false, buffer: Buffer.alloc(0), continueSent: false };
     this.connectionStates.set(peerId, state);
 
     logger.info(`tcp_client_connected peer:${peerId} total:${this.clients.size}`, 'server');
@@ -210,10 +210,8 @@ export class TCPServer {
       return;
     }
 
-    const text = chunk.toString('utf8');
-
-    if (state.isHTTP || this.isHTTPRequest(text)) {
-      this.handleHTTPData(peerId, socket, text).catch((err) => {
+    if (state.isHTTP || this.isHTTPRequest(chunk.toString('utf8'))) {
+      this.handleHTTPData(peerId, socket, chunk).catch((err) => {
         const msg = err instanceof Error ? err.message : 'unknown';
         logger.error(`http_data_error peer:${peerId} ${msg}`, 'http');
         try { socket.destroy(); } catch {}
@@ -352,7 +350,7 @@ export class TCPServer {
     return { model: target, projectorPath };
   }
 
-  private async handleHTTPData(peerId: string, socket: any, chunk: string): Promise<void> {
+  private async handleHTTPData(peerId: string, socket: any, chunk: Buffer): Promise<void> {
     const state = this.connectionStates.get(peerId);
     if (!state) {
       return;
@@ -360,16 +358,16 @@ export class TCPServer {
 
     state.isHTTP = true;
 
-    state.buffer += chunk;
+    state.buffer = Buffer.concat([state.buffer, chunk]);
 
     while (true) {
       const parsed = parseHTTPBuffer(state.buffer);
-      
+
       if (parsed.needsMoreData) {
         if (!state.continueSent) {
           const sepIdx = state.buffer.indexOf('\r\n\r\n');
           if (sepIdx !== -1) {
-            const headerBlock = state.buffer.slice(0, sepIdx).toLowerCase();
+            const headerBlock = state.buffer.slice(0, sepIdx).toString('utf8').toLowerCase();
             if (headerBlock.includes('expect:') && headerBlock.includes('100-continue')) {
               try {
                 socket.write('HTTP/1.1 100 Continue\r\n\r\n');

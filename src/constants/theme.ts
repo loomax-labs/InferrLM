@@ -10,13 +10,15 @@ const lightTheme = {
   tabBarInactiveText: 'rgba(255, 255, 255, 0.6)',
   borderColor: '#eee',
   statusBarStyle: 'light' as const,
-  statusBarBg: '#4d0461',
+  statusBarBg: 'transparent',
   navigationBar: '#660880',
   secondaryText: '#666',
   textSecondary: '#666',
   primary: '#4a0660',
   cardBackground: '#f8f8f8',
   success: '#28a745',
+  bgGradStart: '#4a0660',
+  bgGradEnd: '#660880',
 };
 
 const darkTheme = {
@@ -29,13 +31,15 @@ const darkTheme = {
   tabBarInactiveText: 'rgba(255, 255, 255, 0.7)',
   borderColor: '#3D2D4A',
   statusBarStyle: 'light' as const,
-  statusBarBg: '#4D0F61',
+  statusBarBg: 'transparent',
   navigationBar: '#660880',
   secondaryText: '#BDB7C4',
   textSecondary: '#BDB7C4',
   primary: '#9C38C0',
   cardBackground: '#2A1F37',
   success: '#28a745',
+  bgGradStart: '#9C38C0',
+  bgGradEnd: '#660880',
 };
 
 export const theme: Record<ThemeColors, typeof lightTheme> = {

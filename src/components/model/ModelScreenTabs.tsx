@@ -107,13 +107,13 @@ export const ModelScreenTabs: React.FC<ModelScreenTabsProps> = ({
 const styles = StyleSheet.create({
   tabContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   segmentedControl: {
     flexDirection: 'row',
     borderRadius: 8,
     padding: 2,
-    marginTop: 8,
   },
   slidingPill: {
     position: 'absolute',

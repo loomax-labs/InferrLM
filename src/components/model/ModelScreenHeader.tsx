@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
@@ -29,7 +29,7 @@ export const ModelScreenHeader: React.FC<ModelScreenHeaderProps> = ({
             <MaterialCommunityIcons 
               name={isLoggedIn ? "account-circle" : "login"} 
               size={22} 
-              color={theme[currentTheme].headerText} 
+              color={Platform.OS === 'ios' && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
             />
           </TouchableOpacity>
         </View>
@@ -40,10 +40,10 @@ export const ModelScreenHeader: React.FC<ModelScreenHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    width: Platform.OS === 'ios' ? 44 : 36,
+    height: Platform.OS === 'ios' ? 44 : 36,
+    borderRadius: Platform.OS === 'ios' ? 0 : 18,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },

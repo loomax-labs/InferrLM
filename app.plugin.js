@@ -49,6 +49,50 @@ function injectSpmRootFix(contents) {
   return contents.replace(anchor, `${block}\n\n${anchor}`);
 }
 
+function injectUseModularHeaders(contents) {
+  const line = 'use_modular_headers!';
+
+  if (contents.includes(line)) {
+    return contents;
+  }
+
+  const anchor = 'target \'InferrLM\' do';
+
+  if (!contents.includes(anchor)) {
+    return contents;
+  }
+
+  return contents.replace(anchor, `${line}\n\n${anchor}`);
+}
+
+function injectMinDeploymentTarget(contents) {
+  const block = [
+    '    installer.pods_project.targets.each do |target|',
+    '      target.build_configurations.each do |config|',
+    '        current = config.build_settings[\'IPHONEOS_DEPLOYMENT_TARGET\']',
+    '        if current && Gem::Version.new(current) < Gem::Version.new(\'15.0\')',
+    '          config.build_settings[\'IPHONEOS_DEPLOYMENT_TARGET\'] = \'15.0\'',
+    '        end',
+    '      end',
+    '    end',
+  ].join('\n');
+
+  if (contents.includes('installer.pods_project.targets.each')) {
+    return contents;
+  }
+
+  const anchor = 'react_native_post_install(';
+
+  if (!contents.includes(anchor)) {
+    return contents;
+  }
+
+  return contents.replace(
+    /(react_native_post_install\([\s\S]*?\n    \))/,
+    `$1\n${block}`
+  );
+}
+
 function stripProjectBuildSettings(project) {
   const section = project.pbxXCBuildConfigurationSection();
 
@@ -70,15 +114,41 @@ function stripProjectBuildSettings(project) {
   return project;
 }
 
+function setAutomaticSigning(project) {
+  const section = project.pbxXCBuildConfigurationSection();
+
+  for (const key of Object.keys(section)) {
+    if (key.endsWith('_comment')) {
+      continue;
+    }
+
+    const config = section[key];
+    const buildSettings = config?.buildSettings;
+
+    if (!buildSettings || !buildSettings.PRODUCT_NAME) {
+      continue;
+    }
+
+    if (!buildSettings.CODE_SIGN_STYLE) {
+      buildSettings.CODE_SIGN_STYLE = 'Automatic';
+    }
+  }
+
+  return project;
+}
+
 function withIos(config) {
   config = withPodfile(config, (modConfig) => {
     modConfig.modResults.contents = disableDeterministicPodUuids(modConfig.modResults.contents);
     modConfig.modResults.contents = injectSpmRootFix(modConfig.modResults.contents);
+    modConfig.modResults.contents = injectUseModularHeaders(modConfig.modResults.contents);
+    modConfig.modResults.contents = injectMinDeploymentTarget(modConfig.modResults.contents);
     return modConfig;
   });
 
   return withXcodeProject(config, (modConfig) => {
     stripProjectBuildSettings(modConfig.modResults);
+    setAutomaticSigning(modConfig.modResults);
     return modConfig;
   });
 }
@@ -87,4 +157,5 @@ module.exports = withIos;
 module.exports._helpers = {
   disableDeterministicPodUuids,
   injectSpmRootFix,
+  injectMinDeploymentTarget,
 };

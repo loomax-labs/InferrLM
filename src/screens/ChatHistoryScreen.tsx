@@ -5,9 +5,11 @@ import {
   SectionList,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import chatManager, { Chat } from '../utils/ChatManager';
@@ -205,7 +207,7 @@ export default function ChatHistoryScreen() {
         onPress={handleCreateNewChat}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <MaterialCommunityIcons name="plus" size={24} color={themeColors.headerText} />
+        <MaterialCommunityIcons name="plus" size={24} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
       </TouchableOpacity>
       
       {chats.length > 0 && (
@@ -214,7 +216,7 @@ export default function ChatHistoryScreen() {
           onPress={handleDeleteAllChats}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <MaterialCommunityIcons name="delete-outline" size={24} color={themeColors.headerText} />
+          <MaterialCommunityIcons name="delete-outline" size={24} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
         </TouchableOpacity>
       )}
     </>
@@ -222,6 +224,7 @@ export default function ChatHistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <GradientBg />
       <AppHeader 
         title="Chat History"
         showBackButton
@@ -263,7 +266,7 @@ export default function ChatHistoryScreen() {
                   style={[styles.newChatButtonEmpty, { backgroundColor: themeColors.headerBackground }]}
                   onPress={handleCreateNewChat}
                 >
-                  <MaterialCommunityIcons name="plus" size={20} color={themeColors.headerText} style={styles.newChatIcon} />
+                  <MaterialCommunityIcons name="plus" size={20} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} style={styles.newChatIcon} />
                   <Text style={styles.newChatText}>Start a new chat</Text>
                 </TouchableOpacity>
               </View>
@@ -292,13 +295,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerButton: {
-    width: 40,
-    height: 40,
+    width: Platform.OS === 'ios' ? 44 : 40,
+    height: Platform.OS === 'ios' ? 44 : 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    marginLeft: 8,
+    borderRadius: Platform.OS === 'ios' ? 0 : 20,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.15)',
+    marginLeft: Platform.OS === 'ios' ? 0 : 8,
   },
   listContent: {
     padding: 12,

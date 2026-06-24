@@ -25,6 +25,11 @@ public class TransferModule: Module {
     config.isDiscretionary = false
     config.sessionSendsLaunchEvents = true
     config.allowsCellularAccess = true
+    config.waitsForConnectivity = false
+    if #available(iOS 13.0, *) {
+      config.allowsExpensiveNetworkAccess = true
+      config.allowsConstrainedNetworkAccess = true
+    }
     return URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
   }()
 
@@ -60,10 +65,19 @@ public class TransferModule: Module {
       let modelName = Self.extractModelName(destination) ?? transferId
 
       var request = URLRequest(url: downloadUrl)
+      request.cachePolicy = .reloadIgnoringLocalCacheData
+      if #available(iOS 12.0, *) {
+        request.networkServiceType = .responsiveData
+      }
+      if #available(iOS 13.0, *) {
+        request.allowsExpensiveNetworkAccess = true
+        request.allowsConstrainedNetworkAccess = true
+      }
       headers?.forEach { request.setValue($1, forHTTPHeaderField: $0) }
 
       let task = self.session.downloadTask(with: request)
       task.taskDescription = transferId
+      task.priority = URLSessionTask.highPriority
       task.resume()
 
       let entry = TransferMeta(
@@ -194,12 +208,15 @@ public class TransferModule: Module {
         "totalBytes": 0.0
       ])
     } else {
+      let underlying = (nsErr.userInfo[NSUnderlyingErrorKey] as? NSError) ?? nsErr
+      let isEnospc = underlying.domain == NSPOSIXErrorDomain && underlying.code == Int(ENOSPC)
+      let errorMsg = isEnospc ? "enospc" : error.localizedDescription
       sendEvent("onTransferError", [
         "downloadId": tid,
         "modelName": modelName,
         "destination": stored?.destination ?? "",
         "url": stored?.url ?? "",
-        "error": error.localizedDescription,
+        "error": errorMsg,
         "bytesWritten": 0.0,
         "totalBytes": 0.0
       ])

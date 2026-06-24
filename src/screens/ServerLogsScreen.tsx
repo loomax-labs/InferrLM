@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, RefreshControl, Switch, Clipboard } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, TextInput, TouchableOpacity, RefreshControl, Switch, Clipboard, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
 import { logger } from '../utils/logger';
 import type { LogMetadata } from '../utils/logger';
@@ -287,6 +288,7 @@ export default function ServerLogsScreen() {
 
   return (
     <View style={s.container}>
+      <GradientBg />
       <AppHeader
         title="Server Logs"
         showBackButton
@@ -317,14 +319,14 @@ export default function ServerLogsScreen() {
               }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons name="content-copy" size={20} color="#FFFFFF" />
+              <MaterialCommunityIcons name="content-copy" size={20} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : '#FFFFFF'} />
             </TouchableOpacity>
             <TouchableOpacity
               style={s.headerBtn}
               onPress={() => setClearDialogVisible(true)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons name="delete-outline" size={20} color="#FFFFFF" />
+              <MaterialCommunityIcons name="delete-outline" size={20} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : '#FFFFFF'} />
             </TouchableOpacity>
           </View>
         }
@@ -417,10 +419,10 @@ const s = StyleSheet.create({
     gap: 8,
   },
   headerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    width: Platform.OS === 'ios' ? 44 : 36,
+    height: Platform.OS === 'ios' ? 44 : 36,
+    borderRadius: Platform.OS === 'ios' ? 0 : 18,
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
   },

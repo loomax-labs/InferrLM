@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { fs as FileSystem } from '../../services/fs';
 import { useTheme } from '../../context/ThemeContext';
@@ -71,6 +72,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
   onExport,
   onSettings
 }) => {
+  const insets = useSafeAreaInsets();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -427,7 +429,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
       data={displayModels}
       renderItem={renderItem}
       keyExtractor={(item: any) => item.isMLXGroup ? `group-${item.groupKey}` : item.path}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[styles.list, Platform.OS === 'ios' && { paddingBottom: insets.bottom }]}
       ListHeaderComponent={StoredModelsHeader}
       ListEmptyComponent={
         isLoading ? (

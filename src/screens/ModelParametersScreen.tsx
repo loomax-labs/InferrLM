@@ -9,6 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { llamaManager } from '../utils/LlamaManager';
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
 import type { ModelSettings } from '../services/ModelSettingsService';
@@ -233,6 +234,7 @@ export default function ModelParametersScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <GradientBg />
       <AppHeader         
       title="AI Content Terms"
               leftComponent={
@@ -241,7 +243,7 @@ export default function ModelParametersScreen() {
                   onPress={() => router.back()}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <MaterialCommunityIcons name="arrow-left" size={24} color={themeColors.headerText} />
+                  <MaterialCommunityIcons name="arrow-left" size={24} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
                 </TouchableOpacity>
               }
               rightButtons={[]}
