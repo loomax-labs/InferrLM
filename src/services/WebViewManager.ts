@@ -29,15 +29,19 @@ export class WebViewManager {
 
   private sanitizeHtml(html: string): string {
     return html
-      .replace(/<script\b[^>]*\bsrc\s*=\s*(['"])(.*?)\1[^>]*>\s*<\/script>/gi, '')
-      .replace(/<iframe[\s\S]*?<\/iframe>/gi, '');
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+      .replace(/<embed[\s\S]*?>/gi, '')
+      .replace(/<object[\s\S]*?<\/object>/gi, '');
   }
 
   private buildTaskHtml(taskId: string, html: string, input: unknown): string {
-    const payload = JSON.stringify(input ?? null)
-      .replace(/</g, '\\u003c')
-      .replace(/>/g, '\\u003e');
-    const bridge = `<script>(function(){const taskId=${JSON.stringify(taskId)};const input=${payload};const normalize=function(value){if(value&&typeof value==='object'&&('result'in value||'error'in value||'image'in value||'webview'in value)){return value;}if(typeof value==='string'){return{result:value};}return{result:JSON.stringify(value??'')};};const send=function(payload){window.ReactNativeWebView.postMessage(JSON.stringify({type:'skill_result',taskId:taskId,payload:payload}));};const run=async function(){try{const runner=window.runSkill||window.run||(window.skill&&typeof window.skill.run==='function'?window.skill.run.bind(window.skill):null);if(typeof runner!=='function'){throw new Error('skill_runner_missing');}const value=await runner(input);send(normalize(value));}catch(error){send({error:error instanceof Error?error.message:String(error)});}};if(document.readyState==='complete'||document.readyState==='interactive'){setTimeout(run,0);}else{window.addEventListener('load',function(){setTimeout(run,0);},{once:true});}})();</script>`;
+    const sanitizedInput = JSON.stringify(input ?? null);
+    const encodedInput = sanitizedInput
+      .replace(/</g, '\\x3c')
+      .replace(/>/g, '\\x3e')
+      .replace(/&/g, '\\x26');
+    const bridge = `<script>(function(){const taskId=${JSON.stringify(taskId)};const input=${encodedInput};const normalize=function(value){if(value&&typeof value==='object'&&('result'in value||'error'in value||'image'in value||'webview'in value)){return value;}if(typeof value==='string'){return{result:value};}return{result:JSON.stringify(value??'')};};const send=function(payload){window.ReactNativeWebView.postMessage(JSON.stringify({type:'skill_result',taskId:taskId,payload:payload}));};const run=async function(){try{const runner=window.runSkill||window.run||(window.skill&&typeof window.skill.run==='function'?window.skill.run.bind(window.skill):null);if(typeof runner!=='function'){throw new Error('skill_runner_missing');}const value=await runner(input);send(normalize(value));}catch(error){send({error:error instanceof Error?error.message:String(error)});}};if(document.readyState==='complete'||document.readyState==='interactive'){setTimeout(run,0);}else{window.addEventListener('load',function(){setTimeout(run,0);},{once:true});}})();</script>`;
     const sanitizedHtml = this.sanitizeHtml(html);
 
     if (sanitizedHtml.includes('</body>')) {

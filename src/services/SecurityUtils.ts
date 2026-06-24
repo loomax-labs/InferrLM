@@ -31,7 +31,7 @@ export const sanitizeInput = (input: string): string => {
     .replace(/javascript:/gi, '')
     .replace(/data:/gi, '')
     .replace(/vbscript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
+    .replace(/\bon\w*\s*=/gi, '')
     .trim()
     .slice(0, 1000);
 };
