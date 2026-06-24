@@ -193,7 +193,6 @@ export const registerWithEmail = async (
       params: {
         email: maskEmail(email),
         hasName: !!name,
-        passwordLength: password.length,
       },
     });
 
@@ -231,7 +230,6 @@ export const loginWithEmail = async (
       endpoint: '/auth/login',
       params: {
         email: maskEmail(email),
-        passwordLength: password.length,
       },
     });
 
