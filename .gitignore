@@ -149,11 +149,9 @@ jspm_packages/
 .cache
 .parcel-cache
 
-# eas
-eas.json
+# eas code signing private key
+keys/
 
 # Misc
 package-lock.json
 yarn.lock
-# EAS code signing private key
-keys/

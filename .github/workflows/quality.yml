@@ -1,0 +1,104 @@
+name: quality
+
+on:
+  pull_request:
+    branches: [main, development]
+  push:
+    branches: [development]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: install_deps
+        run: yarn install --frozen-lockfile
+
+      - name: lint
+        run: yarn lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: install_deps
+        run: yarn install --frozen-lockfile
+
+      - name: typecheck
+        run: npx tsc --noEmit
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: install_deps
+        run: yarn install --frozen-lockfile
+
+      - name: audit
+        run: yarn audit --level moderate
+        continue-on-error: true
+
+  secrets_check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: scan_for_secrets
+        run: |
+          echo "scanning_for_secrets"
+
+          PATTERNS=(
+            "AIza[0-9A-Za-z_-]{35}"
+            "sk-[a-zA-Z0-9]{32,}"
+            "sk-ant-[a-zA-Z0-9_-]{32,}"
+            "hf_[a-zA-Z0-9]{30,}"
+            "xox[baprs]-[a-zA-Z0-9-]+"
+            "ghp_[a-zA-Z0-9]{36}"
+            "gho_[a-zA-Z0-9]{36}"
+            "-----BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY-----"
+          )
+
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            MATCHES=$(git log -p --no-color origin/${GITHUB_BASE_REF}..HEAD -- . ':!.github/workflows' 2>/dev/null | grep -onE "$pattern" || true)
+            if [ -n "$MATCHES" ]; then
+              echo "SECRET_PATTERN_DETECTED: $pattern"
+              echo "$MATCHES"
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo "secret_scan_failed"
+            exit 1
+          fi
+
+          echo "secret_scan_clean"
+

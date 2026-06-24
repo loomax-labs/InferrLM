@@ -9,7 +9,6 @@ import {
   TextStyle,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  useColorScheme,
   ViewStyle,
   View,
 } from 'react-native';
@@ -94,20 +93,15 @@ const AppDialog = (({
   children,
 }: DialogProps) => {
   const { theme: currentTheme } = useTheme();
-  const systemScheme = useColorScheme();
-  const resolvedTheme: 'light' | 'dark' =
-    currentTheme === 'light' || currentTheme === 'dark'
-      ? currentTheme
-      : systemScheme ?? 'light';
-  const themeColors = theme[resolvedTheme];
+  const themeColors = theme[currentTheme];
   const hasDualButtons = !!primaryButtonText && !!secondaryButtonText;
   const hasPrimaryOnly = !!primaryButtonText && !secondaryButtonText;
   const hasLegacyBtn = !!buttonText && !primaryButtonText;
   const close = onClose || onDismiss;
   const defaultSecondaryBg =
-    resolvedTheme === 'light' ? themeColors.secondaryText : themeColors.cardBackground;
+    currentTheme === 'light' ? themeColors.secondaryText : themeColors.cardBackground;
   const defaultSecondaryText =
-    resolvedTheme === 'light' ? '#fff' : themeColors.text;
+    currentTheme === 'light' ? '#fff' : themeColors.text;
   const isManagedDialog =
     !!iconName ||
     !!title ||
@@ -118,45 +112,29 @@ const AppDialog = (({
     hasLegacyBtn;
 
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.88)).current;
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (visible) {
       opacity.setValue(0);
-      scale.setValue(0.88);
       setShow(true);
     } else {
-      Animated.parallel([
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 160,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scale, {
-          toValue: 0.88,
-          duration: 160,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
         if (finished) setShow(false);
       });
     }
   }, [visible]);
 
   const animateIn = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   return (
@@ -166,6 +144,7 @@ const AppDialog = (({
       animationType="none"
       onShow={animateIn}
       onRequestClose={close}
+      statusBarTranslucent
     >
       <View style={styles.modalOverlay}>
         <TouchableWithoutFeedback
@@ -177,9 +156,9 @@ const AppDialog = (({
         <Animated.View
           style={[
             styles.modalContent,
-            { backgroundColor: themeColors.background, maxWidth, borderWidth: 1, borderColor: themeColors.borderColor },
+            { backgroundColor: themeColors.background, maxWidth },
             style,
-            { opacity, transform: [{ scale }] },
+            { opacity },
           ]}
         >
           {isManagedDialog ? (
@@ -303,12 +282,7 @@ const AppDialog = (({
 
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, style }) => {
   const { theme: currentTheme } = useTheme();
-  const systemScheme = useColorScheme();
-  const resolvedTheme: 'light' | 'dark' =
-    currentTheme === 'light' || currentTheme === 'dark'
-      ? currentTheme
-      : systemScheme ?? 'light';
-  const themeColors = theme[resolvedTheme];
+  const themeColors = theme[currentTheme];
 
   return <Text style={[styles.compoundTitle, { color: themeColors.text }, style]}>{children}</Text>;
 };
@@ -333,18 +307,15 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: '100%',
     borderRadius: 16,
     padding: 24,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    borderRadius: 16,
+    padding: 24,
   },
   modalHeader: {
     flexDirection: 'row',

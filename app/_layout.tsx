@@ -3,6 +3,7 @@ import { AppState, AppStateStatus, BackHandler, Platform, Text, TextInput, Toast
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, useRouter } from 'expo-router';
@@ -136,6 +137,12 @@ function InnerLayout() {
       }).catch(() => {});
     };
   }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    NavigationBar.setBackgroundColorAsync(themeColors.navigationBar);
+    NavigationBar.setButtonStyleAsync(currentTheme === 'dark' ? 'light' : 'dark');
+  }, [currentTheme, themeColors]);
 
   return (
     <>
