@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main, development]
+    branches: [main]
   workflow_dispatch:
     inputs:
       profile:
@@ -53,11 +53,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "profile=${{ inputs.profile }}" >> $GITHUB_OUTPUT
             echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref_name }}" = "main" ]; then
-            echo "profile=production" >> $GITHUB_OUTPUT
-            echo "platform=all" >> $GITHUB_OUTPUT
           else
-            echo "profile=development" >> $GITHUB_OUTPUT
+            echo "profile=production" >> $GITHUB_OUTPUT
             echo "platform=all" >> $GITHUB_OUTPUT
           fi
 
