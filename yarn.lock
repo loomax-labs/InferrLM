@@ -6957,10 +6957,10 @@ linkify-it@^5.0.1:
   dependencies:
     uc.micro "^2.0.0"
 
-llama.rn@^0.12.4:
-  version "0.12.4"
-  resolved "https://registry.yarnpkg.com/llama.rn/-/llama.rn-0.12.4.tgz#3bb0fca305f1c2d03827359afc6ee04d65cf6818"
-  integrity sha512-53oQKv2rzYbsSfFMONcj+KnFfAJ9S5gO9l1FyRi35Zmh8PeLUa7Zzh0FUQ6/+LwZH5SYnCulMeA94GS+ls/y7w==
+llama.rn@^0.12.5:
+  version "0.12.5"
+  resolved "https://registry.yarnpkg.com/llama.rn/-/llama.rn-0.12.5.tgz#9327a15a069d888570d90f84905a35c17ca9026a"
+  integrity sha512-XCGrmf39Mh0Roo97Rwq+8j34xrAPw3faYdaFZl6GCKGbrcEdoxPGZWy+44GjAK44M399+qjFHJzVrmzYrlX6LQ==
 
 "local-server@file:./modules/local-server":
   version "1.0.0"
