@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform } from 'react-native';
 import { fs as FileSystem } from '../services/fs';
-import PdfImage from 'pdf-image';
+import PdfImage from 'inferrlm-pdf-image';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 export type PageImage = {
