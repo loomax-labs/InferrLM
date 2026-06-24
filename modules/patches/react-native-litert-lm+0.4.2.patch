@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-litert-lm/android/build.gradle b/node_modules/react-native-litert-lm/android/build.gradle
+index 65219be..88fec9d 100644
+--- a/node_modules/react-native-litert-lm/android/build.gradle
++++ b/node_modules/react-native-litert-lm/android/build.gradle
+@@ -18,7 +18,7 @@ android {
+     compileSdk 36
+     
+     defaultConfig {
+-        minSdk 26  // LiteRT-LM requires API 26+
++        minSdk 28
+         consumerProguardFiles 'consumer-rules.pro'
+         
+         externalNativeBuild {

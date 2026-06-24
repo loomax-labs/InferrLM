@@ -8,7 +8,8 @@
     "ios": "expo run:ios",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "eas-build-post-install": "if [ \"$EAS_BUILD_PLATFORM\" = \"ios\" ]; then xcodebuild -downloadComponent MetalToolchain; fi"
+    "eas-build-post-install": "if [ \"$EAS_BUILD_PLATFORM\" = \"ios\" ]; then xcodebuild -downloadComponent MetalToolchain; fi",
+    "postinstall": "patch-package --patch-dir modules/patches"
   },
   "jest": {
     "preset": "jest-expo"
