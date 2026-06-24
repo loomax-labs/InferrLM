@@ -59,11 +59,17 @@ export type GenSettings = {
   typicalP: number;
   enableThinking: boolean;
   systemPrompt: string;
+  /** Validate engine with a test inference after loading (GPU/NPU only). */
+  validate?: boolean;
+  /** Enable speculative decoding for faster generation on supported models. */
+  enableSpeculativeDecoding?: boolean;
 };
 
 export type GenOpts = {
   settings?: Partial<GenSettings>;
   onToken?: (token: string) => boolean | void;
+  /** Native tool definitions for engines that support function calling (LiteRT-LM). */
+  tools?: any[];
 };
 
 export interface InferenceManager {
