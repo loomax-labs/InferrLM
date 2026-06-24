@@ -38,6 +38,7 @@ export class MultimodalService {
       const success = await context.initMultimodal({
         path: finalProjectorPath,
         use_gpu: Platform.OS === 'ios' ? true : false,
+        image_max_tokens: 768,
       });
 
       if (success) {
