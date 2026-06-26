@@ -9,7 +9,6 @@ import { useDownloads } from '../context/DownloadContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useStoredModels } from './useStoredModels';
 import { modelDownloader } from '../services/ModelDownloader';
-import { downloadNotificationService } from '../services/DownloadNotifier';
 import { onlineModelService } from '../services/OnlineModelService';
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { getUserFromSecureStorage } from '../services/AuthStorage';
@@ -346,61 +345,6 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
     applyIntent();
   }, [routeParams, isLoggedIn, enableRemoteModels, toggleRemoteModels]);
 
-  useEffect(() => {
-    const handleCompleted = async ({ modelName, downloadId, ...rest }: any) => {
-      if (!modelName || modelName.startsWith('com.inferra.transfer.')) return;
-      const filename = modelName.split('/').pop() || modelName;
-      if (!isAndroid) {
-        const totalBytes = typeof rest.totalBytes === 'number' ? rest.totalBytes : 0;
-        await downloadNotificationService.showNotification(filename, downloadId, 100, totalBytes, totalBytes);
-      }
-      await refreshStoredModels();
-      setTimeout(() => {
-        setDownloadProgress(prev => {
-          const next = { ...prev };
-          delete next[modelName];
-          return next;
-        });
-      }, 1000);
-    };
-
-    const handleFailed = async ({ modelName, downloadId }: any) => {
-      if (!modelName || modelName.startsWith('com.inferra.transfer.')) return;
-      if (!isAndroid) {
-        await downloadNotificationService.cancelNotification(downloadId);
-      }
-      setTimeout(() => {
-        setDownloadProgress(prev => {
-          const next = { ...prev };
-          delete next[modelName];
-          return next;
-        });
-      }, 1000);
-    };
-
-    const handleNotificationProgress = async ({ modelName, ...progress }: any) => {
-      if (!modelName || modelName.startsWith('com.inferra.transfer.')) return;
-      if (isAndroid) return;
-      if (progress.status === 'completed' || progress.status === 'failed' || progress.status === 'cancelled') return;
-      const filename = modelName.split('/').pop() || modelName;
-      const bytesDownloaded = typeof progress.bytesDownloaded === 'number' ? progress.bytesDownloaded : 0;
-      const totalBytes = typeof progress.totalBytes === 'number' ? progress.totalBytes : 0;
-      const progressValue = typeof progress.progress === 'number' ? progress.progress : 0;
-      await downloadNotificationService.updateProgress(progress.downloadId, progressValue, bytesDownloaded, totalBytes, filename);
-    };
-
-
-    modelDownloader.on('downloadCompleted', handleCompleted);
-    modelDownloader.on('downloadFailed', handleFailed);
-    modelDownloader.on('downloadProgress', handleNotificationProgress);
-    
-    return () => {
-      modelDownloader.off('downloadCompleted', handleCompleted);
-      modelDownloader.off('downloadFailed', handleFailed);
-      modelDownloader.off('downloadProgress', handleNotificationProgress);
-    };
-  }, []);
-
   const hasActiveDownloads = getActiveDownloadsCount(downloadProgress) > 0;
 
   useEffect(() => {
@@ -410,7 +354,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
 
     const id = setInterval(() => {
       modelDownloader.ensureDownloadsAreRunning().catch(() => {});
-    }, 1000);
+    }, 5000);
 
     return () => clearInterval(id);
   }, [hasActiveDownloads]);
@@ -442,15 +386,6 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
     };
   }, [isExporting]);
 
-  useEffect(() => {
-    const handleModelsChanged = () => {
-      rescanStoredModels();
-    };
-    modelDownloader.on('modelsChanged', handleModelsChanged);
-    return () => {
-      modelDownloader.off('modelsChanged', handleModelsChanged);
-    };
-  }, []);
 
   return {
     activeTab,
