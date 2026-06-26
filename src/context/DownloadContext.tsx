@@ -25,6 +25,9 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({});
   const isLoadedRef = useRef(false);
   const cancelledRef = useRef<Set<string>>(new Set());
+  const lastUpdateRef = useRef<Record<string, number>>({});
+  const pendingRef = useRef<Record<string, any>>({});
+  const timerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     const loadSavedStates = async () => {
@@ -103,6 +106,14 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
+
+      if (timerRef.current[data.modelName]) {
+        clearTimeout(timerRef.current[data.modelName]);
+        delete timerRef.current[data.modelName];
+      }
+      delete pendingRef.current[data.modelName];
+      delete lastUpdateRef.current[data.modelName];
+
       setDownloadProgress(prev => ({
         ...prev,
         [data.modelName]: {
@@ -121,6 +132,14 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
+
+      if (timerRef.current[data.modelName]) {
+        clearTimeout(timerRef.current[data.modelName]);
+        delete timerRef.current[data.modelName];
+      }
+      delete pendingRef.current[data.modelName];
+      delete lastUpdateRef.current[data.modelName];
+
       setDownloadProgress(prev => {
         const newProgress = { ...prev };
         if (newProgress[data.modelName]) {
@@ -146,6 +165,14 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
+
+      if (timerRef.current[data.modelName]) {
+        clearTimeout(timerRef.current[data.modelName]);
+        delete timerRef.current[data.modelName];
+      }
+      delete pendingRef.current[data.modelName];
+      delete lastUpdateRef.current[data.modelName];
+
       setDownloadProgress(prev => {
         const newProgress = { ...prev };
         if (newProgress[data.modelName]) {
@@ -170,6 +197,14 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
+
+      if (timerRef.current[data.modelName]) {
+        clearTimeout(timerRef.current[data.modelName]);
+        delete timerRef.current[data.modelName];
+      }
+      delete pendingRef.current[data.modelName];
+      delete lastUpdateRef.current[data.modelName];
+
       cancelledRef.current.add(data.modelName);
       setTimeout(() => cancelledRef.current.delete(data.modelName), 30000);
       setDownloadProgress(prev => {
@@ -189,15 +224,40 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (cancelledRef.current.has(data.modelName)) {
         return;
       }
+
+      const now = Date.now();
+      const last = lastUpdateRef.current[data.modelName] || 0;
+      const minInterval = 500;
+
+      pendingRef.current[data.modelName] = data;
+
+      if (now - last >= minInterval) {
+        lastUpdateRef.current[data.modelName] = now;
+        flushPending(data.modelName);
+      } else if (!timerRef.current[data.modelName]) {
+        const delay = minInterval - (now - last);
+        timerRef.current[data.modelName] = setTimeout(() => {
+          lastUpdateRef.current[data.modelName] = Date.now();
+          delete timerRef.current[data.modelName];
+          flushPending(data.modelName);
+        }, delay);
+      }
+    };
+
+    const flushPending = (modelName: string) => {
+      const data = pendingRef.current[modelName];
+      if (!data) return;
+      delete pendingRef.current[modelName];
+
       setDownloadProgress(prev => ({
         ...prev,
-        [data.modelName]: {
+        [modelName]: {
           progress: data.progress || 0,
           bytesDownloaded: data.bytesDownloaded || 0,
           totalBytes: data.totalBytes || 0,
           status: data.status || 'downloading',
-          downloadId: data.downloadId || prev[data.modelName]?.downloadId || 0,
-          isPaused: prev[data.modelName]?.isPaused,
+          downloadId: data.downloadId || prev[modelName]?.downloadId || 0,
+          isPaused: prev[modelName]?.isPaused,
         }
       }));
     };
@@ -214,6 +274,11 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       modelDownloader.off('downloadFailed', handleDownloadFailed);
       modelDownloader.off('downloadCancelled', handleDownloadCancelled);
       modelDownloader.off('downloadProgress', handleProgress);
+
+      Object.values(timerRef.current).forEach(clearTimeout);
+      timerRef.current = {};
+      pendingRef.current = {};
+      lastUpdateRef.current = {};
     };
   }, []);
 
