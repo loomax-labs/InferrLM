@@ -42,10 +42,9 @@ export class FileManager extends EventEmitter {
   }
 
   async moveFile(sourcePath: string, destPath: string): Promise<void> {
-    
+    const modelName = destPath.split('/').pop() || 'model';
+
     try {
-      const modelName = destPath.split('/').pop() || 'model';
-      
       this.emit('importProgress', {
         modelName,
         status: 'importing'
@@ -60,52 +59,43 @@ export class FileManager extends EventEmitter {
         }
         throw new Error(`Source file does not exist: ${sourcePath}`);
       }
-      
+
       const destDir = destPath.substring(0, destPath.lastIndexOf('/'));
       const destDirInfo = await FileSystem.getInfoAsync(destDir);
       if (!destDirInfo.exists) {
         await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
       }
-      
+
       const destInfo = await FileSystem.getInfoAsync(destPath);
       if (destInfo.exists) {
         await FileSystem.deleteAsync(destPath, { idempotent: true });
       }
-      
-      console.log(`FileManager.moveFile: Starting move from ${sourcePath} to ${destPath}`);
-      const sourceInfoBefore = await FileSystem.getInfoAsync(sourcePath, { size: true });
-      console.log(`FileManager.moveFile: Source size: ${(sourceInfoBefore as any).size}`);
 
-      await FileSystem.moveAsync({
-        from: sourcePath,
-        to: destPath
-      });
-      
-      const newDestInfo = await FileSystem.getInfoAsync(destPath, { size: true });
-      if (!newDestInfo.exists) {
-        throw new Error(`File was not moved successfully to ${destPath}`);
-      }
-      console.log(`FileManager.moveFile: Dest size after move: ${(newDestInfo as any).size}`);
+      const sourceSizeInfo = await FileSystem.getInfoAsync(sourcePath, { size: true });
+      const sourceSize = (sourceSizeInfo as any).size || 0;
+      console.log('moveFile_source_size', sourceSize);
+
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      console.log('moveFile_try_move', modelName);
+      await this.tryMove(sourcePath, destPath, sourceSize);
+
+      console.log('moveFile_dest_size', (await FileSystem.getInfoAsync(destPath, { size: true }) as any).size);
 
       this.emit('importProgress', {
         modelName,
         status: 'completed'
       } as ImportProgressEvent);
-      
+
     } catch (error) {
-      // Expo wraps native exceptions in CodedError, so error.message might not contain 'NoSuchFileException'.
-      // Instead, we verify if the file was concurrently moved by checking if destination exists and source does not.
       const destInfoCheck = await FileSystem.getInfoAsync(destPath);
       const sourceInfoCheck = await FileSystem.getInfoAsync(sourcePath);
-      
+
       if (destInfoCheck.exists && !sourceInfoCheck.exists) {
-        const modelName = destPath.split('/').pop() || 'model';
         this.emit('importProgress', { modelName, status: 'completed' } as ImportProgressEvent);
         return;
       }
 
-      const modelName = destPath.split('/').pop() || 'model';
-      
       this.emit('importProgress', {
         modelName,
         status: 'error',
@@ -114,6 +104,62 @@ export class FileManager extends EventEmitter {
 
       throw error;
     }
+  }
+
+  private async tryMove(sourcePath: string, destPath: string, expectedSize: number): Promise<void> {
+    try {
+      await FileSystem.moveAsync({ from: sourcePath, to: destPath });
+
+      const destInfo = await FileSystem.getInfoAsync(destPath, { size: true });
+      if (!destInfo.exists) {
+        throw new Error('move_verify_failed');
+      }
+      console.log('moveFile_move_ok', (destInfo as any).size);
+    } catch (moveError) {
+      console.log('moveFile_move_failed', moveError instanceof Error ? moveError.message : 'unknown');
+
+      await this.fallbackCopy(sourcePath, destPath, expectedSize);
+    }
+  }
+
+  private async fallbackCopy(sourcePath: string, destPath: string, expectedSize: number): Promise<void> {
+    console.log('moveFile_copy_fallback');
+
+    const freeSpace = await FileSystem.getFreeDiskStorageAsync();
+    if (freeSpace < expectedSize + 50 * 1024 * 1024) {
+      throw new Error(`insufficient_space_for_copy: need ${expectedSize} bytes, have ${freeSpace} free`);
+    }
+
+    const maxRetries = 3;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log('moveFile_copy_attempt', attempt);
+        await FileSystem.copyAsync({ from: sourcePath, to: destPath });
+
+        const destInfo = await FileSystem.getInfoAsync(destPath, { size: true });
+        const destSize = (destInfo as any).size || 0;
+
+        if (!destInfo.exists || destSize !== expectedSize) {
+          throw new Error(`copy_size_mismatch: expected ${expectedSize}, got ${destSize}`);
+        }
+
+        await FileSystem.deleteAsync(sourcePath, { idempotent: true });
+        console.log('moveFile_copy_ok', destSize);
+        return;
+      } catch (err) {
+        lastError = err;
+        console.log('moveFile_copy_retry', attempt, err instanceof Error ? err.message : 'unknown');
+
+        if (attempt < maxRetries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    throw lastError || new Error('copy_fallback_exhausted');
   }
 
   async getFileSize(path: string): Promise<number> {
