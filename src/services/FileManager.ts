@@ -88,13 +88,15 @@ export class FileManager extends EventEmitter {
       } as ImportProgressEvent);
       
     } catch (error) {
-      if (error instanceof Error && error.message.includes('NoSuchFileException')) {
-        const destInfoCheck = await FileSystem.getInfoAsync(destPath);
-        if (destInfoCheck.exists) {
-          const modelName = destPath.split('/').pop() || 'model';
-          this.emit('importProgress', { modelName, status: 'completed' } as ImportProgressEvent);
-          return;
-        }
+      // Expo wraps native exceptions in CodedError, so error.message might not contain 'NoSuchFileException'.
+      // Instead, we verify if the file was concurrently moved by checking if destination exists and source does not.
+      const destInfoCheck = await FileSystem.getInfoAsync(destPath);
+      const sourceInfoCheck = await FileSystem.getInfoAsync(sourcePath);
+      
+      if (destInfoCheck.exists && !sourceInfoCheck.exists) {
+        const modelName = destPath.split('/').pop() || 'model';
+        this.emit('importProgress', { modelName, status: 'completed' } as ImportProgressEvent);
+        return;
       }
 
       const modelName = destPath.split('/').pop() || 'model';
