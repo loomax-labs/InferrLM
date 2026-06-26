@@ -406,7 +406,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
   useEffect(() => {
     modelDownloader.ensureDownloadsAreRunning().catch(() => {});
 
-    if (!hasActiveDownloads) return;
+    if (!hasActiveDownloads || Platform.OS !== 'ios') return;
 
     const id = setInterval(() => {
       modelDownloader.ensureDownloadsAreRunning().catch(() => {});

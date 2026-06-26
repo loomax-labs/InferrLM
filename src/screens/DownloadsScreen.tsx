@@ -129,7 +129,7 @@ export default function DownloadsScreen() {
   useEffect(() => {
     modelDownloader.ensureDownloadsAreRunning().catch(() => {});
 
-    if (!hasActive) return;
+    if (!hasActive || Platform.OS !== 'ios') return;
 
     const id = setInterval(() => {
       modelDownloader.ensureDownloadsAreRunning().catch(() => {});
