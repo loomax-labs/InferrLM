@@ -53,6 +53,11 @@ export class FileManager extends EventEmitter {
 
       const sourceInfo = await FileSystem.getInfoAsync(sourcePath);
       if (!sourceInfo.exists) {
+        const destInfoCheck = await FileSystem.getInfoAsync(destPath);
+        if (destInfoCheck.exists) {
+          this.emit('importProgress', { modelName, status: 'completed' } as ImportProgressEvent);
+          return;
+        }
         throw new Error(`Source file does not exist: ${sourcePath}`);
       }
       
@@ -77,13 +82,21 @@ export class FileManager extends EventEmitter {
         throw new Error(`File was not moved successfully to ${destPath}`);
       }
 
-      
       this.emit('importProgress', {
         modelName,
         status: 'completed'
       } as ImportProgressEvent);
       
     } catch (error) {
+      if (error instanceof Error && error.message.includes('NoSuchFileException')) {
+        const destInfoCheck = await FileSystem.getInfoAsync(destPath);
+        if (destInfoCheck.exists) {
+          const modelName = destPath.split('/').pop() || 'model';
+          this.emit('importProgress', { modelName, status: 'completed' } as ImportProgressEvent);
+          return;
+        }
+      }
+
       const modelName = destPath.split('/').pop() || 'model';
       
       this.emit('importProgress', {
