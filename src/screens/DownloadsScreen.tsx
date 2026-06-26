@@ -133,7 +133,7 @@ export default function DownloadsScreen() {
 
     const id = setInterval(() => {
       modelDownloader.ensureDownloadsAreRunning().catch(() => {});
-    }, 1000);
+    }, 5000);
 
     return () => clearInterval(id);
   }, [hasActive]);
@@ -262,14 +262,13 @@ export default function DownloadsScreen() {
     
     let intervalId: ReturnType<typeof setInterval>;
     if (hasActiveMlx) {
-      intervalId = setInterval(loadMlxPackageFiles, 5000);
+      intervalId = setInterval(loadMlxPackageFiles, 15000);
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Object.keys(downloadProgress).filter(n => n.startsWith('temp_mlx_')).join(',')]);
+  }, [Object.keys(downloadProgress).filter(n => n.startsWith('temp_mlx_')).length]);
 
   const togglePackage = (packageName: string) => {
     setExpandedPackages(prev => {
