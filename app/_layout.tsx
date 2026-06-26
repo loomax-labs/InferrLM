@@ -140,8 +140,8 @@ function InnerLayout() {
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
-    NavigationBar.setBackgroundColorAsync(themeColors.navigationBar);
-    NavigationBar.setButtonStyleAsync(currentTheme === 'dark' ? 'light' : 'dark');
+    NavigationBar.setBackgroundColorAsync?.(themeColors.navigationBar);
+    NavigationBar.setButtonStyleAsync?.(currentTheme === 'dark' ? 'light' : 'dark');
   }, [currentTheme, themeColors]);
 
   return (
