@@ -310,7 +310,7 @@ export default function LoginScreen() {
               <Image
                 source={require('../../assets/icon.png')}
                 style={styles.logoImage}
-                
+                fadeDuration={0}
               />
               <Text style={styles.logoText} variant="headlineMedium">
                 Welcome Back

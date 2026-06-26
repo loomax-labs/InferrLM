@@ -157,6 +157,7 @@ export default function AppHeader({
                   source={require('../../assets/icon.png')}
                   style={styles.icon}
                   resizeMode="cover"
+                  fadeDuration={0}
                 />
                 <Text style={[styles.title, { color: themeColors.headerText }, fonts.bold]}>
                   {title}
