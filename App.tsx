@@ -218,7 +218,7 @@ function Navigation() {
 
     return () => {
       try {
-        BackgroundFetch.unregisterTaskAsync(BACKGROUND_DOWNLOAD_TASK);
+        BackgroundTask.unregisterTaskAsync(BACKGROUND_DOWNLOAD_TASK);
       } catch (error) {
         // do nothing
       }
