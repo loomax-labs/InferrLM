@@ -227,7 +227,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const now = Date.now();
       const last = lastUpdateRef.current[data.modelName] || 0;
-      const minInterval = 500;
+      const minInterval = 1000;
 
       pendingRef.current[data.modelName] = data;
 
