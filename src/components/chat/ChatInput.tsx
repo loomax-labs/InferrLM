@@ -16,9 +16,9 @@ import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioRecorder,
-  useAudioRecorderState,
+  AudioModule,
 } from 'expo-audio';
+import type { AudioRecorder, RecorderState } from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import { fs as FileSystem } from '../../services/fs';
 import { useTheme } from '../../context/ThemeContext';
@@ -154,8 +154,67 @@ export default function ChatInput({
 
   const isGenerating = isLoading || isRegenerating;
   const hasText = text.trim().length > 0;
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const audioRecorderState = useAudioRecorderState(audioRecorder, 250);
+  const audioRecorderRef = useRef<AudioRecorder | null>(null);
+  const [recorderState, setRecorderState] = useState<RecorderState>({
+    canRecord: false,
+    isRecording: false,
+    durationMillis: 0,
+    mediaServicesDidReset: false,
+    url: null,
+  });
+  const recorderPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const ensureRecorder = useCallback(() => {
+    if (audioRecorderRef.current) return audioRecorderRef.current;
+    const recorder = new AudioModule.AudioRecorder(
+      RecordingPresets.HIGH_QUALITY,
+    );
+    audioRecorderRef.current = recorder;
+
+    const initial = recorder.getStatus();
+    setRecorderState(initial);
+
+    recorderPollRef.current = setInterval(() => {
+      if (!audioRecorderRef.current) return;
+      const newState = audioRecorderRef.current.getStatus();
+      setRecorderState(prev => {
+        if (
+          prev.isRecording !== newState.isRecording ||
+          prev.canRecord !== newState.canRecord ||
+          prev.url !== newState.url ||
+          Math.abs(prev.durationMillis - newState.durationMillis) > 50
+        ) {
+          return newState;
+        }
+        return prev;
+      });
+    }, 250);
+
+    return recorder;
+  }, []);
+
+  const releaseRecorder = useCallback(() => {
+    if (recorderPollRef.current) {
+      clearInterval(recorderPollRef.current);
+      recorderPollRef.current = null;
+    }
+    audioRecorderRef.current = null;
+    setRecorderState({
+      canRecord: false,
+      isRecording: false,
+      durationMillis: 0,
+      mediaServicesDidReset: false,
+      url: null,
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (recorderPollRef.current) {
+        clearInterval(recorderPollRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     loadTermsAcceptance();
@@ -955,8 +1014,9 @@ export default function ChatInput({
         allowsRecording: true,
         playsInSilentMode: true,
       });
-      await audioRecorder.prepareToRecordAsync();
-      audioRecorder.record();
+      const recorder = ensureRecorder();
+      await recorder.prepareToRecordAsync();
+      recorder.record();
       setPendingAttachment(null);
       setShowAttachmentMenu(false);
     } catch {
@@ -964,23 +1024,25 @@ export default function ChatInput({
     } finally {
       setIsAudioRecordingBusy(false);
     }
-  }, [audioRecorder, selectedModelPath, showDialog, supportsAudioUpload]);
+  }, [ensureRecorder, selectedModelPath, showDialog, supportsAudioUpload]);
 
   const stopAudioRecording = useCallback(async (discard = false) => {
     try {
       setIsAudioRecordingBusy(true);
-      await audioRecorder.stop();
+      const recorder = ensureRecorder();
+      await recorder.stop();
       await setAudioModeAsync({
         allowsRecording: false,
         playsInSilentMode: true,
       });
 
-      const uri = audioRecorder.uri || audioRecorderState.url;
+      const uri = recorder.uri || recorderState.url;
       if (!discard && uri) {
         const name = uri.split('/').pop() || `recording-${Date.now()}.m4a`;
         setPendingAttachment({ uri, name, kind: 'audio' });
         setTimeout(() => inputRef.current?.focus(), 100);
       }
+      releaseRecorder();
     } catch {
       if (!discard) {
         showDialog('Recording Failed', 'Could not finish audio recording. Please try again.');
@@ -988,20 +1050,20 @@ export default function ChatInput({
     } finally {
       setIsAudioRecordingBusy(false);
     }
-  }, [audioRecorder, audioRecorderState.url, showDialog]);
+  }, [ensureRecorder, releaseRecorder, recorderState.url, showDialog]);
 
   const toggleAudioRecording = useCallback(async () => {
     if (isAudioRecordingBusy) {
       return;
     }
 
-    if (audioRecorderState.isRecording) {
+    if (recorderState.isRecording) {
       await stopAudioRecording(false);
       return;
     }
 
     await startAudioRecording();
-  }, [audioRecorderState.isRecording, isAudioRecordingBusy, startAudioRecording, stopAudioRecording]);
+  }, [recorderState.isRecording, isAudioRecordingBusy, startAudioRecording, stopAudioRecording]);
 
   const closeFileModal = useCallback(() => {
     setFileModalVisible(false);
@@ -1180,22 +1242,22 @@ export default function ChatInput({
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.attachmentMenuItem} onPress={toggleAudioRecording}>
-                <View style={[styles.attachmentMenuIcon, { backgroundColor: audioRecorderState.isRecording ? '#c0392b' : '#8e44ad' }]}> 
+                <View style={[styles.attachmentMenuIcon, { backgroundColor: recorderState.isRecording ? '#c0392b' : '#8e44ad' }]}> 
                   {isAudioRecordingBusy ? (
                     <ActivityIndicator size="small" color="#ffffff" />
                   ) : (
-                    <MaterialCommunityIcons name={audioRecorderState.isRecording ? 'stop-circle-outline' : 'microphone-outline'} size={20} color="#ffffff" />
+                    <MaterialCommunityIcons name={recorderState.isRecording ? 'stop-circle-outline' : 'microphone-outline'} size={20} color="#ffffff" />
                   )}
                 </View>
                 <Text style={[styles.attachmentMenuText, { color: isDark ? themeColors.text : '#000000' }]}> 
-                  {audioRecorderState.isRecording ? 'Stop' : 'Record'}
+                  {recorderState.isRecording ? 'Stop' : 'Record'}
                 </Text>
               </TouchableOpacity>
               
             </Animated.View>
           )}
 
-          {audioRecorderState.isRecording && (
+          {recorderState.isRecording && (
             <View style={styles.attachmentChip}>
               <View style={[styles.pendingFileRow, { backgroundColor: themeColors.borderColor }]}> 
                 <View style={[styles.pendingFileIcon, { backgroundColor: '#c0392b' }]}> 
@@ -1206,7 +1268,7 @@ export default function ChatInput({
                     Recording audio
                   </Text>
                   <Text style={[styles.pendingFileSubtitle, { color: themeColors.secondaryText }]}>
-                    {formatDuration(audioRecorderState.durationMillis / 1000)} elapsed
+                    {formatDuration(recorderState.durationMillis / 1000)} elapsed
                   </Text>
                 </View>
                 <TouchableOpacity
