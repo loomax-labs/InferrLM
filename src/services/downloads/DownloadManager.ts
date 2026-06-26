@@ -96,7 +96,11 @@ export class BackgroundDownloadService {
       transfer.lastBytesWritten = bytesWritten;
       transfer.lastUpdateTime = currentTimestamp;
 
-      this.eventCallbacks.onProgress?.(derivedModelName, transfer.state.progress);
+      const timeSinceLastUIUpdate = currentTimestamp - ((transfer as any).lastUIUpdateTime || 0);
+      if (timeSinceLastUIUpdate >= 1000 || computedProgress === 100) {
+        (transfer as any).lastUIUpdateTime = currentTimestamp;
+        this.eventCallbacks.onProgress?.(derivedModelName, transfer.state.progress);
+      }
     }));
 
     this.eventSubscriptions.push(

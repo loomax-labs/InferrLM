@@ -257,7 +257,19 @@ export default function DownloadsScreen() {
     };
 
     loadMlxPackageFiles();
-  }, [downloadProgress]);
+
+    const hasActiveMlx = Object.keys(downloadProgress).some(name => name.startsWith('temp_mlx_') && downloadProgress[name].status !== 'completed' && downloadProgress[name].status !== 'failed');
+    
+    let intervalId: ReturnType<typeof setInterval>;
+    if (hasActiveMlx) {
+      intervalId = setInterval(loadMlxPackageFiles, 5000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Object.keys(downloadProgress).filter(n => n.startsWith('temp_mlx_')).join(',')]);
 
   const togglePackage = (packageName: string) => {
     setExpandedPackages(prev => {
