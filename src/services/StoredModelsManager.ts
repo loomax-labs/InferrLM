@@ -538,9 +538,23 @@ export class StoredModelsManager extends EventEmitter {
     });
   }
 
+  private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private refreshPending: boolean = false;
+
   public async refresh(): Promise<void> {
-    await this.scanAndPersist();
-    this.emit('modelsChanged');
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+    }
+    if (this.refreshPending) {
+      return;
+    }
+    this.refreshPending = true;
+    this.refreshTimer = setTimeout(async () => {
+      this.refreshTimer = null;
+      this.refreshPending = false;
+      await this.scanAndPersist();
+      this.emit('modelsChanged');
+    }, 2000);
   }
 
   async clearAllModels(): Promise<void> {
