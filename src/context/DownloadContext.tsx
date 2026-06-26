@@ -1,31 +1,30 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { modelDownloader } from '../services/ModelDownloader';
 
+interface DownloadProgressData {
+  progress: number;
+  bytesDownloaded: number;
+  totalBytes: number;
+  status: string;
+  downloadId: number;
+  isPaused?: boolean;
+  error?: string;
+}
+
 interface DownloadProgress {
-  [key: string]: {
-    progress: number;
-    bytesDownloaded: number;
-    totalBytes: number;
-    status: string;
-    downloadId: number;
-    isPaused?: boolean;
-    error?: string;
-  };
+  [key: string]: DownloadProgressData;
 }
 
-interface DownloadContextType {
-  downloadProgress: DownloadProgress;
-  setDownloadProgress: React.Dispatch<React.SetStateAction<DownloadProgress>>;
-}
+type SetDownloadProgress = React.Dispatch<React.SetStateAction<DownloadProgress>>;
 
-const DownloadContext = createContext<DownloadContextType | undefined>(undefined);
+const DownloadProgressContext = createContext<DownloadProgress>({});
+const DownloadDispatchContext = createContext<SetDownloadProgress>(() => {});
 
 export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({});
   const isLoadedRef = useRef(false);
   const cancelledRef = useRef<Set<string>>(new Set());
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const loadSavedStates = async () => {
@@ -44,14 +43,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 value.status !== 'completed' &&
                 value.status !== 'failed' &&
                 value.status !== 'cancelled') {
-              acc[key] = value as {
-                progress: number;
-                bytesDownloaded: number;
-                totalBytes: number;
-                status: string;
-                downloadId: number;
-                isPaused?: boolean;
-              };
+              acc[key] = value as DownloadProgressData;
             }
             return acc;
           }, {} as DownloadProgress);
@@ -71,11 +63,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               .map(dl => dl.modelName)
           );
 
-          /*
-            Remove any saved entry that no longer has a live native task.
-            These are stale entries from a previous session where the download
-            finished while the app was backgrounded.
-          */
           Object.keys(merged).forEach(key => {
             if (!activeNames.has(key)) {
               delete merged[key];
@@ -230,32 +217,28 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, []);
 
-  useEffect(() => {
-    if (!isLoadedRef.current) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        if (Object.keys(downloadProgress).length > 0) {
-          await AsyncStorage.setItem('download_progress', JSON.stringify(downloadProgress));
-        } else {
-          await AsyncStorage.removeItem('download_progress');
-        }
-      } catch (error) {
-      }
-    }, 500);
-  }, [downloadProgress]);
+  const progressValue = useMemo(() => downloadProgress, [downloadProgress]);
 
   return (
-    <DownloadContext.Provider value={{ downloadProgress, setDownloadProgress }}>
-      {children}
-    </DownloadContext.Provider>
+    <DownloadProgressContext.Provider value={progressValue}>
+      <DownloadDispatchContext.Provider value={setDownloadProgress}>
+        {children}
+      </DownloadDispatchContext.Provider>
+    </DownloadProgressContext.Provider>
   );
 };
 
+export const useDownloadProgress = () => useContext(DownloadProgressContext);
+
+export const useDownloadDispatch = () => useContext(DownloadDispatchContext);
+
+/*
+  Legacy hook for backward compatibility.
+  Prefer useDownloadProgress or useDownloadDispatch individually
+  to avoid unnecessary re-renders.
+*/
 export const useDownloads = () => {
-  const context = useContext(DownloadContext);
-  if (context === undefined) {
-    throw new Error('useDownloads must be used within a DownloadProvider');
-  }
-  return context;
-}; 
+  const downloadProgress = useContext(DownloadProgressContext);
+  const setDownloadProgress = useContext(DownloadDispatchContext);
+  return { downloadProgress, setDownloadProgress };
+};
