@@ -18,6 +18,8 @@ export class DownloadTaskManager extends EventEmitter {
   private readonly MLX_PACKAGE_MANIFEST_KEY = 'mlx_package_manifest';
   private isInitialized: boolean = false;
   private manualCancellationSet: Set<string> = new Set<string>();
+  private saveTimer: ReturnType<typeof setTimeout> | null = null;
+  private savePending: boolean = false;
 
   constructor(fileManager: FileManager) {
     super();
@@ -495,6 +497,15 @@ export class DownloadTaskManager extends EventEmitter {
   }
 
   private async saveDownloadProgress(): Promise<void> {
+    if (this.saveTimer) {
+      this.savePending = true;
+      return;
+    }
+
+    await this.flushDownloadProgress();
+  }
+
+  private async flushDownloadProgress(): Promise<void> {
     try {
       const progressState = {
         activeDownloads: Array.from(this.activeDownloads.entries()).map(([key, value]) => ({
@@ -521,6 +532,14 @@ export class DownloadTaskManager extends EventEmitter {
       );
     } catch (error) {
       // Failed to save download progress
+    } finally {
+      this.savePending = false;
+      this.saveTimer = setTimeout(() => {
+        this.saveTimer = null;
+        if (this.savePending) {
+          void this.flushDownloadProgress();
+        }
+      }, 2000);
     }
   }
 
