@@ -240,9 +240,6 @@ class TransferExpoModule : Module() {
             val resolvedDest = destination ?: info?.destination ?: ""
             val resolvedUrl = url ?: info?.url
 
-            ongoingTransfers[transferId] = OngoingTransfer(resolvedDest, resolvedName, resolvedUrl)
-            storeTransfer(transferId, OngoingTransfer(resolvedDest, resolvedName, resolvedUrl))
-
             sendEvent("onTransferProgress", mapOf(
               "downloadId" to transferId,
               "modelName" to resolvedName,
