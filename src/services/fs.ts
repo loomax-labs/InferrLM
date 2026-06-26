@@ -97,12 +97,17 @@ const copyPath = ({ from, to }: CopyMoveOptions): void => {
     throw new Error(`Source path does not exist: ${from}`);
   }
 
-  if (type === 'directory') {
-    new Directory(from).copy(new Directory(to));
-    return;
-  }
+  try {
+    if (type === 'directory') {
+      new Directory(from).copy(new Directory(to));
+      return;
+    }
 
-  new File(from).copy(new File(to));
+    new File(from).copy(new File(to));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`copy_failed: ${from} -> ${to}: ${msg}`);
+  }
 };
 
 const movePath = ({ from, to }: CopyMoveOptions): void => {
@@ -111,12 +116,17 @@ const movePath = ({ from, to }: CopyMoveOptions): void => {
     throw new Error(`Source path does not exist: ${from}`);
   }
 
-  if (type === 'directory') {
-    new Directory(from).move(new Directory(to));
-    return;
-  }
+  try {
+    if (type === 'directory') {
+      new Directory(from).move(new Directory(to));
+      return;
+    }
 
-  new File(from).move(new File(to));
+    new File(from).move(new File(to));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`move_failed: ${from} -> ${to}: ${msg}`);
+  }
 };
 
 const detectPathType = (path: string): 'file' | 'directory' | 'missing' => {
@@ -220,8 +230,13 @@ export const fs = {
 
   async copyAsync(options: CopyMoveOptions): Promise<void> {
     if (isContentUri(options.from) || isContentUri(options.to)) {
-      new File(options.from).copy(new File(options.to));
-      return;
+      try {
+        new File(options.from).copy(new File(options.to));
+        return;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`copy_failed: ${options.from} -> ${options.to}: ${msg}`);
+      }
     }
 
     copyPath(options);
