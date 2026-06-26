@@ -49,7 +49,6 @@ class PdfDoc(private val context: Context, private val uriString: String) {
 
     val canvas = Canvas(bitmap)
     canvas.drawColor(Color.WHITE)
-    canvas.drawBitmap(bitmap, 0f, 0f, null)
 
     current.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
     current.close()
@@ -57,7 +56,6 @@ class PdfDoc(private val context: Context, private val uriString: String) {
     val outFile = outputFile()
     FileOutputStream(outFile).use { out ->
       bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-      bitmap.recycle()
     }
 
     val result = mapOf(

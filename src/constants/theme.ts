@@ -1,7 +1,7 @@
 import { ThemeColors } from '../types/theme';
 
 const lightTheme = {
-  background: '#fff',
+  background: '#ffffff',
   text: '#000',
   headerBackground: '#660880',
   headerText: '#fff',

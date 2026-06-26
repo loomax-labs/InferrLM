@@ -267,7 +267,7 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
                     styles.progressFill, 
                     { 
                       width: `${downloadProgress.progress}%`, 
-                      backgroundColor: '#4a0660' 
+                      backgroundColor: themeColors.primary 
                     }
                   ]} 
                 />
