@@ -9,6 +9,7 @@ import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import LabsTasksSection from '../components/settings/LabsTasksSection';
 
 export default function BenchmarkScreen() {
@@ -17,6 +18,7 @@ export default function BenchmarkScreen() {
   const themeColors = theme[currentTheme];
   const router = useRouter();
   const { isLoggedIn } = useRemoteModel();
+  const { isWideScreen } = useResponsiveLayout();
 
   const profileButton = (
     <TouchableOpacity
@@ -33,7 +35,7 @@ export default function BenchmarkScreen() {
       <MaterialCommunityIcons
         name={isLoggedIn ? 'account-circle' : 'login'}
         size={22}
-        color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText}
+        color={Platform.OS === 'ios' && !isWideScreen && currentTheme === 'light' ? themeColors.primary : themeColors.headerText}
       />
     </TouchableOpacity>
   );

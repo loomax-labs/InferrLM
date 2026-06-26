@@ -30,6 +30,7 @@ import { EngineId } from '../managers/inference-manager';
 import type { ModelSettings as StoredModelSettings } from '../services/ModelSettingsService';
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { appleFoundationService } from '../services/AppleFoundationService';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 type ThemeOption = 'system' | 'light' | 'dark';
 
@@ -69,6 +70,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const { enableRemoteModels, toggleRemoteModels, isLoggedIn } = useRemoteModel();
+  const { isWideScreen } = useResponsiveLayout();
   const router = useRouter();
   const parameterEngines: EngineId[] = Platform.OS === 'ios'
     ? ['llama', 'mlx', 'litert']
@@ -561,7 +563,7 @@ export default function SettingsScreen() {
         <MaterialCommunityIcons 
           name={isLoggedIn ? "account-circle" : "login"}
           size={22} 
-          color={Platform.OS === 'ios' && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
+          color={Platform.OS === 'ios' && !isWideScreen && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
         />
       </TouchableOpacity>
     );

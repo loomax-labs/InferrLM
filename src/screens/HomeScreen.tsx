@@ -765,7 +765,7 @@ export default function HomeScreen() {
               onPress={startNewChat}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons name="plus" size={22} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
+              <MaterialCommunityIcons name="plus" size={22} color={Platform.OS === 'ios' && !isWideScreen && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -773,7 +773,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/chat-history')}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <MaterialCommunityIcons name="clock-outline" size={22} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
+              <MaterialCommunityIcons name="clock-outline" size={22} color={Platform.OS === 'ios' && !isWideScreen && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} />
             </TouchableOpacity>
           </View>
         } 

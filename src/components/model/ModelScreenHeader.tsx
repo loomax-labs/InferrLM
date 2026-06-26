@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import AppHeader from '../AppHeader';
+import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 
 interface ModelScreenHeaderProps {
   isLoggedIn: boolean;
@@ -15,6 +16,7 @@ export const ModelScreenHeader: React.FC<ModelScreenHeaderProps> = ({
   onProfilePress
 }) => {
   const { theme: currentTheme } = useTheme();
+  const { isWideScreen } = useResponsiveLayout();
 
   return (
     <AppHeader 
@@ -29,7 +31,7 @@ export const ModelScreenHeader: React.FC<ModelScreenHeaderProps> = ({
             <MaterialCommunityIcons 
               name={isLoggedIn ? "account-circle" : "login"} 
               size={22} 
-              color={Platform.OS === 'ios' && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
+              color={Platform.OS === 'ios' && !isWideScreen && currentTheme === 'light' ? theme[currentTheme].primary : theme[currentTheme].headerText}
             />
           </TouchableOpacity>
         </View>
