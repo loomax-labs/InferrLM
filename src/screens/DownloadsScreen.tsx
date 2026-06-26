@@ -192,6 +192,10 @@ export default function DownloadsScreen() {
     return () => clearInterval(id);
   }, [hasActive, showDialog]);
 
+  const mlxActiveCount = Object.keys(downloadProgress).filter(
+    n => n.startsWith('temp_mlx_')
+  ).length;
+
   useEffect(() => {
     const loadMlxPackageFiles = async () => {
       try {
@@ -268,7 +272,7 @@ export default function DownloadsScreen() {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [Object.keys(downloadProgress).filter(n => n.startsWith('temp_mlx_')).length]);
+  }, [mlxActiveCount]);
 
   const togglePackage = (packageName: string) => {
     setExpandedPackages(prev => {
