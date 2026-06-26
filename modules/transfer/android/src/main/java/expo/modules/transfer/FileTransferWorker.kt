@@ -33,7 +33,9 @@ class FileTransferWorker(
     const val KEY_PROGRESS_PERCENT = "progressPercent"
     const val WORK_TAG = "inferra_file_transfer"
     private const val BUFFER_SIZE = 8192
-    private const val PROGRESS_UPDATE_INTERVAL = 500L
+    private const val BROADCAST_INTERVAL = 1000L
+    private const val DB_UPDATE_INTERVAL = 3000L
+    private const val NOTIFICATION_INTERVAL = 3000L
   }
 
   private var lastBytesTransferred: Long = 0L
@@ -186,7 +188,11 @@ class FileTransferWorker(
         throw IOException("HTTP error: ${httpConnection.responseCode} ${httpConnection.responseMessage}")
       }
 
-      val totalFileSize = httpConnection.contentLength.toLong()
+      val totalFileSize = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+        httpConnection.contentLengthLong
+      } else {
+        httpConnection.getHeaderField("Content-Length")?.toLongOrNull() ?: httpConnection.contentLength.toLong()
+      }
       dataInputStream = httpConnection.inputStream
 
       val actualPath = if (destinationPath.startsWith("file://")) {
@@ -203,6 +209,7 @@ class FileTransferWorker(
       var lastProgressTimestamp = 0L
       val transferStartTime = System.currentTimeMillis()
       var lastNotificationTimestamp = 0L
+      var lastDbUpdateTimestamp = 0L
 
       while (dataInputStream.read(dataBuffer).also { bytesRead = it } != -1) {
         if (isStopped) break
@@ -211,21 +218,24 @@ class FileTransferWorker(
         totalBytesTransferred += bytesRead
 
         val currentTimestamp = System.currentTimeMillis()
-        if (currentTimestamp - lastProgressTimestamp >= PROGRESS_UPDATE_INTERVAL) {
+        if (currentTimestamp - lastProgressTimestamp >= BROADCAST_INTERVAL) {
           val elapsedTime = currentTimestamp - transferStartTime
           val transferSpeed = if (elapsedTime > 0) (totalBytesTransferred * 1000) / elapsedTime else 0L
           val progressPercent = if (totalFileSize > 0) ((totalBytesTransferred * 100) / totalFileSize).toInt() else 0
 
-          try {
-            setProgress(
-              workDataOf(
-                KEY_PROGRESS_BYTES to totalBytesTransferred,
-                KEY_PROGRESS_TOTAL to totalFileSize,
-                KEY_PROGRESS_PERCENT to progressPercent
+          if (currentTimestamp - lastDbUpdateTimestamp >= DB_UPDATE_INTERVAL) {
+            try {
+              setProgress(
+                workDataOf(
+                  KEY_PROGRESS_BYTES to totalBytesTransferred,
+                  KEY_PROGRESS_TOTAL to totalFileSize,
+                  KEY_PROGRESS_PERCENT to progressPercent
+                )
               )
-            )
-          } catch (e: Exception) {
-            Log.w(LOG_TAG, "progress_set_failed", e)
+            } catch (e: Exception) {
+              Log.w(LOG_TAG, "progress_set_failed", e)
+            }
+            lastDbUpdateTimestamp = currentTimestamp
           }
 
           lastBytesTransferred = totalBytesTransferred
@@ -237,7 +247,7 @@ class FileTransferWorker(
           )
           lastProgressTimestamp = currentTimestamp
 
-          if (currentTimestamp - lastNotificationTimestamp >= PROGRESS_UPDATE_INTERVAL) {
+          if (currentTimestamp - lastNotificationTimestamp >= NOTIFICATION_INTERVAL) {
             try {
               setForeground(
                 DownloadNotificationHelper.createForegroundInfo(
