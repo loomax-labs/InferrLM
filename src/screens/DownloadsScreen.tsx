@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  InteractionManager,
 } from 'react-native';
 import { fs as FileSystem } from '../services/fs';
 import { getStorageInfo } from '../utils/storageUtils';
@@ -14,7 +15,7 @@ import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { modelDownloader } from '../services/ModelDownloader';
-import { useDownloads } from '../context/DownloadContext';
+import { useDownloadProgress, useDownloadDispatch } from '../context/DownloadContext';
 import AppHeader from '../components/AppHeader';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { Text } from 'react-native-paper';
@@ -59,12 +60,15 @@ interface DownloadItem {
   bytesDownloaded: number;
   totalBytes: number;
   status: string;
+  progressText: string;
+  isTransferring: boolean;
 }
 
 export default function DownloadsScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
-  const { downloadProgress, setDownloadProgress } = useDownloads();
+  const downloadProgress = useDownloadProgress();
+  const setDownloadProgress = useDownloadDispatch();
   const buttonProcessingRef = useRef<Set<string>>(new Set());
   const prevStatusRef = useRef<Record<string, string>>({});
   const storageWarnedRef = useRef(false);
@@ -81,6 +85,7 @@ export default function DownloadsScreen() {
   const [isCancellingAll, setIsCancellingAll] = useState(false);
   const [mlxPackageFiles, setMlxPackageFiles] = useState<Record<string, string[]>>({});
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
+  const mlxCacheRef = useRef<string>('');
 
   const hideDialog = useCallback(() => setDialogVisible(false), []);
 
@@ -102,21 +107,34 @@ export default function DownloadsScreen() {
     setDialogVisible(true);
   }, []);
 
-  const activeDownloads = Object.entries(downloadProgress).filter(([_, data]) => {
-    return data.status !== 'completed' &&
-           data.status !== 'failed' &&
-           data.status !== 'cancelled' &&
-           (data.progress < 100 || data.status === 'transferring');
-  });
-
-  const downloads: DownloadItem[] = activeDownloads.map(([name, data]) => ({
-    id: data.downloadId || 0,
-    name,
-    progress: data.progress || 0,
-    bytesDownloaded: data.bytesDownloaded || 0,
-    totalBytes: data.totalBytes || 0,
-    status: data.status || 'unknown'
-  }));
+  const downloads: DownloadItem[] = useMemo(() => {
+    return Object.entries(downloadProgress)
+      .filter(([_, data]) => {
+        return data.status !== 'completed' &&
+               data.status !== 'failed' &&
+               data.status !== 'cancelled' &&
+               (data.progress < 100 || data.status === 'transferring');
+      })
+      .map(([name, data]) => {
+        const progress = data.progress || 0;
+        const bytesDownloaded = data.bytesDownloaded || 0;
+        const totalBytes = data.totalBytes || 0;
+        const isTransferring = data.status === 'transferring';
+        const progressText = isTransferring
+          ? 'Transferring to models...'
+          : `${Math.floor(progress)}% • ${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}`;
+        return {
+          id: data.downloadId || 0,
+          name,
+          progress,
+          bytesDownloaded,
+          totalBytes,
+          status: data.status || 'unknown',
+          progressText,
+          isTransferring,
+        };
+      });
+  }, [downloadProgress]);
 
   /*
     iOS background URLSession throttles didWriteData delegate callbacks, so native
@@ -127,12 +145,13 @@ export default function DownloadsScreen() {
   const hasActive = downloads.length > 0;
 
   useEffect(() => {
-    modelDownloader.ensureDownloadsAreRunning().catch(() => {});
+    const run = () => modelDownloader.ensureDownloadsAreRunning().catch(() => {});
+    InteractionManager.runAfterInteractions(run);
 
     if (!hasActive || Platform.OS !== 'ios') return;
 
     const id = setInterval(() => {
-      modelDownloader.ensureDownloadsAreRunning().catch(() => {});
+      InteractionManager.runAfterInteractions(run);
     }, 5000);
 
     return () => clearInterval(id);
@@ -192,9 +211,11 @@ export default function DownloadsScreen() {
     return () => clearInterval(id);
   }, [hasActive, showDialog]);
 
-  const mlxActiveCount = Object.keys(downloadProgress).filter(
-    n => n.startsWith('temp_mlx_')
-  ).length;
+  const mlxActiveNames = useMemo(
+    () => Object.keys(downloadProgress).filter(n => n.startsWith('temp_mlx_')),
+    [downloadProgress]
+  );
+  const mlxActiveCount = mlxActiveNames.length;
 
   useEffect(() => {
     const loadMlxPackageFiles = async () => {
@@ -255,24 +276,29 @@ export default function DownloadsScreen() {
           normalized[packageName] = Array.from(files).sort((a, b) => a.localeCompare(b));
         });
 
-        setMlxPackageFiles(normalized);
+        const cacheKey = JSON.stringify(normalized);
+        if (cacheKey !== mlxCacheRef.current) {
+          mlxCacheRef.current = cacheKey;
+          setMlxPackageFiles(normalized);
+        }
       } catch {
       }
     };
 
-    loadMlxPackageFiles();
-
-    const hasActiveMlx = Object.keys(downloadProgress).some(name => name.startsWith('temp_mlx_') && downloadProgress[name].status !== 'completed' && downloadProgress[name].status !== 'failed');
+    const hasActiveMlx = mlxActiveNames.length > 0;
     
     let intervalId: ReturnType<typeof setInterval>;
     if (hasActiveMlx) {
+      InteractionManager.runAfterInteractions(() => {
+        loadMlxPackageFiles();
+      });
       intervalId = setInterval(loadMlxPackageFiles, 15000);
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [mlxActiveCount]);
+  }, [mlxActiveNames.join(',')]);
 
   const togglePackage = (packageName: string) => {
     setExpandedPackages(prev => {
@@ -375,29 +401,28 @@ export default function DownloadsScreen() {
     );
   };
 
-  const headerRightButtons = downloads.length > 0 ? (
-    <TouchableOpacity
-      style={[styles.headerButton, isCancellingAll && styles.headerButtonDisabled]}
-      onPress={handleCancelAll}
-      disabled={isCancellingAll}
-      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-    >
-      <MaterialCommunityIcons
-        name="close-circle-outline"
-        size={22}
-        color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText}
-      />
-    </TouchableOpacity>
-  ) : null;
+  const headerRightButtons = useMemo(() => {
+    if (downloads.length === 0) return null;
+    return (
+      <TouchableOpacity
+        style={[styles.headerButton, isCancellingAll && styles.headerButtonDisabled]}
+        onPress={handleCancelAll}
+        disabled={isCancellingAll}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <MaterialCommunityIcons
+          name="close-circle-outline"
+          size={22}
+          color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText}
+        />
+      </TouchableOpacity>
+    );
+  }, [downloads.length, isCancellingAll, currentTheme, themeColors]);
 
-  const renderItem = ({ item }: { item: DownloadItem }) => {
+  const renderItem = useCallback(({ item }: { item: DownloadItem }) => {
     const packageFiles = mlxPackageFiles[item.name] || [];
     const isMLXDownload = packageFiles.length > 0;
     const isExpanded = expandedPackages.has(item.name);
-    const isTransferring = item.status === 'transferring';
-    const progressText = isTransferring
-      ? 'Transferring to models...'
-      : `${Math.floor(item.progress || 0)}% • ${formatBytes(item.bytesDownloaded || 0)} / ${formatBytes(item.totalBytes || 0)}`;
     
     return (
       <View style={[styles.downloadItem, { backgroundColor: themeColors.borderColor }]}>
@@ -420,7 +445,7 @@ export default function DownloadsScreen() {
               </TouchableOpacity>
             )}
           </View>
-          {!isTransferring && (
+          {!item.isTransferring && (
             <View style={styles.downloadActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
@@ -433,11 +458,11 @@ export default function DownloadsScreen() {
         </View>
         
         <View style={styles.transferRow}>
-          {isTransferring && (
+          {item.isTransferring && (
             <ActivityIndicator size="small" color={getThemeAwareColor('#4a0660', currentTheme)} style={styles.transferSpinner} />
           )}
           <Text style={[styles.downloadProgress, { color: themeColors.secondaryText }]}>
-            {progressText}
+            {item.progressText}
           </Text>
         </View>
 
@@ -461,7 +486,7 @@ export default function DownloadsScreen() {
         </View>
       </View>
     );
-  };
+  }, [mlxPackageFiles, expandedPackages, themeColors, currentTheme, togglePackage, handleCancel]);
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
