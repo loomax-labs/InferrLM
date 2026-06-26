@@ -19,7 +19,6 @@ import { StoredModel } from '../services/ModelDownloaderTypes';
 import { ShowDialogFn } from './useDialog';
 import { SHARE_CANCELLED_ERROR } from '../services/StoredModelsManager';
 
-const BACKGROUND_DOWNLOAD_TASK = 'background-download-task';
 const isAndroid = Platform.OS === 'android';
 
 type ModelRouteParams = {
@@ -27,25 +26,18 @@ type ModelRouteParams = {
   openRemoteTab?: boolean;
 };
 
-TaskManager.defineTask(BACKGROUND_DOWNLOAD_TASK, async ({ data, error }) => {
-  if (error) {
-    return BackgroundTask.BackgroundTaskResult.Failed;
-  }
-  return BackgroundTask.BackgroundTaskResult.Success;
-});
-
-const registerBackgroundTask = async () => {
+// Cleanup old incorrect task registration
+const cleanupOldTask = async () => {
   try {
-    const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_DOWNLOAD_TASK);
+    const isRegistered = await TaskManager.isTaskRegisteredAsync('background-download-task');
     if (isRegistered) {
-      return;
+      await BackgroundTask.unregisterTaskAsync('background-download-task');
     }
-    await BackgroundTask.registerTaskAsync(BACKGROUND_DOWNLOAD_TASK, {
-      minimumInterval: 15
-    });
-  } catch (err) {
+  } catch (e) {
+    // ignore
   }
 };
+cleanupOldTask();
 
 export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
   const { enableRemoteModels, isLoggedIn, checkLoginStatus, toggleRemoteModels } = useRemoteModel();
@@ -397,11 +389,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       await downloadNotificationService.updateProgress(progress.downloadId, progressValue, bytesDownloaded, totalBytes, filename);
     };
 
-    const setupBackgroundTask = async () => {
-      await registerBackgroundTask();
-    };
 
-    setupBackgroundTask();
     modelDownloader.on('downloadCompleted', handleCompleted);
     modelDownloader.on('downloadFailed', handleFailed);
     modelDownloader.on('downloadProgress', handleNotificationProgress);
