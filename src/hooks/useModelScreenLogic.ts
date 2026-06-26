@@ -5,7 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useDownloads } from '../context/DownloadContext';
+import { useDownloadProgress, useDownloadDispatch } from '../context/DownloadContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useStoredModels } from './useStoredModels';
 import { modelDownloader } from '../services/ModelDownloader';
@@ -41,7 +41,8 @@ cleanupOldTask();
 export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
   const { enableRemoteModels, isLoggedIn, checkLoginStatus, toggleRemoteModels } = useRemoteModel();
   const { storedModels, isLoading: isLoadingStoredModels, isRefreshing: isRefreshingStoredModels, refreshStoredModels, rescanStoredModels } = useStoredModels();
-  const { downloadProgress, setDownloadProgress } = useDownloads();
+  const downloadProgress = useDownloadProgress();
+  const setDownloadProgress = useDownloadDispatch();
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<'stored' | 'downloadable' | 'remote'>('stored');
@@ -348,12 +349,13 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
   const hasActiveDownloads = getActiveDownloadsCount(downloadProgress) > 0;
 
   useEffect(() => {
-    modelDownloader.ensureDownloadsAreRunning().catch(() => {});
+    const run = () => modelDownloader.ensureDownloadsAreRunning().catch(() => {});
+    InteractionManager.runAfterInteractions(run);
 
     if (!hasActiveDownloads || Platform.OS !== 'ios') return;
 
     const id = setInterval(() => {
-      modelDownloader.ensureDownloadsAreRunning().catch(() => {});
+      InteractionManager.runAfterInteractions(run);
     }, 5000);
 
     return () => clearInterval(id);
