@@ -245,6 +245,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const flushPending = (modelName: string) => {
+      const t0 = Date.now();
       const data = pendingRef.current[modelName];
       if (!data) return;
       delete pendingRef.current[modelName];
@@ -260,6 +261,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           isPaused: prev[modelName]?.isPaused,
         }
       }));
+      console.log('ctx_flush', modelName.slice(0, 30), 'pct', data.progress, 'ms', Date.now() - t0);
     };
 
     modelDownloader.on('downloadStarted', handleDownloadStarted);
