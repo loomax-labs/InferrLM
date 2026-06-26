@@ -72,22 +72,20 @@ export class FileManager extends EventEmitter {
         await FileSystem.deleteAsync(destPath, { idempotent: true });
       }
       
-      console.log(`FileManager.moveFile: Starting copy from ${sourcePath} to ${destPath}`);
+      console.log(`FileManager.moveFile: Starting move from ${sourcePath} to ${destPath}`);
       const sourceInfoBefore = await FileSystem.getInfoAsync(sourcePath, { size: true });
       console.log(`FileManager.moveFile: Source size: ${(sourceInfoBefore as any).size}`);
 
-      await FileSystem.copyAsync({
+      await FileSystem.moveAsync({
         from: sourcePath,
         to: destPath
       });
       
       const newDestInfo = await FileSystem.getInfoAsync(destPath, { size: true });
       if (!newDestInfo.exists) {
-        throw new Error(`File was not copied successfully to ${destPath}`);
+        throw new Error(`File was not moved successfully to ${destPath}`);
       }
-      console.log(`FileManager.moveFile: Dest size after copy: ${(newDestInfo as any).size}`);
-
-      await FileSystem.deleteAsync(sourcePath, { idempotent: true });
+      console.log(`FileManager.moveFile: Dest size after move: ${(newDestInfo as any).size}`);
 
       this.emit('importProgress', {
         modelName,
