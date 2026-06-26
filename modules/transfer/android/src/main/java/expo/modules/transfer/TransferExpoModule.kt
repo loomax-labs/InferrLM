@@ -120,7 +120,7 @@ class TransferExpoModule : Module() {
       for (workInfo in workInfos) {
         if (workInfo.state.isFinished) continue
 
-        val transferId = workInfo.tags.firstOrNull { it != FileTransferWorker.WORK_TAG } ?: continue
+        val transferId = workInfo.tags.firstOrNull { it != FileTransferWorker.WORK_TAG && it != FileTransferWorker::class.java.name } ?: continue
         val storedTransfer = ongoingTransfers[transferId]
           ?: readStoredTransfer(transferId)
           ?: OngoingTransfer("", transferId, null)
@@ -195,7 +195,7 @@ class TransferExpoModule : Module() {
 
         for (info in workInfos) {
           if (info.state.isFinished) continue
-          val transferId = info.tags.firstOrNull { it != FileTransferWorker.WORK_TAG } ?: continue
+          val transferId = info.tags.firstOrNull { it != FileTransferWorker.WORK_TAG && it != FileTransferWorker::class.java.name } ?: continue
           activeIds += transferId
           val stored = readStoredTransfer(transferId) ?: OngoingTransfer("", transferId, null)
           ongoingTransfers[transferId] = stored
