@@ -66,7 +66,7 @@ export class DownloadTaskManager extends EventEmitter {
           downloadInfo.status = 'downloading';
 
           const prevPersisted = downloadInfo.lastPersistedProgress ?? -1;
-          if (progress.progress - prevPersisted >= 1 || progress.progress === 100) {
+          if (progress.progress - prevPersisted >= 5 || progress.progress === 100) {
             downloadInfo.lastPersistedProgress = progress.progress;
             void this.saveDownloadProgress();
           }
