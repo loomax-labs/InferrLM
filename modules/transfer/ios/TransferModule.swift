@@ -8,6 +8,9 @@
 
 import ExpoModulesCore
 import Foundation
+import os.log
+
+private let logger = OSLog(subsystem: "com.inferra.transfer", category: "TransferModule")
 
 private struct TransferMeta: Codable {
   let transferId: String
@@ -135,6 +138,7 @@ public class TransferModule: Module {
   /* Event emitters called by the delegate */
 
   func emitProgress(_ tid: String, bytesWritten: Int64, totalBytes: Int64) {
+    let t0 = CFAbsoluteTimeGetCurrent()
     let stored = getMeta(tid)
     let modelName = stored?.modelName ?? tid
     let progress = totalBytes > 0
@@ -152,6 +156,10 @@ public class TransferModule: Module {
       "eta": 0.0,
       "progress": progress
     ])
+
+    let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+    os_log(.info, log: logger, "progress_evt model=%{public}@ pct=%d bytes=%lld/%lld tx=%dms",
+           modelName, progress, bytesWritten, totalBytes, ms)
   }
 
   func emitComplete(_ tid: String, location: URL) {
@@ -311,6 +319,8 @@ private class SessionDelegate: NSObject, URLSessionDownloadDelegate {
                   totalBytesWritten: Int64,
                   totalBytesExpectedToWrite: Int64) {
     guard let tid = downloadTask.taskDescription else { return }
+    let pct = totalBytesExpectedToWrite > 0 ? Int(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) * 100) : 0
+    os_log(.info, log: logger, "dl_tick tid=%@ pct=%d bytes=%lld/%lld", tid, pct, totalBytesWritten, totalBytesExpectedToWrite)
     module?.emitProgress(tid, bytesWritten: totalBytesWritten, totalBytes: totalBytesExpectedToWrite)
   }
 
