@@ -66,41 +66,50 @@ export class BackgroundDownloadService {
       const bytesWritten = event.bytesWritten ?? transfer.state.progress?.bytesDownloaded ?? 0;
       const totalBytes = event.totalBytes ?? transfer.state.progress?.bytesTotal ?? 0;
 
-      const currentTimestamp = Date.now();
-      const timeDelta = currentTimestamp - transfer.lastUpdateTime;
-      const bytesDelta = bytesWritten - transfer.lastBytesWritten;
-
-      let transferSpeedBps = transfer.state.progress?.rawSpeed ?? 0;
-      if (timeDelta > 0 && bytesDelta >= 0) {
-        transferSpeedBps = (bytesDelta / timeDelta) * 1000;
-      }
-
       const computedProgress = totalBytes > 0
         ? Math.min(Math.round((bytesWritten / totalBytes) * 100), 100)
         : Math.round(event.progress ?? transfer.state.progress?.progress ?? 0);
 
-      const speedFormatted = this.formatTransferSpeed(transferSpeedBps);
-      const etaFormatted = this.calculateTransferEta(bytesWritten, totalBytes, transferSpeedBps);
-      const remainingBytes = totalBytes - bytesWritten;
+      const currentTimestamp = Date.now();
+      const timeSinceLastUIUpdate = currentTimestamp - ((transfer as any).lastUIUpdateTime || 0);
 
       transfer.state.progress = {
         bytesDownloaded: bytesWritten,
         bytesTotal: totalBytes,
         progress: computedProgress,
-        speed: speedFormatted,
-        eta: etaFormatted,
-        rawSpeed: transferSpeedBps,
-        rawEta: transferSpeedBps > 0 && remainingBytes > 0 ? remainingBytes / transferSpeedBps : 0,
+        speed: transfer.state.progress?.speed ?? '0 B/s',
+        eta: transfer.state.progress?.eta ?? 'calculating',
+        rawSpeed: transfer.state.progress?.rawSpeed ?? 0,
+        rawEta: transfer.state.progress?.rawEta ?? 0,
       };
 
-      transfer.lastBytesWritten = bytesWritten;
-      transfer.lastUpdateTime = currentTimestamp;
-
-      const timeSinceLastUIUpdate = currentTimestamp - ((transfer as any).lastUIUpdateTime || 0);
       if (timeSinceLastUIUpdate >= 1000 || computedProgress === 100) {
+        const timeDelta = currentTimestamp - transfer.lastUpdateTime;
+        const bytesDelta = bytesWritten - transfer.lastBytesWritten;
+
+        let transferSpeedBps = transfer.state.progress?.rawSpeed ?? 0;
+        if (timeDelta > 0 && bytesDelta >= 0) {
+          transferSpeedBps = (bytesDelta / timeDelta) * 1000;
+        }
+
+        transfer.state.progress = {
+          bytesDownloaded: bytesWritten,
+          bytesTotal: totalBytes,
+          progress: computedProgress,
+          speed: this.formatTransferSpeed(transferSpeedBps),
+          eta: this.calculateTransferEta(bytesWritten, totalBytes, transferSpeedBps),
+          rawSpeed: transferSpeedBps,
+          rawEta: transferSpeedBps > 0 && (totalBytes - bytesWritten) > 0
+            ? (totalBytes - bytesWritten) / transferSpeedBps
+            : 0,
+        };
+
         (transfer as any).lastUIUpdateTime = currentTimestamp;
         this.eventCallbacks.onProgress?.(derivedModelName, transfer.state.progress);
       }
+
+      transfer.lastBytesWritten = bytesWritten;
+      transfer.lastUpdateTime = currentTimestamp;
     }));
 
     this.eventSubscriptions.push(
