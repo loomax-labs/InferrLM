@@ -748,7 +748,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const offset = Platform.OS === 'ios'
-      ? (isKbOpen ? keyboardHeight : 0)
+      ? (isKbOpen ? keyboardHeight * 1.02 : 0)
       : Math.max(0, keyboardHeight - insets.bottom);
     Animated.timing(kbSlideAnim, {
       toValue: offset,
