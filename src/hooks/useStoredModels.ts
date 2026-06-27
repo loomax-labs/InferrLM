@@ -87,16 +87,26 @@ export const useStoredModels = (): UseStoredModelsReturn => {
 
     const handleModelsChanged = () => {
       console.log('models_changed_event');
-      refreshStoredModels();
+      void refreshStoredModels();
+    };
+
+    const handleDownloadCompleted = (data?: { modelName?: string }) => {
+      if (data?.modelName?.startsWith('com.inferra.transfer.')) {
+        return;
+      }
+      console.log('download_done_resync');
+      void rescanStoredModels();
     };
 
     modelDownloader.on('modelsChanged', handleModelsChanged);
+    modelDownloader.on('downloadCompleted', handleDownloadCompleted);
 
     return () => {
       console.log('hook_unmount');
       modelDownloader.off('modelsChanged', handleModelsChanged);
+      modelDownloader.off('downloadCompleted', handleDownloadCompleted);
     };
-  }, [loadStoredModels, refreshStoredModels]);
+  }, [loadStoredModels, refreshStoredModels, rescanStoredModels]);
 
   return {
     storedModels,
