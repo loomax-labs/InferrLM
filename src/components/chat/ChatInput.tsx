@@ -1728,7 +1728,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   wrapperCompact: {
-    paddingBottom: 4,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 4,
     paddingTop: 4,
   },
   ragBanner: {
