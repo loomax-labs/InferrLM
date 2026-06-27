@@ -106,7 +106,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadSavedStates();
 
     const handleDownloadStarted = (data: any) => {
-      console.log('DownloadContext: download_started:', data);
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
@@ -134,7 +133,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const handleDownloadCompleted = (data: any) => {
-      console.log('DownloadContext: download_completed:', data);
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
@@ -167,7 +165,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const handleDownloadFailed = (data: any) => {
-      console.log('DownloadContext: download_failed:', data);
       if (!data.modelName || data.modelName.startsWith('com.inferra.transfer.')) {
         return;
       }
@@ -251,7 +248,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     const flushPending = (modelName: string) => {
-      const t0 = Date.now();
       const data = pendingRef.current[modelName];
       if (!data) return;
       delete pendingRef.current[modelName];
@@ -269,7 +265,6 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           rawSpeed: data.rawSpeed ?? prev[modelName]?.rawSpeed ?? 0,
         }
       }));
-      console.log('ctx_flush', modelName.slice(0, 30), 'pct', data.progress, 'ms', Date.now() - t0);
     };
 
     modelDownloader.on('downloadStarted', handleDownloadStarted);
