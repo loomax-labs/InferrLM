@@ -77,7 +77,7 @@ function injectMinDeploymentTarget(contents) {
     '    end',
   ].join('\n');
 
-  if (contents.includes('installer.pods_project.targets.each')) {
+  if (contents.includes('IPHONEOS_DEPLOYMENT_TARGET\'] = \'15.0\'')) {
     return contents;
   }
 

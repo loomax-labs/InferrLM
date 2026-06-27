@@ -1,0 +1,17 @@
+{
+  "name": "@react-native-ml-kit/text-recognition",
+  "version": "2.0.0",
+  "description": "React Native On-Device Text Recognition w/ Google ML Kit",
+  "main": "index.ts",
+  "files": [
+    "android",
+    "index.ts",
+    "ios",
+    "RNMLKitTextRecognition.podspec"
+  ],
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "license": "MIT"
+}
