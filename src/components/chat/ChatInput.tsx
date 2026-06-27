@@ -43,6 +43,7 @@ import { OnlineModelService } from '../../services/OnlineModelService';
 import { getMimeType, isOpenAIUploadable } from '../../services/adapters/OpenAIFileAdapter';
 import { isClaudeUploadable } from '../../services/adapters/ClaudeFileAdapter';
 import { isGeminiUploadable } from '../../services/adapters/GeminiFileAdapter';
+import { useKeyboard } from '../../hooks/useKeyboard';
 
 type ChatInputProps = {
   onSend: (text: string) => void;
@@ -151,6 +152,9 @@ export default function ChatInput({
   const [ragStatusLoading, setRagStatusLoading] = useState(false);
   const [ragClearing, setRagClearing] = useState(false);
   const [isAudioRecordingBusy, setIsAudioRecordingBusy] = useState(false);
+
+  const { keyboardHeight } = useKeyboard();
+  const isKbOpen = keyboardHeight > 0;
 
   const isGenerating = isLoading || isRegenerating;
   const hasText = text.trim().length > 0;
@@ -1163,7 +1167,7 @@ export default function ChatInput({
 
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, isKbOpen && styles.wrapperCompact]}>
       {isProcessingWithRAG && (
         <View
           style={[
@@ -1722,6 +1726,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 8,
     paddingTop: 8,
+  },
+  wrapperCompact: {
+    paddingBottom: 4,
+    paddingTop: 4,
   },
   ragBanner: {
     flexDirection: 'row',
