@@ -10,6 +10,8 @@ interface DownloadProgressData {
   downloadId: number;
   isPaused?: boolean;
   error?: string;
+  speed?: string;
+  rawSpeed?: number;
 }
 
 interface DownloadProgress {
@@ -87,6 +89,8 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 totalBytes: dl.totalBytes || 0,
                 status: dl.status || 'downloading',
                 downloadId: dl.downloadId || 0,
+                speed: '0 B/s',
+                rawSpeed: 0,
               };
             }
           }
@@ -122,7 +126,9 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           totalBytes: 0,
           status: 'downloading',
           downloadId: data.downloadId || 0,
-          isPaused: false
+          isPaused: false,
+          speed: '0 B/s',
+          rawSpeed: 0,
         }
       }));
     };
@@ -259,6 +265,8 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           status: data.status || 'downloading',
           downloadId: data.downloadId || prev[modelName]?.downloadId || 0,
           isPaused: prev[modelName]?.isPaused,
+          speed: data.speed || prev[modelName]?.speed || '0 B/s',
+          rawSpeed: data.rawSpeed ?? prev[modelName]?.rawSpeed ?? 0,
         }
       }));
       console.log('ctx_flush', modelName.slice(0, 30), 'pct', data.progress, 'ms', Date.now() - t0);
