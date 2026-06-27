@@ -42,7 +42,7 @@ export default {
         NSBonjourServices: ["_http._tcp"],
         ITSAppUsesNonExemptEncryption: false,
         UIStatusBarStyle: "UIStatusBarStyleDefault",
-        UIViewControllerBasedStatusBarAppearance: true,
+        UIViewControllerBasedStatusBarAppearance: false,
         UIGestureRecognizerShouldBegin: false,
         UINavigationControllerHidesBarsOnSwipe: false,
         CFBundleURLTypes: [
