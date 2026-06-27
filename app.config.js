@@ -120,6 +120,7 @@ export default {
     },
     plugins: [
       "react-native-litert-lm",
+      "@react-native-ml-kit/text-recognition",
       "expo-sharing",
       "expo-status-bar",
       "expo-font",
