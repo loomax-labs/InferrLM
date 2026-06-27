@@ -478,6 +478,7 @@ export class BackgroundDownloadService {
         }
 
         let transferJob = this.activeTransfers.get(modelName);
+        const isNew = !transferJob;
 
         if (!transferJob) {
           const fallbackModel =
@@ -514,7 +515,9 @@ export class BackgroundDownloadService {
           rawEta: 0,
         };
 
-        this.eventCallbacks.onProgress?.(modelName, transferJob.state.progress);
+        if (isNew) {
+          this.eventCallbacks.onProgress?.(modelName, transferJob.state.progress);
+        }
       }
     } catch (error) {
     }

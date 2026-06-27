@@ -347,19 +347,23 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
   }, [routeParams, isLoggedIn, enableRemoteModels, toggleRemoteModels]);
 
   const hasActiveDownloads = getActiveDownloadsCount(downloadProgress) > 0;
+  const hasActiveRef = useRef(hasActiveDownloads);
+  hasActiveRef.current = hasActiveDownloads;
 
   useEffect(() => {
     const run = () => modelDownloader.ensureDownloadsAreRunning().catch(() => {});
     InteractionManager.runAfterInteractions(run);
 
-    if (!hasActiveDownloads || Platform.OS !== 'ios') return;
+    if (Platform.OS !== 'ios') return;
 
     const id = setInterval(() => {
-      InteractionManager.runAfterInteractions(run);
+      if (hasActiveRef.current) {
+        InteractionManager.runAfterInteractions(run);
+      }
     }, 5000);
 
     return () => clearInterval(id);
-  }, [hasActiveDownloads]);
+  }, []);
 
   useEffect(() => {
     const activeCount = getActiveDownloadsCount(downloadProgress);

@@ -148,19 +148,23 @@ export default function DownloadsScreen() {
     giving real-time progress regardless of delegate callback frequency.
   */
   const hasActive = downloads.length > 0;
+  const hasActiveRef = useRef(hasActive);
+  hasActiveRef.current = hasActive;
 
   useEffect(() => {
     const run = () => modelDownloader.ensureDownloadsAreRunning().catch(() => {});
     InteractionManager.runAfterInteractions(run);
 
-    if (!hasActive || Platform.OS !== 'ios') return;
+    if (Platform.OS !== 'ios') return;
 
     const id = setInterval(() => {
-      InteractionManager.runAfterInteractions(run);
+      if (hasActiveRef.current) {
+        InteractionManager.runAfterInteractions(run);
+      }
     }, 5000);
 
     return () => clearInterval(id);
-  }, [hasActive]);
+  }, []);
 
   const isStorageError = (error?: string): boolean => {
     if (!error) return false;
