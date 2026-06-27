@@ -49,12 +49,15 @@ export const useStoredModels = (): UseStoredModelsReturn => {
     }
   }, []);
 
+  const refreshingRef = useRef(false);
+
   const refreshStoredModels = useCallback(async () => {
-    if (isRefreshing) {
+    if (refreshingRef.current) {
       console.log('refresh_skip_already_running');
       return;
     }
     console.log('refresh_storage_cache');
+    refreshingRef.current = true;
     setIsRefreshing(true);
     try {
       const models = await modelDownloader.getStoredModels();
@@ -62,8 +65,9 @@ export const useStoredModels = (): UseStoredModelsReturn => {
       setStoredModels(models);
     } finally {
       setIsRefreshing(false);
+      refreshingRef.current = false;
     }
-  }, [isRefreshing]);
+  }, []);
 
   const rescanStoredModels = useCallback(async () => {
     console.log('refresh_storage_rescan');
