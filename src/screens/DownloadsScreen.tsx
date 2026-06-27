@@ -62,6 +62,8 @@ interface DownloadItem {
   status: string;
   progressText: string;
   isTransferring: boolean;
+  speed: string;
+  rawSpeed: number;
 }
 
 export default function DownloadsScreen() {
@@ -137,6 +139,8 @@ export default function DownloadsScreen() {
           status: data.status || 'unknown',
           progressText,
           isTransferring,
+          speed: data.speed || '0 B/s',
+          rawSpeed: data.rawSpeed || 0,
         };
       });
   }, [downloadProgress]);
@@ -473,6 +477,11 @@ export default function DownloadsScreen() {
           <Text style={[styles.downloadProgress, { color: themeColors.secondaryText }]}>
             {item.progressText}
           </Text>
+          {!item.isTransferring && item.rawSpeed > 0 && (
+            <Text style={[styles.downloadSpeed, { color: themeColors.secondaryText }]}>
+              {item.speed}
+            </Text>
+          )}
         </View>
 
         {isMLXDownload && isExpanded && (
@@ -592,6 +601,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 8,
     flex: 1,
+  },
+  downloadSpeed: {
+    fontSize: 13,
+    marginBottom: 8,
+    marginLeft: 8,
+    fontVariant: ['tabular-nums'],
   },
   transferRow: {
     flexDirection: 'row',
