@@ -9,7 +9,7 @@ const lightTheme = {
   tabBarActiveText: '#fff',
   tabBarInactiveText: 'rgba(255, 255, 255, 0.6)',
   borderColor: '#eee',
-  statusBarStyle: 'light' as const,
+  statusBarStyle: 'dark' as const,
   statusBarBg: 'transparent',
   navigationBar: '#660880',
   secondaryText: '#666',
