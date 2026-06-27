@@ -7,6 +7,8 @@ import { DownloadTaskManager } from './DownloadTaskManager';
 import { downloadNotificationService } from './DownloadNotifier';
 import { StoredModel } from './ModelDownloaderTypes';
 import { notificationService } from './NotificationService';
+import { fs as FileSystem } from './fs';
+import { ModelFormat } from '../types/models';
 
 class ModelDownloader extends EventEmitter {
   private fileManager: FileManager;
@@ -75,8 +77,13 @@ class ModelDownloader extends EventEmitter {
         return;
       }
       try {
-        await this.storedModelsManager.refresh();
-      } catch {
+        await this.syncStoredModelAfterDownload(data);
+      } catch (err) {
+        console.log('post_download_sync_error', err);
+        try {
+          await this.storedModelsManager.reloadStoredModels();
+        } catch {
+        }
       }
       notificationService.showDownloadCompletedNotification(
         data.modelName,
@@ -112,6 +119,37 @@ class ModelDownloader extends EventEmitter {
       });
       this.emit('downloadCancelled', data);
     });
+  }
+
+  private async syncStoredModelAfterDownload(data: {
+    modelName: string;
+    finalPath?: string;
+    modelFormat?: ModelFormat;
+  }): Promise<void> {
+    console.log('post_download_sync', data.modelName);
+
+    if (data.modelFormat === ModelFormat.MLX) {
+      await this.storedModelsManager.reloadStoredModels();
+      return;
+    }
+
+    if (data.finalPath) {
+      try {
+        const info = await FileSystem.getInfoAsync(data.finalPath, { size: true });
+        if (!info.exists) {
+          console.log('post_download_file_missing', data.finalPath);
+          await this.storedModelsManager.refreshStoredModels();
+          return;
+        }
+        const size = (info as { size?: number }).size || 0;
+        await this.storedModelsManager.registerModel(data.modelName, data.finalPath, size);
+        return;
+      } catch (err) {
+        console.log('post_download_register_error', err);
+      }
+    }
+
+    await this.storedModelsManager.refreshStoredModels();
   }
 
   private handleAppStateChange = (nextAppState: AppStateStatus): void => {
