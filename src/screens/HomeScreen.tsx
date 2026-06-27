@@ -7,11 +7,12 @@ import {
   View,
   Text,
   FlatList,
-  KeyboardAvoidingView,
   Clipboard,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
@@ -740,6 +741,19 @@ export default function HomeScreen() {
     return cleanup;
   }, []);
 
+  const { keyboardHeight } = useKeyboard();
+  const insets = useSafeAreaInsets();
+  const kbSlideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const offset = Math.max(0, (keyboardHeight - insets.bottom) * 0.92);
+    Animated.timing(kbSlideAnim, {
+      toValue: offset,
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [keyboardHeight, kbSlideAnim]);
 
 
   if (!chat) {
@@ -790,11 +804,8 @@ export default function HomeScreen() {
             style={styles.modelSelectorWrapper}
           />
       </View>
-      <KeyboardAvoidingView
-        style={styles.chatContainer}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-      >
+      <Animated.View style={{ flex: 1, paddingBottom: kbSlideAnim }}>
+      <View style={styles.chatContainer}>
         <ChatView
            messages={messages}
            isStreaming={isStreaming}
@@ -815,6 +826,7 @@ export default function HomeScreen() {
            onSwitchBranch={handleSwitchBranch}
            onForkChat={handleForkChat}
         />
+      </View>
 
         <ChatInput
           onSend={handleSend}
@@ -831,7 +843,7 @@ export default function HomeScreen() {
           onCancelEdit={handleCancelEdit}
           chatId={chat.id}
         />
-      </KeyboardAvoidingView>
+      </Animated.View>
 
       <CopyToast visible={showCopyToast} message={copyToastMessage} />
       

@@ -1,4 +1,4 @@
-const { withPodfile, withXcodeProject } = require('@expo/config-plugins');
+const { withPodfile, withXcodeProject, withAndroidManifest } = require('@expo/config-plugins');
 
 function disableDeterministicPodUuids(contents) {
   const line = "install! 'cocoapods', :deterministic_uuids => false";
@@ -153,7 +153,38 @@ function withIos(config) {
   });
 }
 
-module.exports = withIos;
+function withAndroidSoftInput(config) {
+  return withAndroidManifest(config, (modConfig) => {
+    const manifest = modConfig.modResults.manifest;
+
+    if (!manifest) {
+      return modConfig;
+    }
+
+    const application = manifest.application?.[0];
+    if (!application) {
+      return modConfig;
+    }
+
+    const mainActivity = application.activity?.find(
+      (a) => a.$['android:name'] === '.MainActivity'
+    );
+
+    if (mainActivity) {
+      mainActivity.$['android:windowSoftInputMode'] = 'adjustNothing';
+    }
+
+    return modConfig;
+  });
+}
+
+function withApp(config) {
+  config = withIos(config);
+  config = withAndroidSoftInput(config);
+  return config;
+}
+
+module.exports = withApp;
 module.exports._helpers = {
   disableDeterministicPodUuids,
   injectSpmRootFix,
