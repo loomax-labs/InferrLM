@@ -50,7 +50,6 @@ export class DownloadTaskManager extends EventEmitter {
         });
       },
       onProgress: (modelName: string, progress) => {
-        const t0 = Date.now();
         const downloadId = this.getDownloadIdForModel(modelName);
         const downloadInfo = this.activeDownloads.get(modelName);
         const progressEvent: DownloadProgressEvent = {
@@ -78,7 +77,6 @@ export class DownloadTaskManager extends EventEmitter {
         }
 
         this.emit('progress', progressEvent);
-        console.log('task_progress', modelName.slice(0, 30), 'pct', progress.progress, 'bytes', progress.bytesDownloaded, progress.bytesTotal, 'ms', Date.now() - t0);
       },
       onComplete: async (modelName: string) => {
         const displayName = this.tempNameMap.get(modelName) ?? modelName;

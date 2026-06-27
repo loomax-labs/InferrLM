@@ -39,7 +39,6 @@ export class BackgroundDownloadService {
 
     this.eventSubscriptions.push(
       this.expoEventEmitter.addListener('onTransferProgress', (event: any) => {
-      const jsRecvTime = Date.now();
       let derivedModelName = event.modelName || this.extractModelName(event.destination, event.url);
 
       let transfer = derivedModelName ? this.activeTransfers.get(derivedModelName) : undefined;
@@ -106,13 +105,8 @@ export class BackgroundDownloadService {
         };
 
         (transfer as any).lastUIUpdateTime = currentTimestamp;
-        const cbStart = Date.now();
         this.eventCallbacks.onProgress?.(derivedModelName, transfer.state.progress);
-        const cbMs = Date.now() - cbStart;
-        const totalMs = Date.now() - jsRecvTime;
-        console.log('mgr_onProgress', derivedModelName.slice(0, 30), 'pct', computedProgress, 'bytes', bytesWritten, totalBytes, 'speed', transfer.state.progress.speed, 'cb', cbMs + 'ms', 'total', totalMs + 'ms');
       } else {
-        console.log('mgr_skip', derivedModelName.slice(0, 30), 'pct', computedProgress, 'sinceLast', timeSinceLastUIUpdate + 'ms');
       }
 
       transfer.lastBytesWritten = bytesWritten;

@@ -45,7 +45,6 @@ class ModelDownloader extends EventEmitter {
       if (data.modelName?.startsWith('temp_mlx_')) {
         return;
       }
-      const t0 = Date.now();
       notificationService.updateDownloadProgressNotification(
         data.modelName,
         data.downloadId,
@@ -56,7 +55,6 @@ class ModelDownloader extends EventEmitter {
       ).catch(() => {
       });
       this.emit('downloadProgress', data);
-      console.log('mdl_progress', data.modelName.slice(0, 30), 'pct', data.progress, 'ms', Date.now() - t0);
     });
     
     this.downloadTaskManager.on('downloadStarted', (data) => {
