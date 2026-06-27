@@ -61,6 +61,8 @@ export class DownloadTaskManager extends EventEmitter {
           modelName: modelName,
           downloadId,
           nativeDownloadId: downloadInfo?.nativeDownloadId,
+          speed: progress.speed,
+          rawSpeed: progress.rawSpeed,
         };
         if (downloadInfo) {
           downloadInfo.progress = progress.progress;

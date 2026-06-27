@@ -90,4 +90,6 @@ export interface DownloadProgressEvent {
   error?: string;
   isPaused?: boolean;
   nativeDownloadId?: string;
+  speed?: string;
+  rawSpeed?: number;
 }
