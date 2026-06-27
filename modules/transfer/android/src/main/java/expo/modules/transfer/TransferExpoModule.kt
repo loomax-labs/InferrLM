@@ -226,7 +226,6 @@ class TransferExpoModule : Module() {
       override fun onReceive(ctx: Context?, intent: Intent?) {
         when (intent?.action) {
           ACTION_TRANSFER_PROGRESS -> {
-            val recvTime = System.currentTimeMillis()
             val transferId = intent.getStringExtra("transferId") ?: return
             val bytesWritten = intent.getLongExtra("bytesWritten", 0)
             val totalBytes = intent.getLongExtra("totalBytes", 0)
@@ -252,9 +251,6 @@ class TransferExpoModule : Module() {
               "eta" to if (speed > 0) (totalBytes - bytesWritten).toDouble() / speed else 0.0,
               "progress" to progress,
             ))
-
-            val sendMs = System.currentTimeMillis() - recvTime
-            Log.i(LOG_TAG, "progress_evt model=$resolvedName pct=$progress% bytes=$bytesWritten/$totalBytes tx=${sendMs}ms")
           }
           ACTION_TRANSFER_COMPLETE -> {
             val transferId = intent.getStringExtra("transferId") ?: return

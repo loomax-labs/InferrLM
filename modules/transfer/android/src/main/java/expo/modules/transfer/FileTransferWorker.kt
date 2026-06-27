@@ -210,25 +210,15 @@ class FileTransferWorker(
       val transferStartTime = System.currentTimeMillis()
       var lastNotificationTimestamp = 0L
       var lastDbUpdateTimestamp = 0L
-      var tickCount = 0
-      var totalReadTime = 0L
-      var totalWriteTime = 0L
-      var totalBroadcastTime = 0L
-
-      Log.i(LOG_TAG, "dl_start model=$modelName tid=$transferId size=$totalFileSize url=${urlString.take(80)}")
 
       while (dataInputStream.read(dataBuffer).also { bytesRead = it } != -1) {
         if (isStopped) break
 
-        val writeStart = System.currentTimeMillis()
         fileOutputStream.write(dataBuffer, 0, bytesRead)
-        totalWriteTime += System.currentTimeMillis() - writeStart
-        totalReadTime += bytesRead.toLong()
         totalBytesTransferred += bytesRead
 
         val currentTimestamp = System.currentTimeMillis()
         if (currentTimestamp - lastProgressTimestamp >= BROADCAST_INTERVAL) {
-          tickCount++
           val elapsedTime = currentTimestamp - transferStartTime
           val transferSpeed = if (elapsedTime > 0) (totalBytesTransferred * 1000) / elapsedTime else 0L
           val progressPercent = if (totalFileSize > 0) ((totalBytesTransferred * 100) / totalFileSize).toInt() else 0
@@ -251,16 +241,11 @@ class FileTransferWorker(
           lastBytesTransferred = totalBytesTransferred
           lastTotalBytes = totalFileSize
 
-          val bcastStart = System.currentTimeMillis()
           broadcastProgress(
             transferId, modelName, destinationPath, urlString,
             totalBytesTransferred, totalFileSize, transferSpeed, progressPercent,
           )
-          val bcastMs = System.currentTimeMillis() - bcastStart
-          totalBroadcastTime += bcastMs
           lastProgressTimestamp = currentTimestamp
-
-          Log.i(LOG_TAG, "dl_tick model=$modelName tick=$tickCount pct=$progressPercent% bytes=$totalBytesTransferred/$totalFileSize speed=$transferSpeed bcast=${bcastMs}ms elapsed=${elapsedTime}ms")
 
           if (currentTimestamp - lastNotificationTimestamp >= NOTIFICATION_INTERVAL) {
             try {
@@ -287,8 +272,6 @@ class FileTransferWorker(
       lastBytesTransferred = totalBytesTransferred
       lastTotalBytes = totalFileSize
 
-      val totalElapsed = System.currentTimeMillis() - transferStartTime
-      Log.i(LOG_TAG, "dl_done model=$modelName size=$totalBytesTransferred ticks=$tickCount elapsed=${totalElapsed}ms avgWrite=${totalWriteTime/tickCount.coerceAtLeast(1)}ms avgBcast=${totalBroadcastTime/tickCount.coerceAtLeast(1)}ms")
     } finally {
       dataInputStream?.close()
       fileOutputStream?.close()
