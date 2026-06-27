@@ -158,7 +158,7 @@ function InnerLayout() {
         }}
         pointerEvents="none"
       />
-      <StatusBar style="light" translucent />
+      <StatusBar style={themeColors.statusBarStyle} translucent />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
