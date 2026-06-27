@@ -741,19 +741,22 @@ export default function HomeScreen() {
     return cleanup;
   }, []);
 
-  const { keyboardHeight } = useKeyboard();
+  const { keyboardHeight, keyboardDuration } = useKeyboard();
   const insets = useSafeAreaInsets();
   const kbSlideAnim = useRef(new Animated.Value(0)).current;
+  const isKbOpen = keyboardHeight > 0;
 
   useEffect(() => {
-    const offset = Math.max(0, (keyboardHeight - insets.bottom) * 0.92);
+    const offset = Platform.OS === 'ios'
+      ? (isKbOpen ? keyboardHeight : 0)
+      : Math.max(0, keyboardHeight - insets.bottom);
     Animated.timing(kbSlideAnim, {
       toValue: offset,
-      duration: 250,
+      duration: keyboardDuration,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [keyboardHeight, kbSlideAnim]);
+  }, [keyboardHeight, keyboardDuration, insets.bottom, isKbOpen, kbSlideAnim]);
 
 
   if (!chat) {
@@ -766,7 +769,10 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]} edges={Platform.OS === 'ios' ? ['left', 'right', 'bottom'] : ['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={Platform.OS === 'ios' ? (isKbOpen ? ['left', 'right'] : ['left', 'right', 'bottom']) : ['left', 'right']}
+    >
       <GradientBg />
       <AppHeader 
         onNewChat={startNewChat}
