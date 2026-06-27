@@ -50,6 +50,10 @@ export const useStoredModels = (): UseStoredModelsReturn => {
   }, []);
 
   const refreshStoredModels = useCallback(async () => {
+    if (isRefreshing) {
+      console.log('refresh_skip_already_running');
+      return;
+    }
     console.log('refresh_storage_cache');
     setIsRefreshing(true);
     try {
@@ -59,7 +63,7 @@ export const useStoredModels = (): UseStoredModelsReturn => {
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [isRefreshing]);
 
   const rescanStoredModels = useCallback(async () => {
     console.log('refresh_storage_rescan');
