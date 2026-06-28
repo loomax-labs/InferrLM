@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import Dialog from '../components/Dialog';
 import ModelSelector from '../components/ModelSelector';
+import PromptModeSelector from '../components/PromptModeSelector';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
@@ -32,7 +33,6 @@ import {
   buildTemplatePrompt,
   defaultTemplateOpts,
   getTemplatePrefix,
-  type PromptTemplate,
 } from './promptLabTemplates';
 
 const HISTORY_KEY = '@prompt_lab_history_v1';
@@ -100,48 +100,6 @@ function ParamStepper({
         </TouchableOpacity>
       </View>
     </View>
-  );
-}
-
-function ModeTile({
-  item,
-  active,
-  onPress,
-  disabled,
-  themeColors,
-  fonts,
-}: {
-  item: PromptTemplate;
-  active: boolean;
-  onPress: () => void;
-  disabled: boolean;
-  themeColors: typeof theme['light'];
-  fonts: ReturnType<typeof OpenSansFont>['fonts'];
-}) {
-  return (
-    <TouchableOpacity
-      style={[
-        styles.modeTile,
-        { backgroundColor: active ? themeColors.primary + '28' : themeColors.cardBackground },
-      ]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.75}
-    >
-      <View style={[styles.modeIcon, { backgroundColor: active ? themeColors.primary + '35' : themeColors.primary + '18' }]}>
-        <MaterialCommunityIcons
-          name={item.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
-          size={22}
-          color={themeColors.primary}
-        />
-      </View>
-      <Text style={[styles.modeLabel, fonts.semibold, { color: active ? themeColors.primary : themeColors.text }]} numberOfLines={1}>
-        {item.label}
-      </Text>
-      <Text style={[styles.modeHint, { color: themeColors.secondaryText }]} numberOfLines={2}>
-        {item.hint}
-      </Text>
-    </TouchableOpacity>
   );
 }
 
@@ -368,22 +326,11 @@ export default function PromptLabScreen() {
 
         <ModelSelector isGenerating={isRunning} />
 
-        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-          <Text style={[styles.sectionTitle, { color: themeColors.text }, fonts.semibold]}>Mode</Text>
-          <View style={styles.modeGrid}>
-            {PROMPT_TEMPLATES.map(item => (
-              <ModeTile
-                key={item.id}
-                item={item}
-                active={item.id === templateId}
-                onPress={() => handleTemplatePick(item.id)}
-                disabled={isRunning}
-                themeColors={themeColors}
-                fonts={fonts}
-              />
-            ))}
-          </View>
-        </View>
+        <PromptModeSelector
+          templateId={templateId}
+          onSelect={handleTemplatePick}
+          disabled={isRunning}
+        />
 
         {activeTemplate.options?.map(opt => (
           <View key={opt.key} style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
@@ -653,29 +600,6 @@ const styles = StyleSheet.create({
   card: { borderRadius: 18, padding: 16 },
   sectionTitle: { fontSize: 17, marginBottom: 12 },
   cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
-
-  modeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  modeTile: {
-    width: '47%',
-    flexGrow: 1,
-    borderRadius: 14,
-    padding: 12,
-    minHeight: 108,
-  },
-  modeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  modeLabel: { fontSize: 14, marginBottom: 4 },
-  modeHint: { fontSize: 12, lineHeight: 16 },
 
   chipRow: { gap: 8 },
   chip: {
