@@ -51,6 +51,7 @@ export class DownloadTaskManager extends EventEmitter {
         });
       },
       onProgress: (modelName: string, progress) => {
+        const displayName = this.tempNameMap.get(modelName) ?? modelName;
         const downloadId = this.getDownloadIdForModel(modelName);
         const downloadInfo = this.activeDownloads.get(modelName);
         const progressEvent: DownloadProgressEvent = {
@@ -58,7 +59,7 @@ export class DownloadTaskManager extends EventEmitter {
           bytesDownloaded: progress.bytesDownloaded,
           totalBytes: progress.bytesTotal,
           status: 'downloading',
-          modelName: modelName,
+          modelName: displayName,
           downloadId,
           nativeDownloadId: downloadInfo?.nativeDownloadId,
           speed: progress.speed,
@@ -222,6 +223,7 @@ export class DownloadTaskManager extends EventEmitter {
       }
 
       await this.loadDownloadProgress();
+      await this.ensureDownloadsAreRunning();
       this.isInitialized = true;
     } catch (error) {
       throw error;
