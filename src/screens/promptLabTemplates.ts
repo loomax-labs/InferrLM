@@ -19,6 +19,13 @@ export type PromptTemplate = {
 const toneKey = 'tone';
 const styleKey = 'style';
 const langKey = 'language';
+const audienceKey = 'audience';
+const targetLangKey = 'targetLang';
+const formatKey = 'format';
+const focusKey = 'focus';
+const lengthKey = 'length';
+const emailToneKey = 'emailTone';
+const creativeKey = 'creativeStyle';
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
@@ -112,6 +119,175 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
       'Write a function that returns the square of an integer input.',
       'Parse a JSON string and return the value of the "status" key.',
       'Debounce a search input callback by 300 milliseconds.',
+    ],
+  },
+  {
+    id: 'explain',
+    label: 'Explain',
+    hint: 'Teach a concept clearly',
+    icon: 'lightbulb-outline',
+    placeholder: 'Paste a topic or passage to explain…',
+    options: [{
+      key: audienceKey,
+      label: 'Audience',
+      choices: ['Beginner', 'Developer', 'Executive', 'Student'],
+      default: 'Beginner',
+    }],
+    buildPrompt: (content, opts) =>
+      `Explain the following to a ${(opts[audienceKey] || 'Beginner').toLowerCase()}: ${content}`,
+    examples: [
+      'What a hash table is and when to use one instead of an array.',
+      'How retrieval-augmented generation differs from standard chat completion.',
+      'Why KV-cache reuse speeds up autoregressive text generation.',
+      'What speculative decoding does during LLM inference.',
+    ],
+  },
+  {
+    id: 'translate',
+    label: 'Translate',
+    hint: 'Convert text to another language',
+    icon: 'translate',
+    placeholder: 'Paste the text you want translated…',
+    options: [{
+      key: targetLangKey,
+      label: 'Language',
+      choices: ['Spanish', 'French', 'German', 'Hindi', 'Japanese', 'Korean', 'Portuguese', 'Chinese (Simplified)'],
+      default: 'Spanish',
+    }],
+    buildPrompt: (content, opts) =>
+      `Translate the following to ${opts[targetLangKey] || 'Spanish'}. Preserve meaning and tone:\n${content}`,
+    examples: [
+      'Please restart the app after updating your settings.',
+      'Our team will review your request and respond within two business days.',
+      'The meeting has been moved to 3 PM. Let me know if that works for you.',
+    ],
+  },
+  {
+    id: 'structured',
+    label: 'Structured',
+    hint: 'Extract or reformat data',
+    icon: 'code-json',
+    placeholder: 'Paste raw notes or text to structure…',
+    options: [{
+      key: formatKey,
+      label: 'Format',
+      choices: ['JSON', 'Markdown table', 'Bullet list', 'YAML'],
+      default: 'JSON',
+    }],
+    buildPrompt: (content, opts) =>
+      `Convert the following into ${opts[formatKey] || 'JSON'}. Return only the formatted output:\n${content}`,
+    examples: [
+      'Meeting notes: Standup Jan 12. Attendees: Alice, Bob, Chen. Action: ship v2.1 by Friday. Bob fixes login bug.',
+      'Products: Widget A $12 in stock, Widget B $8 out of stock, Widget C $15 in stock.',
+      'Sentiment check: The app is mostly great but sync fails on slow networks.',
+    ],
+  },
+  {
+    id: 'debug',
+    label: 'Debug code',
+    hint: 'Find bugs and suggest fixes',
+    icon: 'bug-outline',
+    placeholder: 'Paste code or describe the bug…',
+    options: [{
+      key: focusKey,
+      label: 'Focus',
+      choices: ['Bug fix', 'Performance', 'Security', 'Readability'],
+      default: 'Bug fix',
+    }],
+    buildPrompt: (content, opts) =>
+      `Review the following for ${(opts[focusKey] || 'Bug fix').toLowerCase()} issues. Explain the problem and provide a fixed version:\n${content}`,
+    examples: [
+      'function merge(a, b) { return a.sort().concat(b.sort()); }',
+      'for i in range(len(data)):\n  if data[i] > 0:\n    result.append(data[i])',
+      'const fetchData = async () => { const res = await fetch(url); return res.json(); }',
+    ],
+  },
+  {
+    id: 'reasoning',
+    label: 'Reasoning',
+    hint: 'Step-by-step problem solving',
+    icon: 'brain',
+    placeholder: 'Enter a logic or math problem…',
+    buildPrompt: (content) =>
+      `Solve the following step by step. Show reasoning before the final answer:\n${content}`,
+    examples: [
+      'A train leaves A at 9am at 60mph. Another leaves B at 10am at 80mph toward A. When do they meet?',
+      'You have 3L and 5L jugs. Measure exactly 4L of water. List each step.',
+      'A farmer has 35 heads and 94 legs among chickens and rabbits. How many of each?',
+    ],
+  },
+  {
+    id: 'proofread',
+    label: 'Proofread',
+    hint: 'Fix grammar and clarity',
+    icon: 'spellcheck',
+    placeholder: 'Paste text to proofread…',
+    buildPrompt: (content) =>
+      `Proofread and improve the following text. Fix grammar, spelling, and awkward phrasing. Return the corrected version:\n${content}`,
+    examples: [
+      'Their going to submit the report tomorow, unless their is a blocker.',
+      'The data shows that users prefers dark mode and faster load times.',
+      'Can you please review this and let me know if their is any issues?',
+    ],
+  },
+  {
+    id: 'expand',
+    label: 'Expand',
+    hint: 'Add detail to short text',
+    icon: 'arrow-expand-horizontal',
+    placeholder: 'Paste brief notes or bullets to expand…',
+    options: [{
+      key: lengthKey,
+      label: 'Length',
+      choices: ['Short expansion', 'Detailed expansion', 'Double the length'],
+      default: 'Detailed expansion',
+    }],
+    buildPrompt: (content, opts) =>
+      `Expand the following with a ${(opts[lengthKey] || 'Detailed expansion').toLowerCase()}. Keep the original meaning:\n${content}`,
+    examples: [
+      'On-device AI: private, fast, works offline.',
+      'Launch goals: improve retention, reduce crash rate, ship dark mode.',
+      'Product idea: plant ID app with offline model and care reminders.',
+    ],
+  },
+  {
+    id: 'email',
+    label: 'Email draft',
+    hint: 'Turn notes into an email',
+    icon: 'email-outline',
+    placeholder: 'Paste bullet points or a rough draft…',
+    options: [{
+      key: emailToneKey,
+      label: 'Tone',
+      choices: ['Professional', 'Friendly', 'Urgent', 'Apologetic'],
+      default: 'Professional',
+    }],
+    buildPrompt: (content, opts) =>
+      `Draft a ${(opts[emailToneKey] || 'Professional').toLowerCase()} email from the following notes:\n${content}`,
+    examples: [
+      'Follow up on proposal. Sent last Tuesday. Need answer by Friday. Offer call.',
+      'Thanks for interview. Excited about role. Ask about next steps and timeline.',
+      'Report outage. Service down since 2am. Fix in progress. ETA 4 hours.',
+    ],
+  },
+  {
+    id: 'creative',
+    label: 'Creative',
+    hint: 'Stories, poems, and copy',
+    icon: 'feather',
+    placeholder: 'Describe what you want written…',
+    options: [{
+      key: creativeKey,
+      label: 'Style',
+      choices: ['Short story', 'Poem', 'Tagline', 'Dialogue'],
+      default: 'Short story',
+    }],
+    buildPrompt: (content, opts) =>
+      `Write a ${(opts[creativeKey] || 'Short story').toLowerCase()} based on the following prompt:\n${content}`,
+    examples: [
+      'A phone that only works offline in a world obsessed with the cloud.',
+      'A busy night market where every vendor sells memories instead of goods.',
+      'An on-device AI assistant that never sends data to the cloud.',
     ],
   },
 ];
