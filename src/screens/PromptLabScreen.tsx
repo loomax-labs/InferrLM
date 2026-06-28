@@ -617,7 +617,14 @@ export default function PromptLabScreen() {
 
       </ScrollView>
 
-      <Dialog visible={showExamples} onDismiss={() => setShowExamples(false)} title="Example prompts">
+      <Dialog
+        visible={showExamples}
+        onDismiss={() => setShowExamples(false)}
+        title="Example prompts"
+        primaryButtonText="Close"
+        onPrimaryPress={() => setShowExamples(false)}
+        dismissOnBackdropPress
+      >
         <ScrollView style={styles.exampleScroll} showsVerticalScrollIndicator={false}>
           {activeTemplate.examples.map((example, idx) => (
             <TouchableOpacity
