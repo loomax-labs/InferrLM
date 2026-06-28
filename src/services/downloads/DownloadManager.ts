@@ -12,7 +12,7 @@ import {
 } from './types';
 
 import {StoredModel} from '../ModelDownloaderTypes';
-import {normalizePath, getFileName} from '../../utils/pathUtils';
+import {normalizePath, getFileName, toFileUri} from '../../utils/pathUtils';
 
 let TransferModule: any;
 try {
@@ -156,6 +156,7 @@ export class BackgroundDownloadService {
 
     this.eventSubscriptions.push(
       this.expoEventEmitter.addListener('onTransferComplete', (event: any) => {
+      console.log('native_transfer_complete', event.modelName);
       const derivedModelName = event.modelName || this.extractModelName(event.destination, event.url);
 
       let transfer: DownloadJob | undefined = derivedModelName
@@ -519,21 +520,29 @@ export class BackgroundDownloadService {
     return downloadJob;
   }
 
-  private async pathHasFile(path?: string): Promise<boolean> {
+  private pathVariants(path?: string): string[] {
     if (!path) {
-      return false;
+      return [];
     }
+    const variants = new Set<string>([path, toFileUri(path), normalizePath(path)]);
+    return Array.from(variants).filter(Boolean);
+  }
 
-    try {
-      const info = await FileSystem.getInfoAsync(path, { size: true });
-      if (!info.exists) {
-        return false;
+  private async pathHasFile(path?: string): Promise<boolean> {
+    for (const candidate of this.pathVariants(path)) {
+      try {
+        const info = await FileSystem.getInfoAsync(candidate, { size: true });
+        if (!info.exists) {
+          continue;
+        }
+        const size = (info as { size?: number }).size ?? 0;
+        if (size > 0) {
+          return true;
+        }
+      } catch {
       }
-      const size = (info as { size?: number }).size ?? 0;
-      return size > 0;
-    } catch {
-      return false;
     }
+    return false;
   }
 
   private async waitForFileOnDisk(
@@ -541,7 +550,9 @@ export class BackgroundDownloadService {
     attempts = 12,
     delayMs = 500,
   ): Promise<boolean> {
-    const uniquePaths = Array.from(new Set(paths.filter(Boolean)));
+    const uniquePaths = Array.from(
+      new Set(paths.filter(Boolean).flatMap(p => this.pathVariants(p))),
+    );
 
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       for (const path of uniquePaths) {
@@ -561,9 +572,32 @@ export class BackgroundDownloadService {
   private async tryCompleteFromDisk(
     modelName: string,
     paths?: { temp: string; final: string },
+    downloadId?: string,
   ): Promise<boolean> {
+    if (downloadId && TransferModule?.finalizeTransfer) {
+      try {
+        const result = await TransferModule.finalizeTransfer(downloadId);
+        if (result?.finalized) {
+          console.log('native_finalize_ok', modelName);
+          return true;
+        }
+      } catch {
+        console.log('native_finalize_err', modelName);
+      }
+    }
+
     const candidates = paths ? [paths.temp, paths.final] : [];
-    const ready = await this.waitForFileOnDisk(candidates, 12, 500);
+    for (const path of candidates) {
+      if (await this.pathHasFile(path)) {
+        console.log('disk_complete_ready', modelName);
+        this.staleMap.delete(modelName);
+        this.activeTransfers.delete(modelName);
+        this.eventCallbacks.onComplete?.(modelName);
+        return true;
+      }
+    }
+
+    const ready = await this.waitForFileOnDisk(candidates, 8, 400);
     if (!ready) {
       return false;
     }
@@ -623,7 +657,7 @@ export class BackgroundDownloadService {
         const paths = destinations.get(modelName);
 
         if (progress >= 95 && paths) {
-          const completed = await this.tryCompleteFromDisk(modelName, paths);
+          const completed = await this.tryCompleteFromDisk(modelName, paths, job.downloadId);
           if (completed) {
             continue;
           }
@@ -641,7 +675,7 @@ export class BackgroundDownloadService {
 
         console.log('stale_transfer_check', modelName);
         const completed = paths
-          ? await this.tryCompleteFromDisk(modelName, paths)
+          ? await this.tryCompleteFromDisk(modelName, paths, job.downloadId)
           : false;
 
         if (!completed) {

@@ -8,6 +8,7 @@ import {hasEnoughSpace} from '../utils/storageUtils';
 import { mlxStorageManager } from './MLXStorageManager';
 import { ModelFormat } from '../types/models';
 import { notificationService } from './NotificationService';
+import { toFileUri, normalizePath } from '../utils/pathUtils';
 
 export class DownloadTaskManager extends EventEmitter {
   private activeDownloads: Map<string, DownloadTaskInfo> = new Map();
@@ -545,18 +546,22 @@ export class DownloadTaskManager extends EventEmitter {
     // Resume functionality not implemented
   }
 
+  private pathVariants(path: string): string[] {
+    return Array.from(new Set([path, toFileUri(path), normalizePath(path)])).filter(Boolean);
+  }
+
   private async resolveDownloadFile(
     modelName: string,
     downloadInfo?: DownloadTaskInfo,
   ): Promise<{ path: string; size: number; isFinal: boolean } | null> {
     const baseDir = this.fileManager.getBaseDir();
-    const paths = [
+    const rawPaths = [
       downloadInfo?.destination,
       `${this.fileManager.getDownloadDir()}/${modelName}`,
       `${baseDir}/${modelName}`,
     ].filter(Boolean) as string[];
 
-    const uniquePaths = Array.from(new Set(paths));
+    const uniquePaths = Array.from(new Set(rawPaths.flatMap(p => this.pathVariants(p))));
 
     for (const path of uniquePaths) {
       try {
@@ -568,13 +573,31 @@ export class DownloadTaskManager extends EventEmitter {
         if (size <= 0) {
           continue;
         }
+        const normalized = normalizePath(path);
         return {
           path,
           size,
-          isFinal: path.startsWith(baseDir),
+          isFinal: normalized.startsWith(normalizePath(baseDir)),
         };
       } catch {
       }
+    }
+
+    try {
+      const tempDir = this.fileManager.getDownloadDir();
+      const entries = await FileSystem.readDirectoryAsync(tempDir);
+      const match = entries.find(entry => entry === modelName);
+      if (match) {
+        const path = `${tempDir}/${match}`;
+        const info = await FileSystem.getInfoAsync(path, { size: true });
+        if (info.exists) {
+          const size = (info as { size?: number }).size || 0;
+          if (size > 0) {
+            return { path, size, isFinal: false };
+          }
+        }
+      }
+    } catch {
     }
 
     return null;
