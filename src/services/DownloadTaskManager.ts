@@ -7,6 +7,7 @@ import { fs as FileSystem } from './fs';
 import {hasEnoughSpace} from '../utils/storageUtils';
 import { mlxStorageManager } from './MLXStorageManager';
 import { ModelFormat } from '../types/models';
+import { notificationService } from './NotificationService';
 
 export class DownloadTaskManager extends EventEmitter {
   private activeDownloads: Map<string, DownloadTaskInfo> = new Map();
@@ -336,24 +337,13 @@ export class DownloadTaskManager extends EventEmitter {
       this.manualCancellationSet.add(internalName);
 
       try {
-        await backgroundDownloadService.abortTransfer(internalName);
+        await backgroundDownloadService.abortTransfer(internalName, downloadInfo.nativeDownloadId);
       } catch (error) {
         failures.push(error);
       } finally {
         if (this.activeDownloads.has(internalName)) {
           downloadInfo.status = 'cancelled';
-          if (downloadInfo.destination) {
-            try {
-              await this.fileManager.deleteFile(downloadInfo.destination);
-            } catch (error) {
-            }
-          }
-
-          try {
-            const modelTempPath = `${this.fileManager.getBaseDir()}/${internalName}`;
-            await this.fileManager.deleteFile(modelTempPath);
-          } catch (error) {
-          }
+          await this.purgeDownloadFiles(internalName, downloadInfo);
 
           this.activeDownloads.delete(internalName);
           this.tempNameMap.delete(internalName);
@@ -402,13 +392,74 @@ export class DownloadTaskManager extends EventEmitter {
     return Array.from(new Set([...exact, ...mapped]));
   }
 
+  private async stopNativeTransfer(internalName: string, nativeDownloadId?: string): Promise<void> {
+    console.log('stop_native_transfer', internalName);
+    this.manualCancellationSet.add(internalName);
+
+    try {
+      await backgroundDownloadService.abortTransfer(internalName, nativeDownloadId);
+    } catch {
+    }
+  }
+
+  private async purgeDownloadFiles(internalName: string, downloadInfo: DownloadTaskInfo): Promise<void> {
+    const paths = [
+      downloadInfo.destination,
+      `${this.fileManager.getDownloadDir()}/${internalName}`,
+      `${this.fileManager.getBaseDir()}/${internalName}`,
+    ].filter(Boolean) as string[];
+
+    for (const path of paths) {
+      try {
+        await this.fileManager.deleteFile(path);
+        console.log('purge_download_path', path);
+      } catch {
+      }
+    }
+  }
+
+  private async cleanupPackageTempResidue(packageName: string): Promise<void> {
+    const prefix = `temp_mlx_${packageName}_`;
+
+    try {
+      const tempDir = this.fileManager.getDownloadDir();
+      const dirInfo = await FileSystem.getInfoAsync(tempDir);
+      if (!dirInfo.exists) {
+        return;
+      }
+
+      const contents = await FileSystem.readDirectoryAsync(tempDir);
+      for (const filename of contents) {
+        if (!filename.startsWith(prefix)) {
+          continue;
+        }
+
+        try {
+          await this.fileManager.deleteFile(`${tempDir}/${filename}`);
+          await this.fileManager.deleteFile(`${this.fileManager.getBaseDir()}/${filename}`);
+          console.log('package_temp_purge', filename);
+        } catch {
+        }
+      }
+    } catch {
+    }
+  }
+
   async restartDownload(identifier: string, authToken?: string): Promise<void> {
     const internalNames = this.resolveInternalNames(identifier);
     if (internalNames.length === 0) {
       throw new Error('download_not_found');
     }
 
+    const isMlxPackage = internalNames.some(
+      name => name.startsWith('temp_mlx_') || this.tempNameMap.has(name)
+    );
+    if (isMlxPackage) {
+      await this.cleanupPackageTempResidue(identifier);
+    }
+
     const failures: unknown[] = [];
+    const snapshots: Array<{ internalName: string; url: string; downloadId: number }> = [];
 
     for (const internalName of internalNames) {
       const downloadInfo = this.activeDownloads.get(internalName);
@@ -418,44 +469,47 @@ export class DownloadTaskManager extends EventEmitter {
       }
 
       const displayName = this.tempNameMap.get(internalName) ?? internalName;
-      const url = downloadInfo.url;
-      const downloadId = downloadInfo.downloadId;
+      console.log('restart_cleanup', displayName, internalName);
 
-      console.log('restart_download', displayName, internalName);
-      this.startedDisplayNames.delete(displayName);
-      this.manualCancellationSet.add(internalName);
+      await this.stopNativeTransfer(internalName, downloadInfo.nativeDownloadId);
+      await this.purgeDownloadFiles(internalName, downloadInfo);
 
       try {
-        await backgroundDownloadService.abortTransfer(internalName);
-      } catch (error) {
-        failures.push(error);
-      }
-
-      if (downloadInfo.destination) {
-        try {
-          await this.fileManager.deleteFile(downloadInfo.destination);
-        } catch {
-        }
-      }
-
-      try {
-        const modelTempPath = `${this.fileManager.getBaseDir()}/${internalName}`;
-        await this.fileManager.deleteFile(modelTempPath);
+        await notificationService.cancelDownloadNotification(
+          downloadInfo.downloadId,
+          downloadInfo.nativeDownloadId,
+        );
       } catch {
       }
 
-      this.activeDownloads.delete(internalName);
+      snapshots.push({
+        internalName,
+        url: downloadInfo.url,
+        downloadId: downloadInfo.downloadId,
+      });
 
+      this.activeDownloads.delete(internalName);
+      this.startedDisplayNames.delete(displayName);
+
+      setTimeout(() => {
+        this.manualCancellationSet.delete(internalName);
+      }, 30000);
+    }
+
+    await this.saveDownloadProgress();
+
+    for (const snap of snapshots) {
       try {
-        const newDownloadId = await this.startDownload(internalName, url, authToken);
-        const newInfo = this.activeDownloads.get(internalName);
+        await this.startDownload(snap.internalName, snap.url, authToken);
+        const newInfo = this.activeDownloads.get(snap.internalName);
         if (newInfo) {
-          newInfo.downloadId = downloadId;
+          newInfo.downloadId = snap.downloadId;
         }
 
+        const resolvedDisplayName = this.tempNameMap.get(snap.internalName) ?? snap.internalName;
         this.emit('downloadStarted', {
-          modelName: displayName,
-          downloadId,
+          modelName: resolvedDisplayName,
+          downloadId: snap.downloadId,
           nativeDownloadId: newInfo?.nativeDownloadId,
         });
       } catch (error) {
