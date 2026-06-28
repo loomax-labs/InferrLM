@@ -17,6 +17,7 @@ import AppHeader from '../components/AppHeader';
 import Dialog from '../components/Dialog';
 import ModelSelector from '../components/ModelSelector';
 import PromptModeSelector from '../components/PromptModeSelector';
+import PromptOptionSelector from '../components/PromptOptionSelector';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
@@ -333,27 +334,13 @@ export default function PromptLabScreen() {
         />
 
         {activeTemplate.options?.map(opt => (
-          <View key={opt.key} style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-            <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>{opt.label.toUpperCase()}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-              {opt.choices.map(choice => {
-                const active = templateOpts[opt.key] === choice;
-                return (
-                  <TouchableOpacity
-                    key={choice}
-                    style={[styles.chip, { backgroundColor: active ? themeColors.primary : themeColors.cardBackground }]}
-                    onPress={() => handleOptionPick(opt.key, choice)}
-                    disabled={isRunning}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.chipText, fonts.semibold, { color: active ? '#FFF' : themeColors.text }]} numberOfLines={1}>
-                      {choice}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
+          <PromptOptionSelector
+            key={opt.key}
+            option={opt}
+            value={templateOpts[opt.key] ?? opt.default}
+            onSelect={val => handleOptionPick(opt.key, val)}
+            disabled={isRunning}
+          />
         ))}
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
@@ -600,15 +587,6 @@ const styles = StyleSheet.create({
   card: { borderRadius: 18, padding: 16 },
   sectionTitle: { fontSize: 17, marginBottom: 12 },
   cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
-
-  chipRow: { gap: 8 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    maxWidth: 260,
-  },
-  chipText: { fontSize: 13 },
 
   inputHeader: {
     flexDirection: 'row',
