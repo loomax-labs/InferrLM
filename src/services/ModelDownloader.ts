@@ -267,6 +267,15 @@ class ModelDownloader extends EventEmitter {
     await this.downloadTaskManager.resumeDownload(downloadId);
   }
 
+  async restartDownload(modelName: string, authToken?: string): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initializationPromise;
+    }
+
+    console.log('restart_download', modelName);
+    await this.downloadTaskManager.restartDownload(modelName, authToken);
+  }
+
   async cancelDownload(identifier: number | string): Promise<void> {
     if (typeof identifier === 'number') {
       await this.downloadTaskManager.cancelDownload(identifier);
