@@ -4,6 +4,8 @@ import {
   ActivityIndicator,
   Alert,
   Clipboard,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -30,10 +32,12 @@ import {
   DEFAULT_TEMPLATE,
   buildTemplatePrompt,
   defaultTemplateOpts,
+  getTemplatePrefix,
+  type PromptTemplate,
+  type TemplateOption,
 } from './promptLabTemplates';
 
 const HISTORY_KEY = '@prompt_lab_history_v1';
-const DEFAULT_PROMPT = DEFAULT_TEMPLATE.examples[0];
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_MAX_TOKENS = 256;
 const DEFAULT_TOP_K = 40;
@@ -101,13 +105,112 @@ function ParamStepper({
   );
 }
 
+function OptionSelect({
+  opt,
+  value,
+  onPick,
+  themeColors,
+  disabled,
+}: {
+  opt: TemplateOption;
+  value: string;
+  onPick: (val: string) => void;
+  themeColors: typeof theme['light'];
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.optionBtn, { backgroundColor: themeColors.cardBackground }]}
+        onPress={() => setOpen(true)}
+        disabled={disabled}
+        activeOpacity={0.75}
+      >
+        <Text style={[styles.optionBtnText, { color: themeColors.text }]}>
+          {opt.label}: {value}
+        </Text>
+        <MaterialCommunityIcons name="chevron-down" size={18} color={themeColors.secondaryText} />
+      </TouchableOpacity>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.optOverlay} onPress={() => setOpen(false)}>
+          <View style={[styles.optSheet, { backgroundColor: themeColors.background }]}>
+            <Text style={[styles.optSheetTitle, { color: themeColors.text }]}>{opt.label}</Text>
+            {opt.choices.map(choice => {
+              const active = choice === value;
+              return (
+                <TouchableOpacity
+                  key={choice}
+                  style={[styles.optRow, active && { backgroundColor: themeColors.primary + '18' }]}
+                  onPress={() => {
+                    onPick(choice);
+                    setOpen(false);
+                  }}
+                >
+                  <Text style={[styles.optRowText, { color: active ? themeColors.primary : themeColors.text }]}>
+                    {choice}
+                  </Text>
+                  {active && <MaterialCommunityIcons name="check" size={18} color={themeColors.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
+function ExampleSheet({
+  visible,
+  template,
+  onClose,
+  onPick,
+  themeColors,
+}: {
+  visible: boolean;
+  template: PromptTemplate;
+  onClose: () => void;
+  onPick: (text: string) => void;
+  themeColors: typeof theme['light'];
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.sheetOverlay} onPress={onClose}>
+        <Pressable style={[styles.sheet, { backgroundColor: themeColors.background }]}>
+          <View style={styles.sheetHandle} />
+          <Text style={[styles.sheetTitle, { color: themeColors.text }]}>Select an example</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {template.examples.map((example, idx) => (
+              <TouchableOpacity
+                key={`${template.id}-ex-${idx}`}
+                style={[styles.sheetRow, { backgroundColor: themeColors.cardBackground }]}
+                onPress={() => {
+                  onPick(example);
+                  onClose();
+                }}
+                activeOpacity={0.75}
+              >
+                <MaterialCommunityIcons name="file-document-outline" size={20} color={themeColors.primary} />
+                <Text style={[styles.sheetRowText, { color: themeColors.text }]}>{example}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 export default function PromptLabScreen() {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const { selectedModelPath } = useModel();
   const { fonts } = OpenSansFont();
 
-  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
+  const [content, setContent] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [output, setOutput] = useState('');
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
@@ -120,21 +223,34 @@ export default function PromptLabScreen() {
   const [tab, setTab] = useState<'output' | 'history'>('output');
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE.id);
   const [templateOpts, setTemplateOpts] = useState<Record<string, string>>(() => defaultTemplateOpts(DEFAULT_TEMPLATE));
+  const [showPreview, setShowPreview] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
+  const [showParams, setShowParams] = useState(false);
 
   const activeTemplate = useMemo(
     () => PROMPT_TEMPLATES.find(t => t.id === templateId) ?? DEFAULT_TEMPLATE,
     [templateId],
   );
 
+  const fullPrompt = useMemo(
+    () => buildTemplatePrompt(activeTemplate, content, templateOpts),
+    [activeTemplate, content, templateOpts],
+  );
+
+  const promptPrefix = useMemo(
+    () => getTemplatePrefix(activeTemplate, templateOpts),
+    [activeTemplate, templateOpts],
+  );
+
+  const hasWrapper = Boolean(activeTemplate.buildPrompt);
+  const canPreview = hasWrapper && content.trim().length > 0;
+  const canRun = content.trim().length > 0 && !isRunning;
+
   const localModelPath = engineService.getActiveModelPath() || (selectedModelPath && !remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)) ? selectedModelPath : null);
   const isRemoteSelection = Boolean(selectedModelPath && remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)));
   const displayModelName = useMemo(() => {
-    if (isRemoteSelection && selectedModelPath) {
-      return selectedModelPath;
-    }
-    if (localModelPath) {
-      return formatModelName(localModelPath.split('/').pop() || localModelPath);
-    }
+    if (isRemoteSelection && selectedModelPath) return selectedModelPath;
+    if (localModelPath) return formatModelName(localModelPath.split('/').pop() || localModelPath);
     return 'No model selected';
   }, [isRemoteSelection, localModelPath, selectedModelPath]);
 
@@ -162,7 +278,7 @@ export default function PromptLabScreen() {
   };
 
   const handleResetLab = () => {
-    setPrompt(DEFAULT_PROMPT);
+    setContent('');
     setSystemPrompt('');
     setTemperature(DEFAULT_TEMPERATURE);
     setMaxTokens(DEFAULT_MAX_TOKENS);
@@ -170,31 +286,35 @@ export default function PromptLabScreen() {
     setTopP(DEFAULT_TOP_P);
     setTemplateId(DEFAULT_TEMPLATE.id);
     setTemplateOpts(defaultTemplateOpts(DEFAULT_TEMPLATE));
+    setShowPreview(false);
     handleClearOutput();
   };
 
-  const handleTemplatePick = (templateId: string) => {
-    const next = PROMPT_TEMPLATES.find(t => t.id === templateId) ?? DEFAULT_TEMPLATE;
+  const handleTemplatePick = (id: string) => {
+    const next = PROMPT_TEMPLATES.find(t => t.id === id) ?? DEFAULT_TEMPLATE;
+    setContent('');
+    setShowPreview(false);
     setTemplateId(next.id);
     setTemplateOpts(defaultTemplateOpts(next));
-  };
-
-  const handleExamplePick = (content: string) => {
-    const full = buildTemplatePrompt(activeTemplate, content, templateOpts);
-    setPrompt(full);
   };
 
   const handleOptionPick = (key: string, value: string) => {
     setTemplateOpts(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleCopy = () => {
+  const handleCopyPrompt = () => {
+    if (!content.trim()) return;
+    Clipboard.setString(fullPrompt);
+    Alert.alert('Copied', 'Full prompt copied to clipboard.');
+  };
+
+  const handleCopyOutput = () => {
     if (!output) return;
     Clipboard.setString(output);
     Alert.alert('Copied', 'Output copied to clipboard.');
   };
 
-  const runLocalPrompt = async (modelPath: string) => {
+  const runLocalPrompt = async (modelPath: string, promptText: string) => {
     const storedModels = await modelDownloader.getStoredModels();
     const storedEntry = storedModels.find(model => model.path === modelPath);
     const engine = engineService.getEngineForModel(modelPath, storedEntry?.modelFormat);
@@ -206,7 +326,7 @@ export default function PromptLabScreen() {
     const mergedSystemPrompt = await skillManager.buildSystemPrompt(systemPrompt.trim());
     const messages = [] as Array<{ role: string; content: string }>;
     if (mergedSystemPrompt) messages.push({ role: 'system', content: mergedSystemPrompt });
-    messages.push({ role: 'user', content: prompt.trim() });
+    messages.push({ role: 'user', content: promptText.trim() });
 
     const startedAt = Date.now();
     let firstTokenMs = 0;
@@ -231,16 +351,16 @@ export default function PromptLabScreen() {
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
       model: `${displayModelName} (${engineLabels[engine]})`,
-      prompt, systemPrompt, output: finalOutput, ...finalStats,
+      prompt: promptText, systemPrompt, output: finalOutput, ...finalStats,
       temperature, maxTokens, topK, topP,
     });
   };
 
-  const runRemotePrompt = async (provider: string) => {
+  const runRemotePrompt = async (provider: string, promptText: string) => {
     const mergedSystemPrompt = await skillManager.buildSystemPrompt(systemPrompt.trim());
     const messages = [] as Array<{ id: string; role: 'system' | 'user'; content: string }>;
     if (mergedSystemPrompt) messages.push({ id: 'system', role: 'system', content: mergedSystemPrompt });
-    messages.push({ id: 'user', role: 'user', content: prompt.trim() });
+    messages.push({ id: 'user', role: 'user', content: promptText.trim() });
 
     const startedAt = Date.now();
     let firstTokenMs = 0;
@@ -266,14 +386,14 @@ export default function PromptLabScreen() {
     await persistHistory({
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
-      model: provider, prompt, systemPrompt, output: finalOutput, ...finalStats,
+      model: provider, prompt: promptText, systemPrompt, output: finalOutput, ...finalStats,
       temperature, maxTokens, topK, topP,
     });
   };
 
   const handleRun = async () => {
-    if (!prompt.trim()) {
-      Alert.alert('Prompt required', 'Enter a prompt before running.');
+    if (!canRun) {
+      Alert.alert('Content required', 'Enter content before running.');
       return;
     }
     try {
@@ -284,14 +404,14 @@ export default function PromptLabScreen() {
       await skillManager.syncTools();
 
       if (isRemoteSelection && selectedModelPath) {
-        await runRemotePrompt(selectedModelPath);
+        await runRemotePrompt(selectedModelPath, fullPrompt);
         return;
       }
       if (!localModelPath) {
         Alert.alert('No model', 'Load a local model or select a remote provider before using Prompt Lab.');
         return;
       }
-      await runLocalPrompt(localModelPath);
+      await runLocalPrompt(localModelPath, fullPrompt);
     } catch (error) {
       Alert.alert('Run failed', error instanceof Error ? error.message : 'Prompt Lab failed');
     } finally {
@@ -306,139 +426,171 @@ export default function PromptLabScreen() {
       <GradientBg />
       <AppHeader title="Prompt Lab" showBackButton showLogo={false} rightButtons={[]} />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         <ModelSelector isGenerating={isRunning} />
 
-        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-          <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>TEMPLATES</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.templateTabs}>
-            {PROMPT_TEMPLATES.map(item => {
-              const active = item.id === templateId;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[styles.templateTab, active && { backgroundColor: themeColors.primary }]}
-                  onPress={() => handleTemplatePick(item.id)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.templateTabText, fonts.semibold, { color: active ? '#FFF' : themeColors.secondaryText }]}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {activeTemplate.options?.map(opt => (
-            <View key={opt.key} style={styles.optionBlock}>
-              <Text style={[styles.optionLabel, { color: themeColors.secondaryText }]}>{opt.label}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>
-                {opt.choices.map(choice => {
-                  const active = templateOpts[opt.key] === choice;
-                  return (
-                    <TouchableOpacity
-                      key={choice}
-                      style={[styles.optionChip, { backgroundColor: active ? themeColors.primary + '22' : themeColors.cardBackground }]}
-                      onPress={() => handleOptionPick(opt.key, choice)}
-                      activeOpacity={0.75}
-                    >
-                      <Text style={[styles.optionChipText, { color: active ? themeColors.primary : themeColors.text }]} numberOfLines={1}>
-                        {choice}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          ))}
-
-          <View style={styles.exampleList}>
-            {activeTemplate.examples.map((example, idx) => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.templateTabs}>
+          {PROMPT_TEMPLATES.map(item => {
+            const active = item.id === templateId;
+            return (
               <TouchableOpacity
-                key={`${activeTemplate.id}-${idx}`}
-                style={[styles.exampleRow, { backgroundColor: themeColors.cardBackground }]}
-                onPress={() => handleExamplePick(example)}
+                key={item.id}
+                style={[styles.templateTab, active && { backgroundColor: themeColors.primary + '18' }]}
+                onPress={() => handleTemplatePick(item.id)}
+                disabled={isRunning}
                 activeOpacity={0.75}
               >
-                <MaterialCommunityIcons name="file-document-outline" size={18} color={themeColors.primary} />
-                <Text style={[styles.exampleText, { color: themeColors.text }]} numberOfLines={3}>
-                  {example}
+                <Text style={[styles.templateTabText, fonts.semibold, { color: active ? themeColors.primary : themeColors.secondaryText }]}>
+                  {item.label}
                 </Text>
               </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {activeTemplate.options && activeTemplate.options.length > 0 && (
+          <View style={[styles.optionRow, { backgroundColor: themeColors.borderColor }]}>
+            {activeTemplate.options.map(opt => (
+              <OptionSelect
+                key={opt.key}
+                opt={opt}
+                value={templateOpts[opt.key] ?? opt.default}
+                onPick={val => handleOptionPick(opt.key, val)}
+                themeColors={themeColors}
+                disabled={isRunning}
+              />
             ))}
           </View>
-        </View>
+        )}
 
-        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-          <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>PROMPT</Text>
-          <TextInput
-            multiline
-            value={prompt}
-            onChangeText={setPrompt}
-            placeholder="Write a prompt to test…"
-            placeholderTextColor={themeColors.secondaryText + '80'}
-            style={[styles.promptInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
-          />
-          <Text style={[styles.cardLabel, { color: themeColors.secondaryText, marginTop: 14 }, fonts.semibold]}>SYSTEM PROMPT</Text>
-          <TextInput
-            multiline
-            value={systemPrompt}
-            onChangeText={setSystemPrompt}
-            placeholder="Optional system prompt override…"
-            placeholderTextColor={themeColors.secondaryText + '80'}
-            style={[styles.systemInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
-          />
-        </View>
+        <View style={[styles.inputCard, { backgroundColor: themeColors.borderColor }]}>
+          {showPreview && canPreview ? (
+            <View style={[styles.previewBox, { backgroundColor: themeColors.cardBackground }]}>
+              <Text style={[styles.previewText, { color: themeColors.primary }]}>{promptPrefix}</Text>
+              <Text style={[styles.previewText, { color: themeColors.text }]}>{content}</Text>
+            </View>
+          ) : (
+            <TextInput
+              multiline
+              value={content}
+              onChangeText={setContent}
+              placeholder={activeTemplate.placeholder}
+              placeholderTextColor={themeColors.secondaryText + '80'}
+              style={[styles.contentInput, { color: themeColors.text }]}
+              editable={!isRunning}
+            />
+          )}
 
-        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-          <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>PARAMETERS</Text>
-          <View style={styles.paramGrid}>
-            <ParamStepper
-              label="Temperature"
-              value={temperature.toFixed(1)}
-              onDecrease={() => setTemperature(v => Math.max(0, Number((v - 0.1).toFixed(1))))}
-              onIncrease={() => setTemperature(v => Math.min(2, Number((v + 0.1).toFixed(1))))}
-              themeColors={themeColors}
-            />
-            <ParamStepper
-              label="Max Tokens"
-              value={String(maxTokens)}
-              onDecrease={() => setMaxTokens(v => Math.max(32, v - 32))}
-              onIncrease={() => setMaxTokens(v => Math.min(2048, v + 32))}
-              themeColors={themeColors}
-            />
-            <ParamStepper
-              label="Top K"
-              value={String(topK)}
-              onDecrease={() => setTopK(v => Math.max(1, v - 5))}
-              onIncrease={() => setTopK(v => Math.min(200, v + 5))}
-              themeColors={themeColors}
-            />
-            <ParamStepper
-              label="Top P"
-              value={topP.toFixed(2)}
-              onDecrease={() => setTopP(v => Math.max(0.1, Number((v - 0.05).toFixed(2))))}
-              onIncrease={() => setTopP(v => Math.min(1, Number((v + 0.05).toFixed(2))))}
-              themeColors={themeColors}
-            />
+          <View style={styles.inputActions}>
+            {canPreview && (
+              <TouchableOpacity
+                style={[styles.inputActionBtn, showPreview && { backgroundColor: themeColors.primary + '22' }]}
+                onPress={() => setShowPreview(v => !v)}
+                activeOpacity={0.75}
+              >
+                <MaterialCommunityIcons
+                  name={showPreview ? 'eye' : 'eye-off'}
+                  size={18}
+                  color={showPreview ? themeColors.primary : themeColors.secondaryText}
+                />
+                <Text style={[styles.inputActionText, { color: showPreview ? themeColors.primary : themeColors.secondaryText }]}>
+                  Preview prompt
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={styles.inputActionsRight}>
+              {content.trim().length > 0 && (
+                <TouchableOpacity
+                  style={[styles.iconCircle, { backgroundColor: themeColors.cardBackground }]}
+                  onPress={handleCopyPrompt}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <MaterialCommunityIcons name="content-copy" size={18} color={themeColors.text} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.iconCircle, { backgroundColor: themeColors.cardBackground }]}
+                onPress={() => setShowExamples(true)}
+                disabled={isRunning}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <MaterialCommunityIcons name="plus" size={20} color={themeColors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.sendBtn, { backgroundColor: canRun ? themeColors.primary + '22' : themeColors.cardBackground }]}
+                onPress={handleRun}
+                disabled={!canRun}
+                activeOpacity={0.8}
+              >
+                {isRunning
+                  ? <ActivityIndicator color={themeColors.primary} size="small" />
+                  : <MaterialCommunityIcons name="send" size={18} color={canRun ? themeColors.primary : themeColors.secondaryText + '55'} />}
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={[styles.hint, { color: themeColors.secondaryText }]}>Top K applies to local engines only.</Text>
         </View>
 
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.runBtn, { backgroundColor: themeColors.primary }]}
-            onPress={handleRun}
-            disabled={isRunning}
-            activeOpacity={0.8}
-          >
-            {isRunning
-              ? <ActivityIndicator color="#FFF" size="small" />
-              : <MaterialCommunityIcons name="play" size={18} color="#FFF" />}
-            <Text style={[styles.runBtnText, fonts.bold]}>{isRunning ? 'Running…' : 'Run'}</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.paramsToggle, { backgroundColor: themeColors.borderColor }]}
+          onPress={() => setShowParams(v => !v)}
+          activeOpacity={0.75}
+        >
+          <MaterialCommunityIcons name="tune" size={18} color={themeColors.secondaryText} />
+          <Text style={[styles.paramsToggleText, { color: themeColors.secondaryText }, fonts.semibold]}>
+            Parameters & system prompt
+          </Text>
+          <MaterialCommunityIcons name={showParams ? 'chevron-up' : 'chevron-down'} size={20} color={themeColors.secondaryText} />
+        </TouchableOpacity>
 
+        {showParams && (
+          <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+            <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>SYSTEM PROMPT</Text>
+            <TextInput
+              multiline
+              value={systemPrompt}
+              onChangeText={setSystemPrompt}
+              placeholder="Optional system prompt override…"
+              placeholderTextColor={themeColors.secondaryText + '80'}
+              style={[styles.systemInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
+            />
+            <Text style={[styles.cardLabel, { color: themeColors.secondaryText, marginTop: 14 }, fonts.semibold]}>PARAMETERS</Text>
+            <View style={styles.paramGrid}>
+              <ParamStepper
+                label="Temperature"
+                value={temperature.toFixed(1)}
+                onDecrease={() => setTemperature(v => Math.max(0, Number((v - 0.1).toFixed(1))))}
+                onIncrease={() => setTemperature(v => Math.min(2, Number((v + 0.1).toFixed(1))))}
+                themeColors={themeColors}
+              />
+              <ParamStepper
+                label="Max Tokens"
+                value={String(maxTokens)}
+                onDecrease={() => setMaxTokens(v => Math.max(32, v - 32))}
+                onIncrease={() => setMaxTokens(v => Math.min(2048, v + 32))}
+                themeColors={themeColors}
+              />
+              <ParamStepper
+                label="Top K"
+                value={String(topK)}
+                onDecrease={() => setTopK(v => Math.max(1, v - 5))}
+                onIncrease={() => setTopK(v => Math.min(200, v + 5))}
+                themeColors={themeColors}
+              />
+              <ParamStepper
+                label="Top P"
+                value={topP.toFixed(2)}
+                onDecrease={() => setTopP(v => Math.max(0.1, Number((v - 0.05).toFixed(2))))}
+                onIncrease={() => setTopP(v => Math.min(1, Number((v + 0.05).toFixed(2))))}
+                themeColors={themeColors}
+              />
+            </View>
+            <Text style={[styles.hint, { color: themeColors.secondaryText }]}>Top K applies to local engines only.</Text>
+          </View>
+        )}
+
+        <View style={styles.outputActions}>
           <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
             onPress={handleClearOutput}
@@ -455,7 +607,7 @@ export default function PromptLabScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
-            onPress={handleCopy}
+            onPress={handleCopyOutput}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <MaterialCommunityIcons name="content-copy" size={20} color={themeColors.text} />
@@ -521,13 +673,15 @@ export default function PromptLabScreen() {
                     key={entry.id}
                     style={[styles.historyRow, { backgroundColor: themeColors.cardBackground }]}
                     onPress={() => {
-                      setPrompt(entry.prompt);
+                      setContent(entry.prompt);
                       setSystemPrompt(entry.systemPrompt);
                       setOutput(entry.output);
                       setTemperature(entry.temperature);
                       setMaxTokens(entry.maxTokens);
                       setTopK(entry.topK);
                       setTopP(entry.topP);
+                      setTemplateId(DEFAULT_TEMPLATE.id);
+                      setShowPreview(false);
                       setStats({ durationMs: entry.durationMs, firstTokenMs: entry.firstTokenMs, tokens: entry.tokens });
                       setTab('output');
                     }}
@@ -545,6 +699,14 @@ export default function PromptLabScreen() {
         </View>
 
       </ScrollView>
+
+      <ExampleSheet
+        visible={showExamples}
+        template={activeTemplate}
+        onClose={() => setShowExamples(false)}
+        onPick={setContent}
+        themeColors={themeColors}
+      />
     </View>
   );
 }
@@ -552,49 +714,125 @@ export default function PromptLabScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40, gap: 12 },
+  content: { padding: 16, paddingBottom: 40, gap: 10 },
+
+  templateTabs: { gap: 4, paddingVertical: 4 },
+  templateTab: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  templateTabText: { fontSize: 14 },
+
+  optionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  optionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  optionBtnText: { fontSize: 13, fontWeight: '600' },
+
+  optOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  optSheet: {
+    borderRadius: 16,
+    padding: 16,
+    maxHeight: '70%',
+  },
+  optSheetTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
+  optRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  optRowText: { fontSize: 14, flex: 1 },
+
+  inputCard: {
+    borderRadius: 16,
+    minHeight: 180,
+    overflow: 'hidden',
+  },
+  contentInput: {
+    flex: 1,
+    minHeight: 140,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    fontSize: 16,
+    lineHeight: 24,
+    textAlignVertical: 'top',
+  },
+  previewBox: {
+    minHeight: 140,
+    margin: 12,
+    borderRadius: 12,
+    padding: 14,
+  },
+  previewText: { fontSize: 15, lineHeight: 23 },
+
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  inputActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  inputActionText: { fontSize: 12, fontWeight: '600' },
+  inputActionsRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  paramsToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  paramsToggleText: { flex: 1, fontSize: 13 },
 
   card: { borderRadius: 18, padding: 16 },
   cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
 
-  templateTabs: { gap: 8, paddingBottom: 12 },
-  templateTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  templateTabText: { fontSize: 13 },
-
-  optionBlock: { marginBottom: 10 },
-  optionLabel: { fontSize: 11, letterSpacing: 0.6, marginBottom: 8 },
-  optionRow: { gap: 8 },
-  optionChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 16,
-    maxWidth: 220,
-  },
-  optionChipText: { fontSize: 12 },
-
-  exampleList: { gap: 8 },
-  exampleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    borderRadius: 12,
-    padding: 12,
-  },
-  exampleText: { flex: 1, fontSize: 13, lineHeight: 19 },
-
-  promptInput: {
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    lineHeight: 22,
-    minHeight: 120,
-    textAlignVertical: 'top',
-  },
   systemInput: {
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -605,59 +843,23 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
-  paramGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  stepper: {
-    flex: 1,
-    minWidth: '44%',
-    borderRadius: 14,
-    padding: 12,
-  },
+  paramGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  stepper: { flex: 1, minWidth: '44%', borderRadius: 14, padding: 12 },
   stepperLabel: { fontSize: 12, marginBottom: 10 },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  stepBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   stepperValue: { fontSize: 16, fontWeight: '700' },
   hint: { fontSize: 12, marginTop: 12, lineHeight: 17 },
 
-  actionRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  runBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  runBtnText: { color: '#FFF', fontSize: 15 },
-  iconBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  outputActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
+  iconBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  tabPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
+  tabPill: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   tabPillText: { fontSize: 13 },
 
   runningPlaceholder: { alignItems: 'center', paddingVertical: 32, gap: 10 },
   runningText: { fontSize: 14 },
-
   outputText: { fontSize: 15, lineHeight: 23, minHeight: 80 },
 
   statsRow: { flexDirection: 'row', gap: 8, marginTop: 16, flexWrap: 'wrap' },
@@ -668,4 +870,36 @@ const styles = StyleSheet.create({
   historyRow: { borderRadius: 14, padding: 12, marginTop: 8 },
   historyPrompt: { fontSize: 14 },
   historyMeta: { fontSize: 12, marginTop: 3 },
+
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+    maxHeight: '70%',
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(128,128,128,0.4)',
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 12,
+  },
+  sheetTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
+  sheetRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  sheetRowText: { flex: 1, fontSize: 14, lineHeight: 20 },
 });
