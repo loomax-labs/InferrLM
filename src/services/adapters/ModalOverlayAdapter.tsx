@@ -1,11 +1,12 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Modal,
   Platform,
-  Pressable,
   StyleSheet,
-  useWindowDimensions,
+  TouchableWithoutFeedback,
   View,
+  ViewStyle,
 } from 'react-native';
 import { FullWindowOverlay } from 'react-native-screens';
 
@@ -15,19 +16,92 @@ type OverlayHostProps = {
   children: ReactNode;
 };
 
-export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) => {
-  const { width, height } = useWindowDimensions();
+const fadeInMs = 180;
+const fadeOutMs = 150;
 
-  if (!visible) {
+export const panelElevation: ViewStyle = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.24,
+    shadowRadius: 16,
+  },
+  android: {
+    elevation: 10,
+  },
+  default: {},
+}) as ViewStyle;
+
+export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.96)).current;
+  const [mounted, setMounted] = useState(false);
+
+  const animateIn = useCallback(() => {
+    opacity.setValue(0);
+    scale.setValue(0.96);
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: fadeInMs,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: fadeInMs,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [opacity, scale]);
+
+  const animateOut = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: fadeOutMs,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 0.96,
+        duration: fadeOutMs,
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) {
+        setMounted(false);
+      }
+    });
+  }, [opacity, scale]);
+
+  useEffect(() => {
+    if (visible) {
+      setMounted(true);
+      return;
+    }
+
+    if (mounted) {
+      animateOut();
+    }
+  }, [visible, mounted, animateOut]);
+
+  useEffect(() => {
+    if (mounted && visible) {
+      animateIn();
+    }
+  }, [mounted, visible, animateIn]);
+
+  if (!mounted) {
     return null;
   }
 
   const body = (
-    <View style={[styles.overlay, { width, height }]}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" />
-      <View style={styles.contentLayer} pointerEvents="box-none">
+    <View style={styles.overlay}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <Animated.View style={[styles.backdrop, { opacity }]} />
+      </TouchableWithoutFeedback>
+      <Animated.View style={[styles.panelWrap, { opacity, transform: [{ scale }] }]}>
         {children}
-      </View>
+      </Animated.View>
     </View>
   );
 
@@ -39,7 +113,7 @@ export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) =>
     <Modal
       visible
       transparent
-      animationType="fade"
+      animationType="none"
       statusBarTranslucent
       onRequestClose={onClose}
     >
@@ -51,16 +125,15 @@ export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) =>
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 1,
   },
-  contentLayer: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
+  panelWrap: {
+    zIndex: 1,
+    maxWidth: '100%',
   },
 });
