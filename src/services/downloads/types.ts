@@ -71,3 +71,10 @@ export interface ActiveDownload {
   progress: number;
   modelName?: string;
 }
+
+export interface TransferPathPair {
+  temp: string;
+  final: string;
+}
+
+export type TransferPathMap = Map<string, TransferPathPair>;

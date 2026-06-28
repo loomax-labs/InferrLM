@@ -8,6 +8,7 @@ import {
   DownloadMap,
   DownloadNativeEvent,
   DownloadProgress,
+  TransferPathMap,
 } from './types';
 
 import {StoredModel} from '../ModelDownloaderTypes';
@@ -178,6 +179,7 @@ export class BackgroundDownloadService {
       const modelName = transfer.model.name;
       const totalBytes = event.totalBytes ?? transfer.state.progress?.bytesTotal ?? 0;
 
+      this.staleMap.delete(modelName);
       transfer.state.isDownloading = false;
       transfer.state.progress = {
         bytesDownloaded: totalBytes,
@@ -517,7 +519,66 @@ export class BackgroundDownloadService {
     return downloadJob;
   }
 
-  async synchronizeWithActiveTransfers(models: StoredModel[] = []): Promise<void> {
+  private async pathHasFile(path?: string): Promise<boolean> {
+    if (!path) {
+      return false;
+    }
+
+    try {
+      const info = await FileSystem.getInfoAsync(path, { size: true });
+      if (!info.exists) {
+        return false;
+      }
+      const size = (info as { size?: number }).size ?? 0;
+      return size > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  private async waitForFileOnDisk(
+    paths: string[],
+    attempts = 12,
+    delayMs = 500,
+  ): Promise<boolean> {
+    const uniquePaths = Array.from(new Set(paths.filter(Boolean)));
+
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      for (const path of uniquePaths) {
+        if (await this.pathHasFile(path)) {
+          return true;
+        }
+      }
+
+      if (attempt < attempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+
+    return false;
+  }
+
+  private async tryCompleteFromDisk(
+    modelName: string,
+    paths?: { temp: string; final: string },
+  ): Promise<boolean> {
+    const candidates = paths ? [paths.temp, paths.final] : [];
+    const ready = await this.waitForFileOnDisk(candidates, 12, 500);
+    if (!ready) {
+      return false;
+    }
+
+    console.log('disk_complete_ready', modelName);
+    this.staleMap.delete(modelName);
+    this.activeTransfers.delete(modelName);
+    this.eventCallbacks.onComplete?.(modelName);
+    return true;
+  }
+
+  async synchronizeWithActiveTransfers(
+    models: StoredModel[] = [],
+    destinations: TransferPathMap = new Map(),
+  ): Promise<void> {
     if (!TransferModule) {
       return;
     }
@@ -558,6 +619,16 @@ export class BackgroundDownloadService {
           continue;
         }
 
+        const progress = job.state.progress?.progress ?? 0;
+        const paths = destinations.get(modelName);
+
+        if (progress >= 95 && paths) {
+          const completed = await this.tryCompleteFromDisk(modelName, paths);
+          if (completed) {
+            continue;
+          }
+        }
+
         const first = this.staleMap.get(modelName);
         if (!first) {
           this.staleMap.set(modelName, now);
@@ -568,13 +639,20 @@ export class BackgroundDownloadService {
           continue;
         }
 
-        console.log('stale_transfer_recovery', modelName);
-        this.staleMap.delete(modelName);
-        this.activeTransfers.delete(modelName);
+        console.log('stale_transfer_check', modelName);
+        const completed = paths
+          ? await this.tryCompleteFromDisk(modelName, paths)
+          : false;
 
-        const dest = models.find(m => m.name === modelName);
-        if (dest) {
-          this.eventCallbacks.onComplete?.(modelName);
+        if (!completed) {
+          if (progress >= 95) {
+            console.log('stale_grace_extend', modelName);
+            this.staleMap.set(modelName, now);
+          } else {
+            console.log('stale_transfer_drop', modelName);
+            this.staleMap.delete(modelName);
+            this.activeTransfers.delete(modelName);
+          }
         }
       }
 
