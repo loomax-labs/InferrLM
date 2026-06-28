@@ -394,6 +394,82 @@ export class DownloadTaskManager extends EventEmitter {
     }
   }
 
+  private resolveInternalNames(identifier: string): string[] {
+    const exact = this.activeDownloads.has(identifier) ? [identifier] : [];
+    const mapped = Array.from(this.activeDownloads.keys()).filter(
+      key => this.tempNameMap.get(key) === identifier
+    );
+    return Array.from(new Set([...exact, ...mapped]));
+  }
+
+  async restartDownload(identifier: string, authToken?: string): Promise<void> {
+    const internalNames = this.resolveInternalNames(identifier);
+    if (internalNames.length === 0) {
+      throw new Error('download_not_found');
+    }
+
+    const failures: unknown[] = [];
+
+    for (const internalName of internalNames) {
+      const downloadInfo = this.activeDownloads.get(internalName);
+      if (!downloadInfo?.url) {
+        failures.push(new Error('download_url_missing'));
+        continue;
+      }
+
+      const displayName = this.tempNameMap.get(internalName) ?? internalName;
+      const url = downloadInfo.url;
+      const downloadId = downloadInfo.downloadId;
+
+      console.log('restart_download', displayName, internalName);
+      this.startedDisplayNames.delete(displayName);
+      this.manualCancellationSet.add(internalName);
+
+      try {
+        await backgroundDownloadService.abortTransfer(internalName);
+      } catch (error) {
+        failures.push(error);
+      }
+
+      if (downloadInfo.destination) {
+        try {
+          await this.fileManager.deleteFile(downloadInfo.destination);
+        } catch {
+        }
+      }
+
+      try {
+        const modelTempPath = `${this.fileManager.getBaseDir()}/${internalName}`;
+        await this.fileManager.deleteFile(modelTempPath);
+      } catch {
+      }
+
+      this.activeDownloads.delete(internalName);
+
+      try {
+        const newDownloadId = await this.startDownload(internalName, url, authToken);
+        const newInfo = this.activeDownloads.get(internalName);
+        if (newInfo) {
+          newInfo.downloadId = downloadId;
+        }
+
+        this.emit('downloadStarted', {
+          modelName: displayName,
+          downloadId,
+          nativeDownloadId: newInfo?.nativeDownloadId,
+        });
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+
+    await this.saveDownloadProgress();
+
+    if (failures.length > 0) {
+      throw failures[0] as Error;
+    }
+  }
+
   async pauseDownload(downloadId: number): Promise<void> {
     const download = Array.from(this.activeDownloads.entries()).find(([, info]) => info.downloadId === downloadId);
     if (!download) {
