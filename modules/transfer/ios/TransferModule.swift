@@ -1,9 +1,8 @@
 /*
-  iOS native transfer module using URLSession background downloads.
-  Manages file downloads that survive app reloads and backgrounding
-  by using a persistent background URLSession identifier and UserDefaults
-  metadata store. Emits progress/completion/error/cancellation events
-  matching the Android TransferModule API.
+  iOS native transfer module using URLSession downloads.
+  Uses a default URLSession so completion delegates fire reliably
+  while the app is in the foreground. Metadata is persisted in
+  UserDefaults for reconnect after reload.
 */
 
 import ExpoModulesCore
@@ -17,20 +16,19 @@ private struct TransferMeta: Codable {
 }
 
 public class TransferModule: Module {
-  static let sessionId = "com.inferra.bgdownload"
   private static let storeKey = "transfer_module_meta"
 
   private lazy var session: URLSession = {
-    let config = URLSessionConfiguration.background(withIdentifier: Self.sessionId)
-    config.isDiscretionary = false
-    config.sessionSendsLaunchEvents = true
+    let config = URLSessionConfiguration.default
+    config.timeoutIntervalForRequest = 3600
+    config.timeoutIntervalForResource = 86400
     config.allowsCellularAccess = true
-    config.waitsForConnectivity = false
+    config.waitsForConnectivity = true
     if #available(iOS 13.0, *) {
       config.allowsExpensiveNetworkAccess = true
       config.allowsConstrainedNetworkAccess = true
     }
-    return URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+    return URLSession(configuration: config, delegate: delegate, delegateQueue: OperationQueue.main)
   }()
 
   private let delegate = SessionDelegate()
@@ -99,6 +97,10 @@ public class TransferModule: Module {
       return true
     }
 
+    AsyncFunction("finalizeTransfer") { (transferId: String) -> [String: Any] in
+      return self.finalizeTransferIfReady(transferId)
+    }
+
     AsyncFunction("getOngoingTransfers") { () -> [[String: Any]] in
       return await withCheckedContinuation { continuation in
         self.session.getTasksWithCompletionHandler { _, _, downloadTasks in
@@ -132,7 +134,14 @@ public class TransferModule: Module {
     }
   }
 
-  /* Event emitters called by the delegate */
+  private func emitOnMain(_ name: String, _ body: [String: Any]) {
+    let work = { self.sendEvent(name, body) }
+    if Thread.isMainThread {
+      work()
+    } else {
+      DispatchQueue.main.async(execute: work)
+    }
+  }
 
   func emitProgress(_ tid: String, bytesWritten: Int64, totalBytes: Int64) {
     let stored = getMeta(tid)
@@ -141,7 +150,7 @@ public class TransferModule: Module {
       ? min(Int(Double(bytesWritten) / Double(totalBytes) * 100), 100)
       : 0
 
-    sendEvent("onTransferProgress", [
+    emitOnMain("onTransferProgress", [
       "downloadId": tid,
       "modelName": modelName,
       "destination": stored?.destination ?? "",
@@ -167,7 +176,7 @@ public class TransferModule: Module {
       do {
         try FileManager.default.moveItem(at: location, to: destURL)
       } catch {
-        sendEvent("onTransferError", [
+        emitOnMain("onTransferError", [
           "downloadId": tid,
           "modelName": modelName,
           "destination": dest,
@@ -178,10 +187,19 @@ public class TransferModule: Module {
       }
     }
 
+    emitCompleteAtDestination(tid: tid, stored: stored, modelName: modelName, dest: dest)
+  }
+
+  private func emitCompleteAtDestination(
+    tid: String,
+    stored: TransferMeta?,
+    modelName: String,
+    dest: String
+  ) {
     let finalPath = dest.isEmpty ? dest : Self.resolveDestinationURL(dest).path
     let size = (try? FileManager.default.attributesOfItem(atPath: finalPath))?[.size] as? Int64 ?? 0
 
-    sendEvent("onTransferComplete", [
+    emitOnMain("onTransferComplete", [
       "downloadId": tid,
       "modelName": modelName,
       "destination": dest,
@@ -192,6 +210,37 @@ public class TransferModule: Module {
     removeMeta(tid)
   }
 
+  private func finalizeTransferIfReady(_ transferId: String) -> [String: Any] {
+    guard let stored = getMeta(transferId) else {
+      return ["finalized": false]
+    }
+
+    let dest = stored.destination
+    guard !dest.isEmpty else {
+      return ["finalized": false]
+    }
+
+    let destURL = Self.resolveDestinationURL(dest)
+    var isDir: ObjCBool = false
+    let exists = FileManager.default.fileExists(atPath: destURL.path, isDirectory: &isDir)
+    guard exists && !isDir.boolValue else {
+      return ["finalized": false]
+    }
+
+    let size = (try? FileManager.default.attributesOfItem(atPath: destURL.path)[.size] as? Int64) ?? 0
+    guard size > 0 else {
+      return ["finalized": false]
+    }
+
+    emitCompleteAtDestination(
+      tid: transferId,
+      stored: stored,
+      modelName: stored.modelName,
+      dest: dest
+    )
+    return ["finalized": true, "size": Double(size)]
+  }
+
   func emitError(_ tid: String, error: Error) {
     let stored = getMeta(tid)
     let modelName = stored?.modelName ?? tid
@@ -199,7 +248,7 @@ public class TransferModule: Module {
     let cancelled = nsErr.code == NSURLErrorCancelled
 
     if cancelled {
-      sendEvent("onTransferCancelled", [
+      emitOnMain("onTransferCancelled", [
         "downloadId": tid,
         "modelName": modelName,
         "destination": stored?.destination ?? "",
@@ -211,7 +260,7 @@ public class TransferModule: Module {
       let underlying = (nsErr.userInfo[NSUnderlyingErrorKey] as? NSError) ?? nsErr
       let isEnospc = underlying.domain == NSPOSIXErrorDomain && underlying.code == Int(ENOSPC)
       let errorMsg = isEnospc ? "enospc" : error.localizedDescription
-      sendEvent("onTransferError", [
+      emitOnMain("onTransferError", [
         "downloadId": tid,
         "modelName": modelName,
         "destination": stored?.destination ?? "",
@@ -224,19 +273,15 @@ public class TransferModule: Module {
     removeMeta(tid)
   }
 
-  /* Reconnect to any background tasks that survived reload */
   private func reconnect() {
     session.getTasksWithCompletionHandler { [weak self] _, _, downloadTasks in
       guard let self else { return }
       for task in downloadTasks {
-        guard let tid = task.taskDescription, task.state == .running || task.state == .suspended else { continue }
+        guard let tid = task.taskDescription else { continue }
         if self.getMeta(tid) == nil {
-          /*
-            Metadata was cleared (e.g. UserDefaults eviction or reinstall).
-            Without a destination path there is nowhere to put the file,
-            so cancel the task rather than silently losing data later.
-          */
-          task.cancel()
+          if task.state == .running || task.state == .suspended {
+            task.cancel()
+          }
           continue
         }
         if task.state == .suspended {
@@ -245,8 +290,6 @@ public class TransferModule: Module {
       }
     }
   }
-
-  /* Persistent metadata store via UserDefaults */
 
   private func loadMeta() {
     metaLock.lock()
@@ -301,8 +344,6 @@ public class TransferModule: Module {
   }
 }
 
-/* URLSession delegate that forwards events to the module */
-
 private class SessionDelegate: NSObject, URLSessionDownloadDelegate {
   weak var module: TransferModule?
 
@@ -328,16 +369,5 @@ private class SessionDelegate: NSObject, URLSessionDownloadDelegate {
 
   func urlSession(_ session: URLSession,
                   didBecomeInvalidWithError error: Error?) {
-    /* no-op; session should not be invalidated */
-  }
-
-  func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
-    DispatchQueue.main.async {
-      NotificationCenter.default.post(
-        name: Notification.Name("com.inferra.bgdownload.sessionFinished"),
-        object: nil,
-        userInfo: ["identifier": TransferModule.sessionId]
-      )
-    }
   }
 }
