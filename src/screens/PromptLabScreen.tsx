@@ -14,6 +14,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
+import ModelSelector from '../components/ModelSelector';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
@@ -277,12 +278,7 @@ export default function PromptLabScreen() {
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        <View style={[styles.modelChip, { backgroundColor: themeColors.primary + '18', borderColor: themeColors.primary + '35' }]}>
-          <MaterialCommunityIcons name="chip" size={14} color={themeColors.primary} />
-          <Text style={[styles.modelChipText, { color: themeColors.primary }, fonts.semibold]} numberOfLines={1}>
-            {displayModelName}
-          </Text>
-        </View>
+        <ModelSelector isGenerating={isRunning} />
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
           <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>PROMPT</Text>
@@ -467,19 +463,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 40, gap: 12 },
-
-  modelChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    maxWidth: '100%',
-  },
-  modelChipText: { fontSize: 13 },
 
   card: { borderRadius: 18, padding: 16 },
   cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
