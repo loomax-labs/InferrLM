@@ -25,9 +25,15 @@ import { engineService } from '../services/runtime-service';
 import { onlineModelService, OnlineModelService } from '../services/OnlineModelService';
 import { skillManager } from '../services/SkillManager';
 import { OpenSansFont } from '../hooks/OpenSansFont';
+import {
+  PROMPT_TEMPLATES,
+  DEFAULT_TEMPLATE,
+  buildTemplatePrompt,
+  defaultTemplateOpts,
+} from './promptLabTemplates';
 
 const HISTORY_KEY = '@prompt_lab_history_v1';
-const DEFAULT_PROMPT = 'Explain how retrieval-augmented generation differs from a standard chat completion.';
+const DEFAULT_PROMPT = DEFAULT_TEMPLATE.examples[0];
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_MAX_TOKENS = 256;
 const DEFAULT_TOP_K = 40;
@@ -112,6 +118,13 @@ export default function PromptLabScreen() {
   const [isRunning, setIsRunning] = useState(false);
   const [stats, setStats] = useState({ durationMs: 0, firstTokenMs: 0, tokens: 0 });
   const [tab, setTab] = useState<'output' | 'history'>('output');
+  const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE.id);
+  const [templateOpts, setTemplateOpts] = useState<Record<string, string>>(() => defaultTemplateOpts(DEFAULT_TEMPLATE));
+
+  const activeTemplate = useMemo(
+    () => PROMPT_TEMPLATES.find(t => t.id === templateId) ?? DEFAULT_TEMPLATE,
+    [templateId],
+  );
 
   const localModelPath = engineService.getActiveModelPath() || (selectedModelPath && !remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)) ? selectedModelPath : null);
   const isRemoteSelection = Boolean(selectedModelPath && remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)));
@@ -155,7 +168,24 @@ export default function PromptLabScreen() {
     setMaxTokens(DEFAULT_MAX_TOKENS);
     setTopK(DEFAULT_TOP_K);
     setTopP(DEFAULT_TOP_P);
+    setTemplateId(DEFAULT_TEMPLATE.id);
+    setTemplateOpts(defaultTemplateOpts(DEFAULT_TEMPLATE));
     handleClearOutput();
+  };
+
+  const handleTemplatePick = (templateId: string) => {
+    const next = PROMPT_TEMPLATES.find(t => t.id === templateId) ?? DEFAULT_TEMPLATE;
+    setTemplateId(next.id);
+    setTemplateOpts(defaultTemplateOpts(next));
+  };
+
+  const handleExamplePick = (content: string) => {
+    const full = buildTemplatePrompt(activeTemplate, content, templateOpts);
+    setPrompt(full);
+  };
+
+  const handleOptionPick = (key: string, value: string) => {
+    setTemplateOpts(prev => ({ ...prev, [key]: value }));
   };
 
   const handleCopy = () => {
@@ -279,6 +309,66 @@ export default function PromptLabScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         <ModelSelector isGenerating={isRunning} />
+
+        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+          <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>TEMPLATES</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.templateTabs}>
+            {PROMPT_TEMPLATES.map(item => {
+              const active = item.id === templateId;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.templateTab, active && { backgroundColor: themeColors.primary }]}
+                  onPress={() => handleTemplatePick(item.id)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.templateTabText, fonts.semibold, { color: active ? '#FFF' : themeColors.secondaryText }]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {activeTemplate.options?.map(opt => (
+            <View key={opt.key} style={styles.optionBlock}>
+              <Text style={[styles.optionLabel, { color: themeColors.secondaryText }]}>{opt.label}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>
+                {opt.choices.map(choice => {
+                  const active = templateOpts[opt.key] === choice;
+                  return (
+                    <TouchableOpacity
+                      key={choice}
+                      style={[styles.optionChip, { backgroundColor: active ? themeColors.primary + '22' : themeColors.cardBackground }]}
+                      onPress={() => handleOptionPick(opt.key, choice)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.optionChipText, { color: active ? themeColors.primary : themeColors.text }]} numberOfLines={1}>
+                        {choice}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ))}
+
+          <View style={styles.exampleList}>
+            {activeTemplate.examples.map((example, idx) => (
+              <TouchableOpacity
+                key={`${activeTemplate.id}-${idx}`}
+                style={[styles.exampleRow, { backgroundColor: themeColors.cardBackground }]}
+                onPress={() => handleExamplePick(example)}
+                activeOpacity={0.75}
+              >
+                <MaterialCommunityIcons name="file-document-outline" size={18} color={themeColors.primary} />
+                <Text style={[styles.exampleText, { color: themeColors.text }]} numberOfLines={3}>
+                  {example}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
           <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>PROMPT</Text>
@@ -466,6 +556,35 @@ const styles = StyleSheet.create({
 
   card: { borderRadius: 18, padding: 16 },
   cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
+
+  templateTabs: { gap: 8, paddingBottom: 12 },
+  templateTab: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  templateTabText: { fontSize: 13 },
+
+  optionBlock: { marginBottom: 10 },
+  optionLabel: { fontSize: 11, letterSpacing: 0.6, marginBottom: 8 },
+  optionRow: { gap: 8 },
+  optionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    maxWidth: 220,
+  },
+  optionChipText: { fontSize: 12 },
+
+  exampleList: { gap: 8 },
+  exampleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    borderRadius: 12,
+    padding: 12,
+  },
+  exampleText: { flex: 1, fontSize: 13, lineHeight: 19 },
 
   promptInput: {
     borderRadius: 12,
