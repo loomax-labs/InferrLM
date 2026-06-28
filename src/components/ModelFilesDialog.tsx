@@ -229,7 +229,7 @@ export default function ModelFilesDialog({
   return (
     <OverlayHost visible={visible} onClose={onClose}>
       {showLoading ? (
-        <View style={[styles.loadingCard, { backgroundColor: themeColors.background }]}>
+        <View style={[styles.loadingCard, { backgroundColor: themeColors.background }]} pointerEvents="auto">
           <ActivityIndicator size="large" color={themeColors.primary} />
           <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading model details...</Text>
           {loadingModelId ? (
@@ -239,7 +239,7 @@ export default function ModelFilesDialog({
           ) : null}
         </View>
       ) : modelDetails ? (
-        <View style={[styles.modalContent, { backgroundColor: themeColors.background, width: modalWidth, maxHeight: height - 100 }]}>
+        <View style={[styles.modalContent, { backgroundColor: themeColors.background, width: modalWidth, maxHeight: height - 100 }]} pointerEvents="auto">
           <View style={styles.header}>
             <View style={styles.titleContainer}>
               <Text style={[styles.title, { color: themeColors.text }]}>{modelDetails.id}</Text>
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderRadius: 16,
     padding: 24,
-    zIndex: 1,
+    overflow: 'hidden',
   },
   loadingCard: {
     padding: 24,
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     gap: 16,
     maxWidth: 320,
     marginHorizontal: 24,
-    zIndex: 1,
+    overflow: 'hidden',
   },
   loadingText: {
     fontSize: 16,

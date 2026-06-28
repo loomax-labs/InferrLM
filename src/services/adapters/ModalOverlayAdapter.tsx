@@ -2,8 +2,9 @@ import React, { ReactNode } from 'react';
 import {
   Modal,
   Platform,
+  Pressable,
   StyleSheet,
-  TouchableWithoutFeedback,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { FullWindowOverlay } from 'react-native-screens';
@@ -15,16 +16,18 @@ type OverlayHostProps = {
 };
 
 export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) => {
+  const { width, height } = useWindowDimensions();
+
   if (!visible) {
     return null;
   }
 
   const body = (
-    <View style={styles.overlay}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.backdrop} />
-      </TouchableWithoutFeedback>
-      {children}
+    <View style={[styles.overlay, { width, height }]}>
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" />
+      <View style={styles.contentLayer} pointerEvents="box-none">
+        {children}
+      </View>
     </View>
   );
 
@@ -48,11 +51,16 @@ export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) =>
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1,
+  },
+  contentLayer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
   },
 });
