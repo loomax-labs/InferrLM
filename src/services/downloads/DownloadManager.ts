@@ -1,4 +1,5 @@
 import { requireNativeModule, EventEmitter as ExpoEventEmitter } from 'expo-modules-core';
+import { Platform } from 'react-native';
 import { fs as FileSystem } from '../fs';
 
 import {
@@ -25,6 +26,66 @@ export class BackgroundDownloadService {
   private expoEventEmitter: InstanceType<typeof ExpoEventEmitter> | null = null;
   private eventSubscriptions: Array<{ remove(): void }> = [];
   private staleMap: Map<string, number> = new Map();
+  private readonly staleMs = Platform.OS === 'ios' ? 60000 : 15000;
+
+  private isUuidLike(name: string): boolean {
+    return /^[0-9A-F]{8}-[0-9A-F]{4}-/i.test(name);
+  }
+
+  private resolveModelName(
+    modelName: string,
+    destination?: string,
+    url?: string,
+  ): string {
+    if (!this.isUuidLike(modelName)) {
+      return modelName;
+    }
+    return this.extractModelName(destination, url) ?? modelName;
+  }
+
+  private findTransferByNativeId(nativeId: string): [string, DownloadJob] | undefined {
+    for (const entry of this.activeTransfers.entries()) {
+      if (entry[1].downloadId === nativeId) {
+        return entry;
+      }
+    }
+    return undefined;
+  }
+
+  private updateProgressFromBytes(
+    transfer: DownloadJob,
+    bytesWritten: number,
+    totalBytes: number,
+    fallbackProgress?: number,
+  ): DownloadProgress {
+    const currentTimestamp = Date.now();
+    const timeDelta = currentTimestamp - transfer.lastUpdateTime;
+    const bytesDelta = bytesWritten - transfer.lastBytesWritten;
+
+    const computedProgress = totalBytes > 0
+      ? Math.min(Math.round((bytesWritten / totalBytes) * 100), 100)
+      : Math.round(fallbackProgress ?? transfer.state.progress?.progress ?? 0);
+
+    let transferSpeedBps = transfer.state.progress?.rawSpeed ?? 0;
+    if (timeDelta > 0 && bytesDelta >= 0) {
+      transferSpeedBps = (bytesDelta / timeDelta) * 1000;
+    }
+
+    transfer.lastBytesWritten = bytesWritten;
+    transfer.lastUpdateTime = currentTimestamp;
+
+    return {
+      bytesDownloaded: bytesWritten,
+      bytesTotal: totalBytes,
+      progress: computedProgress,
+      speed: this.formatTransferSpeed(transferSpeedBps),
+      eta: this.calculateTransferEta(bytesWritten, totalBytes, transferSpeedBps),
+      rawSpeed: transferSpeedBps,
+      rawEta: transferSpeedBps > 0 && totalBytes - bytesWritten > 0
+        ? (totalBytes - bytesWritten) / transferSpeedBps
+        : 0,
+    };
+  }
 
   constructor() {
     this.activeTransfers = new Map();
@@ -39,20 +100,28 @@ export class BackgroundDownloadService {
 
     this.eventSubscriptions.push(
       this.expoEventEmitter.addListener('onTransferProgress', (event: any) => {
-      let derivedModelName = event.modelName || this.extractModelName(event.destination, event.url);
+      let derivedModelName = this.resolveModelName(
+        event.modelName || '',
+        event.destination,
+        event.url,
+      );
+
+      if (this.isUuidLike(derivedModelName)) {
+        derivedModelName = this.extractModelName(event.destination, event.url) ?? derivedModelName;
+      }
 
       let transfer = derivedModelName ? this.activeTransfers.get(derivedModelName) : undefined;
 
       if (!transfer && event.downloadId) {
-        const entry = Array.from(this.activeTransfers.entries()).find(([, job]) => job.downloadId === event.downloadId);
+        const entry = this.findTransferByNativeId(event.downloadId);
         if (entry) {
           derivedModelName = entry[0];
           transfer = entry[1];
         }
       }
 
-      if (!transfer && derivedModelName) {
-        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event);
+      if (!transfer && derivedModelName && !this.isUuidLike(derivedModelName)) {
+        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event) ?? undefined;
       }
 
       if (!transfer || !derivedModelName) {
@@ -66,51 +135,22 @@ export class BackgroundDownloadService {
       const bytesWritten = event.bytesWritten ?? transfer.state.progress?.bytesDownloaded ?? 0;
       const totalBytes = event.totalBytes ?? transfer.state.progress?.bytesTotal ?? 0;
 
-      const computedProgress = totalBytes > 0
-        ? Math.min(Math.round((bytesWritten / totalBytes) * 100), 100)
-        : Math.round(event.progress ?? transfer.state.progress?.progress ?? 0);
-
       const currentTimestamp = Date.now();
       const timeSinceLastUIUpdate = currentTimestamp - ((transfer as any).lastUIUpdateTime || 0);
 
-      transfer.state.progress = {
-        bytesDownloaded: bytesWritten,
-        bytesTotal: totalBytes,
-        progress: computedProgress,
-        speed: transfer.state.progress?.speed ?? '0 B/s',
-        eta: transfer.state.progress?.eta ?? 'calculating',
-        rawSpeed: transfer.state.progress?.rawSpeed ?? 0,
-        rawEta: transfer.state.progress?.rawEta ?? 0,
-      };
+      transfer.state.progress = this.updateProgressFromBytes(
+        transfer,
+        bytesWritten,
+        totalBytes,
+        event.progress,
+      );
+
+      const computedProgress = transfer.state.progress.progress;
 
       if (timeSinceLastUIUpdate >= 1000 || computedProgress === 100) {
-        const timeDelta = currentTimestamp - transfer.lastUpdateTime;
-        const bytesDelta = bytesWritten - transfer.lastBytesWritten;
-
-        let transferSpeedBps = transfer.state.progress?.rawSpeed ?? 0;
-        if (timeDelta > 0 && bytesDelta >= 0) {
-          transferSpeedBps = (bytesDelta / timeDelta) * 1000;
-        }
-
-        transfer.state.progress = {
-          bytesDownloaded: bytesWritten,
-          bytesTotal: totalBytes,
-          progress: computedProgress,
-          speed: this.formatTransferSpeed(transferSpeedBps),
-          eta: this.calculateTransferEta(bytesWritten, totalBytes, transferSpeedBps),
-          rawSpeed: transferSpeedBps,
-          rawEta: transferSpeedBps > 0 && (totalBytes - bytesWritten) > 0
-            ? (totalBytes - bytesWritten) / transferSpeedBps
-            : 0,
-        };
-
         (transfer as any).lastUIUpdateTime = currentTimestamp;
         this.eventCallbacks.onProgress?.(derivedModelName, transfer.state.progress);
-      } else {
       }
-
-      transfer.lastBytesWritten = bytesWritten;
-      transfer.lastUpdateTime = currentTimestamp;
     }));
 
     this.eventSubscriptions.push(
@@ -128,7 +168,7 @@ export class BackgroundDownloadService {
       }
 
       if (!transfer && derivedModelName) {
-        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event);
+        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event) ?? undefined;
       }
 
       if (!transfer) {
@@ -168,7 +208,7 @@ export class BackgroundDownloadService {
       }
 
       if (!transfer && derivedModelName) {
-        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event, false);
+        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event, false) ?? undefined;
       }
 
       if (!transfer) {
@@ -198,7 +238,7 @@ export class BackgroundDownloadService {
       }
 
       if (!transfer && derivedModelName) {
-        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event, false);
+        transfer = this.createTransferJobFromNativeEvent(derivedModelName, event, false) ?? undefined;
       }
 
       if (!transfer) {
@@ -420,7 +460,17 @@ export class BackgroundDownloadService {
     modelName: string,
     event: Partial<DownloadNativeEvent>,
     emitStarted: boolean = true,
-  ): DownloadJob {
+  ): DownloadJob | null {
+    const resolvedName = this.resolveModelName(
+      modelName,
+      event.destination,
+      event.url,
+    );
+
+    if (this.isUuidLike(resolvedName)) {
+      return null;
+    }
+
     const totalBytes = event.totalBytes ?? 0;
     const bytesWritten = event.bytesWritten ?? 0;
     const speed = event.speed ?? 0;
@@ -429,8 +479,8 @@ export class BackgroundDownloadService {
       : event.progress ?? 0;
 
     const storedModel: StoredModel = {
-      id: `${modelName}-${Date.now()}`,
-      name: modelName,
+      id: `${resolvedName}-${Date.now()}`,
+      name: resolvedName,
       path: event.url ?? '',
       size: totalBytes,
       modified: new Date().toISOString(),
@@ -458,10 +508,10 @@ export class BackgroundDownloadService {
       lastUpdateTime: Date.now(),
     };
 
-    this.activeTransfers.set(modelName, downloadJob);
+    this.activeTransfers.set(resolvedName, downloadJob);
 
     if (emitStarted) {
-      this.eventCallbacks.onStart?.(modelName, downloadJob.downloadId);
+      this.eventCallbacks.onStart?.(resolvedName, downloadJob.downloadId);
     }
 
     return downloadJob;
@@ -475,37 +525,73 @@ export class BackgroundDownloadService {
     try {
       const activeTransferList = await TransferModule.getOngoingTransfers();
 
+      const nativeIds = new Set<string>(
+        activeTransferList.map((t: any) => t.id).filter(Boolean),
+      );
+
       const nativeNames = new Set<string>(
         activeTransferList
-          .map((t: any) => t.modelName || this.extractModelName(t.destination, t.url))
+          .map((t: any) => {
+            const name = t.modelName || this.extractModelName(t.destination, t.url);
+            return name ? this.resolveModelName(name, t.destination, t.url) : undefined;
+          })
           .filter(Boolean),
       );
 
       const now = Date.now();
       for (const [modelName, job] of this.activeTransfers.entries()) {
-        if (!nativeNames.has(modelName) && job.state.isDownloading) {
-          const first = this.staleMap.get(modelName);
-          if (!first) {
-            this.staleMap.set(modelName, now);
-          } else if (now - first > 5000) {
-            console.log('stale_transfer_recovery', modelName);
-            this.staleMap.delete(modelName);
-            this.activeTransfers.delete(modelName);
-            this.eventCallbacks.onComplete?.(modelName);
-          }
-        } else {
+        const linkedNative = nativeIds.has(job.downloadId) || nativeNames.has(modelName);
+
+        if (linkedNative) {
           this.staleMap.delete(modelName);
+          continue;
+        }
+
+        if (!job.state.isDownloading) {
+          continue;
+        }
+
+        if (this.isUuidLike(modelName)) {
+          console.log('orphan_transfer_drop', modelName);
+          this.staleMap.delete(modelName);
+          this.activeTransfers.delete(modelName);
+          continue;
+        }
+
+        const first = this.staleMap.get(modelName);
+        if (!first) {
+          this.staleMap.set(modelName, now);
+          continue;
+        }
+
+        if (now - first <= this.staleMs) {
+          continue;
+        }
+
+        console.log('stale_transfer_recovery', modelName);
+        this.staleMap.delete(modelName);
+        this.activeTransfers.delete(modelName);
+
+        const dest = models.find(m => m.name === modelName);
+        if (dest) {
+          this.eventCallbacks.onComplete?.(modelName);
         }
       }
 
       for (const transfer of activeTransferList) {
-        const modelName = transfer.modelName || this.extractModelName(transfer.destination, transfer.url);
-        if (!modelName) {
+        const rawName = transfer.modelName || this.extractModelName(transfer.destination, transfer.url);
+        if (!rawName) {
+          continue;
+        }
+
+        const modelName = this.resolveModelName(rawName, transfer.destination, transfer.url);
+        if (this.isUuidLike(modelName)) {
           continue;
         }
 
         let transferJob = this.activeTransfers.get(modelName);
         const isNew = !transferJob;
+        const prevBytes = transferJob?.lastBytesWritten ?? -1;
 
         if (!transferJob) {
           const fallbackModel =
@@ -524,25 +610,27 @@ export class BackgroundDownloadService {
               totalBytes: transfer.totalBytes,
               progress: transfer.progress,
               url: fallbackModel.path,
+              destination: transfer.destination,
             },
+            false,
           );
+
+          if (!transferJob) {
+            continue;
+          }
         }
 
         transferJob.downloadId = transfer.id;
-        transferJob.lastBytesWritten = transfer.bytesWritten;
-        transferJob.lastUpdateTime = Date.now();
         transferJob.state.isDownloading = true;
-        transferJob.state.progress = {
-          bytesDownloaded: transfer.bytesWritten,
-          bytesTotal: transfer.totalBytes,
-          progress: transfer.progress,
-          speed: '0 B/s',
-          eta: 'calculating...',
-          rawSpeed: 0,
-          rawEta: 0,
-        };
+        transferJob.state.progress = this.updateProgressFromBytes(
+          transferJob,
+          transfer.bytesWritten,
+          transfer.totalBytes,
+          transfer.progress,
+        );
 
-        if (isNew) {
+        const bytesChanged = transfer.bytesWritten !== prevBytes;
+        if (isNew || bytesChanged) {
           this.eventCallbacks.onProgress?.(modelName, transferJob.state.progress);
         }
       }
