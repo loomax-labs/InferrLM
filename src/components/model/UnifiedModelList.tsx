@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Platform, Modal } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, TextInput } from 'react-native-paper';
+import { Text, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
@@ -69,6 +69,8 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
     await handlers.handleWarningAccept(dontShowAgain, logic.pendingDownload);
   };
 
+  const modelFilesOpen = logic.modelDetailsLoading || !!logic.selectedModel;
+
   return (
     <View style={styles.container}>
       <ScrollView 
@@ -129,34 +131,18 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
         )}
       </ScrollView>
 
-      <Modal
-        visible={logic.modelDetailsLoading}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => {}}
-      >
-        <View style={styles.loadingOverlay}>
-          <View style={[styles.loadingCard, { backgroundColor: themeColors.background }]}>
-            <ActivityIndicator size="large" />
-            <Text style={[styles.loadingDialogText, { color: themeColors.text }]}>Loading model details...</Text>
-          </View>
-        </View>
-      </Modal>
-
       <ModelFilesDialog
-        visible={!!logic.selectedModel}
-        onClose={() => {
-          logic.setSelectedModel(null);
-          logic.setSelectedFiles(new Set());
-        }}
+        visible={modelFilesOpen}
+        isLoading={logic.modelDetailsLoading}
+        loadingModelId={logic.loadingModelId}
+        onClose={logic.closeModelFilesDialog}
         modelDetails={logic.selectedModel}
         onDownloadFile={handlers.handleDownloadFile}
         onDownloadMLXModel={handlers.handleDownloadMLXModel}
       />
 
       <Dialog
-        visible={logic.dialogVisible}
+        visible={logic.dialogVisible && !modelFilesOpen}
         onDismiss={logic.hideDialog}
         title={logic.dialogTitle}
         description={logic.dialogMessage}
@@ -165,13 +151,13 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
       />
 
       <ModelWarningDialog
-        visible={logic.showWarningDialog}
+        visible={logic.showWarningDialog && !modelFilesOpen}
         onAccept={handleWarningAccept}
         onCancel={handlers.handleWarningCancel}
       />
 
       <Dialog
-        visible={logic.mlxDirDialogVisible}
+        visible={logic.mlxDirDialogVisible && !modelFilesOpen}
         onClose={logic.hideMLXDirDialog}
         title="MLX Folder Name"
         description="Enter a folder name for this MLX model package. All required MLX files will be downloaded into this folder."
@@ -227,21 +213,6 @@ const styles = StyleSheet.create({
   customUrlButtonSubtitle: {
     fontSize: 14,
     marginTop: 2,
-  },
-  loadingOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingCard: {
-    padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingDialogText: {
-    fontSize: 16,
   },
 });
 

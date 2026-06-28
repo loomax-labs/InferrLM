@@ -8,6 +8,7 @@ import { DownloadableModel } from '../components/model/DownloadableModelItem';
 import { ModelFormat } from '../types/models';
 import { ModelManager } from '@inferrlm/react-native-mlx';
 import { fs as FileSystem } from '../services/fs';
+import { afterModalClose } from '../services/adapters/ModalStackAdapter';
 
 export const useUnifiedModelList = (
   storedModels: any[],
@@ -21,6 +22,7 @@ export const useUnifiedModelList = (
   const [hfLoading, setHfLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<HFModelDetails | null>(null);
   const [modelDetailsLoading, setModelDetailsLoading] = useState(false);
+  const [loadingModelId, setLoadingModelId] = useState<string | null>(null);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');
@@ -46,6 +48,10 @@ export const useUnifiedModelList = (
     setDialogTitle(title);
     setDialogMessage(message);
     setDialogVisible(true);
+  };
+
+  const showDialogAfterModalClose = (title: string, message: string) => {
+    afterModalClose(() => showDialog(title, message));
   };
 
   const hideDialog = () => setDialogVisible(false);
@@ -155,18 +161,29 @@ export const useUnifiedModelList = (
 
   const handleModelPress = async (model: HFModel) => {
     setModelDetailsLoading(true);
+    setLoadingModelId(model.id);
     setSelectedModel(null);
     setSelectedFiles(new Set());
     
     try {
       const details = await huggingFaceService.getModelDetails(model.id);
       setSelectedModel(details);
+      setModelDetailsLoading(false);
+      setLoadingModelId(null);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      showDialog('Error', `Failed to load model details: ${errorMessage}`);
-    } finally {
       setModelDetailsLoading(false);
+      setLoadingModelId(null);
+      setSelectedModel(null);
+      showDialogAfterModalClose('Error', `Failed to load model details: ${errorMessage}`);
     }
+  };
+
+  const closeModelFilesDialog = () => {
+    setModelDetailsLoading(false);
+    setLoadingModelId(null);
+    setSelectedModel(null);
+    setSelectedFiles(new Set());
   };
 
   const handleHfModelDownload = async (model: DownloadableModel) => {
@@ -221,9 +238,11 @@ export const useUnifiedModelList = (
     files: Array<{ filename: string; downloadUrl: string; size: number }>
   ) => {
     const defaultDir = modelId.split('/').pop() || modelId;
-    setMlxDirName(defaultDir);
-    setPendingMLXDownload({ modelId, files });
-    setMlxDirDialogVisible(true);
+    afterModalClose(() => {
+      setMlxDirName(defaultDir);
+      setPendingMLXDownload({ modelId, files });
+      setMlxDirDialogVisible(true);
+    });
   };
 
   const hideMLXDirDialog = () => {
@@ -428,6 +447,7 @@ export const useUnifiedModelList = (
     hfLoading,
     selectedModel,
     modelDetailsLoading,
+    loadingModelId,
     dialogVisible,
     dialogTitle,
     dialogMessage,
@@ -448,6 +468,7 @@ export const useUnifiedModelList = (
     clearSearch,
     isModelDownloaded,
     handleModelPress,
+    closeModelFilesDialog,
     handleHfModelDownload,
     requestMLXDownload,
     hideMLXDirDialog,

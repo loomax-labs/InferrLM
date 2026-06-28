@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { huggingFaceService, HFModel, HFModelDetails } from '../services/HuggingFaceService';
 import { modelDownloader } from '../services/ModelDownloader';
 import { DownloadableModel } from '../components/model/DownloadableModelItem';
+import { afterModalClose } from '../services/adapters/ModalStackAdapter';
 
 export const useModelDownloadHandlers = (
   hfModels: HFModel[],
@@ -20,7 +21,18 @@ export const useModelDownloadHandlers = (
   downloadProgress: any,
   setDownloadProgress: React.Dispatch<React.SetStateAction<any>>
 ) => {
-const handleDownloadFile = async (filename: string, downloadUrl: string) => {
+  const openWarningDialog = (download: {
+    filename: string;
+    downloadUrl: string;
+    modelId: string;
+    curatedModel?: DownloadableModel;
+    filesToDownload?: any[];
+  }) => {
+    setPendingDownload(download);
+    afterModalClose(() => setShowWarningDialog(true));
+  };
+
+  const handleDownloadFile = async (filename: string, downloadUrl: string) => {
     const modelId = selectedModel?.id || '';
     
     setSelectedModel(null);
@@ -31,15 +43,13 @@ const handleDownloadFile = async (filename: string, downloadUrl: string) => {
       const shouldShowWarning = hideWarning !== 'true';
       
       if (shouldShowWarning) {
-        setPendingDownload({ filename, downloadUrl, modelId });
-        setShowWarningDialog(true);
+        openWarningDialog({ filename, downloadUrl, modelId });
         return;
       }
       
       await proceedWithDownload(filename, downloadUrl, modelId);
     } catch (error) {
-      setPendingDownload({ filename, downloadUrl, modelId });
-      setShowWarningDialog(true);
+      openWarningDialog({ filename, downloadUrl, modelId });
     }
   };
 
@@ -57,25 +67,23 @@ const handleDownloadFile = async (filename: string, downloadUrl: string) => {
       const shouldShowWarning = hideWarning !== 'true';
       
       if (shouldShowWarning) {
-        setPendingDownload({ 
-          filename: `${filesToDownload.length} files`, 
-          downloadUrl: '', 
+        openWarningDialog({
+          filename: `${filesToDownload.length} files`,
+          downloadUrl: '',
           modelId: modelId,
-          filesToDownload: filesToDownload
+          filesToDownload: filesToDownload,
         });
-        setShowWarningDialog(true);
         return;
       }
       
       await proceedWithMultipleDownloads(filesToDownload, modelId);
     } catch (error) {
-      setPendingDownload({ 
-        filename: `${filesToDownload.length} files`, 
-        downloadUrl: '', 
+      openWarningDialog({
+        filename: `${filesToDownload.length} files`,
+        downloadUrl: '',
         modelId: modelId,
-        filesToDownload: filesToDownload
+        filesToDownload: filesToDownload,
       });
-      setShowWarningDialog(true);
     }
   };
 
