@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,11 +7,14 @@ import MlxIcon from './icons/MlxIcon';
 import { HFModelDetails, HFFile } from '../services/HuggingFaceService';
 import { huggingFaceService } from '../services/HuggingFaceService';
 import { ModelFormat } from '../types/models';
+import { OverlayHost } from '../services/adapters/ModalOverlayAdapter';
 
 interface ModelFilesDialogProps {
   visible: boolean;
   onClose: () => void;
   modelDetails: HFModelDetails | null;
+  isLoading?: boolean;
+  loadingModelId?: string | null;
   onDownloadFile: (filename: string, downloadUrl: string) => Promise<void>;
   onDownloadMLXModel?: (modelId: string, files: Array<{ filename: string; downloadUrl: string; size: number }>) => Promise<void>;
   isDownloading?: boolean;
@@ -21,6 +24,8 @@ export default function ModelFilesDialog({
   visible,
   onClose,
   modelDetails,
+  isLoading = false,
+  loadingModelId = null,
   onDownloadFile,
   onDownloadMLXModel,
   isDownloading = false,
@@ -42,6 +47,10 @@ export default function ModelFilesDialog({
       setSelectedFiles(new Set());
     }
   }, [visible, modelDetails]);
+
+  const isMLXModel = modelDetails?.modelFormat === ModelFormat.MLX;
+  const isGGUFModel = modelDetails?.modelFormat === ModelFormat.GGUF;
+  const showLoading = isLoading && !modelDetails;
 
   const toggleFileSelection = (filename: string) => {
     setSelectedFiles(prev => {
@@ -99,10 +108,14 @@ export default function ModelFilesDialog({
     }
   };
 
-  if (!visible || !modelDetails) return null;
-
-  const isMLXModel = modelDetails.modelFormat === ModelFormat.MLX;
-  const isGGUFModel = modelDetails.modelFormat === ModelFormat.GGUF;
+  const handleDownload = async (filename: string, downloadUrl: string) => {
+    setDownloadingFile(filename);
+    try {
+      await onDownloadFile(filename, downloadUrl);
+    } finally {
+      setDownloadingFile(null);
+    }
+  };
 
   const handleMLXBatchDownload = async () => {
     if (!modelDetails?.mlxFileGroup || !onDownloadMLXModel) return;
@@ -122,14 +135,7 @@ export default function ModelFilesDialog({
     }
   };
 
-  const handleDownload = async (filename: string, downloadUrl: string) => {
-    setDownloadingFile(filename);
-    try {
-      await onDownloadFile(filename, downloadUrl);
-    } finally {
-      setDownloadingFile(null);
-    }
-  };
+  if (!visible) return null;
 
   const isRequiredMLXFile = (filename: string): boolean => {
     if (!isMLXModel || !modelDetails.mlxFileGroup) return false;
@@ -137,6 +143,8 @@ export default function ModelFilesDialog({
   };
 
   const renderFileItem = (file: HFFile, index: number) => {
+    if (!modelDetails) return null;
+
     const isCurrentlyDownloading = downloadingFile === file.filename;
     const isSelected = selectedFiles.has(file.filename);
 
@@ -219,8 +227,18 @@ export default function ModelFilesDialog({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+    <OverlayHost visible={visible} onClose={onClose}>
+      {showLoading ? (
+        <View style={[styles.loadingCard, { backgroundColor: themeColors.background }]}>
+          <ActivityIndicator size="large" color={themeColors.primary} />
+          <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading model details...</Text>
+          {loadingModelId ? (
+            <Text style={[styles.loadingModelId, { color: themeColors.secondaryText }]} numberOfLines={2}>
+              {loadingModelId}
+            </Text>
+          ) : null}
+        </View>
+      ) : modelDetails ? (
         <View style={[styles.modalContent, { backgroundColor: themeColors.background, width: modalWidth, maxHeight: height - 100 }]}>
           <View style={styles.header}>
             <View style={styles.titleContainer}>
@@ -346,21 +364,34 @@ export default function ModelFilesDialog({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </Modal>
+      ) : null}
+    </OverlayHost>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   modalContent: {
     borderRadius: 16,
     padding: 24,
+    zIndex: 1,
+  },
+  loadingCard: {
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 16,
+    maxWidth: 320,
+    marginHorizontal: 24,
+    zIndex: 1,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  loadingModelId: {
+    fontSize: 13,
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
