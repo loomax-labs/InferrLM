@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Platform, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -129,14 +129,20 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
         )}
       </ScrollView>
 
-      {logic.modelDetailsLoading && (
+      <Modal
+        visible={logic.modelDetailsLoading}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
         <View style={styles.loadingOverlay}>
           <View style={[styles.loadingCard, { backgroundColor: themeColors.background }]}>
             <ActivityIndicator size="large" />
             <Text style={[styles.loadingDialogText, { color: themeColors.text }]}>Loading model details...</Text>
           </View>
         </View>
-      )}
+      </Modal>
 
       <ModelFilesDialog
         visible={!!logic.selectedModel}
@@ -223,11 +229,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 999,
   },
   loadingCard: {
     padding: 24,
