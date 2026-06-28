@@ -15,6 +15,7 @@ import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { modelDownloader } from '../services/ModelDownloader';
+import { huggingFaceService } from '../services/HuggingFaceService';
 import { useDownloadProgress, useDownloadDispatch } from '../context/DownloadContext';
 import AppHeader from '../components/AppHeader';
 import { getThemeAwareColor } from '../utils/ColorUtils';
@@ -332,6 +333,35 @@ export default function DownloadsScreen() {
     setCancelDialogVisible(true);
   };
 
+  const handleRestart = useCallback(async (modelName: string) => {
+    if (!modelName || buttonProcessingRef.current.has(modelName)) {
+      return;
+    }
+
+    buttonProcessingRef.current.add(modelName);
+    console.log('restart_pressed', modelName);
+
+    try {
+      setDownloadProgress(prev => ({
+        ...prev,
+        [modelName]: {
+          ...prev[modelName],
+          progress: 0,
+          bytesDownloaded: 0,
+          status: 'starting',
+          speed: '0 B/s',
+          rawSpeed: 0,
+        },
+      }));
+
+      await modelDownloader.restartDownload(modelName, huggingFaceService.getAccessToken());
+    } catch {
+      showDialog('Error', 'Failed to restart download');
+    } finally {
+      buttonProcessingRef.current.delete(modelName);
+    }
+  }, [setDownloadProgress, showDialog]);
+
   const confirmCancellation = async () => {
     const modelName = cancelModelName;
     hideCancelDialog();
@@ -461,7 +491,13 @@ export default function DownloadsScreen() {
           {!item.isTransferring && (
             <View style={styles.downloadActions}>
               <TouchableOpacity
-                style={styles.cancelButton}
+                style={styles.actionButton}
+                onPress={() => handleRestart(item.name)}
+              >
+                <MaterialCommunityIcons name="restart" size={24} color={getThemeAwareColor('#4a0660', currentTheme)} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
                 onPress={() => handleCancel(item.name)}
               >
                 <MaterialCommunityIcons name="close-circle" size={24} color={getThemeAwareColor('#ff4444', currentTheme)} />
@@ -504,7 +540,7 @@ export default function DownloadsScreen() {
         </View>
       </View>
     );
-  }, [mlxPackageFiles, expandedPackages, themeColors, currentTheme, togglePackage, handleCancel]);
+  }, [mlxPackageFiles, expandedPackages, themeColors, currentTheme, togglePackage, handleCancel, handleRestart]);
 
   return (
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
@@ -642,7 +678,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
   },
-  cancelButton: {
+  actionButton: {
     padding: 4,
   },
   headerButton: {
