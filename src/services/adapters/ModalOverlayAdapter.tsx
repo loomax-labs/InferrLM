@@ -1,4 +1,12 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   Modal,
@@ -13,11 +21,21 @@ import { FullWindowOverlay } from 'react-native-screens';
 type OverlayHostProps = {
   visible: boolean;
   onClose: () => void;
-  children: ReactNode;
+  children: ReactNode | ((dismiss: () => void) => ReactNode);
 };
 
 const fadeInMs = 180;
-const fadeOutMs = 150;
+const fadeOutMs = 200;
+
+const OverlayDismissContext = createContext<(() => void) | null>(null);
+
+export const useOverlayDismiss = () => {
+  const dismiss = useContext(OverlayDismissContext);
+  if (!dismiss) {
+    throw new Error('useOverlayDismiss must be used within OverlayHost');
+  }
+  return dismiss;
+};
 
 export const panelElevation: ViewStyle = Platform.select({
   ios: {
@@ -36,6 +54,30 @@ export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) =>
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
   const [mounted, setMounted] = useState(false);
+  const closingRef = useRef(false);
+  const contentRef = useRef<ReactNode>(null);
+
+  const runOut = useCallback(
+    (done: () => void) => {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: fadeOutMs,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: 0.96,
+          duration: fadeOutMs,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished) {
+          done();
+        }
+      });
+    },
+    [opacity, scale]
+  );
 
   const animateIn = useCallback(() => {
     opacity.setValue(0);
@@ -54,35 +96,37 @@ export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) =>
     ]).start();
   }, [opacity, scale]);
 
-  const animateOut = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: fadeOutMs,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 0.96,
-        duration: fadeOutMs,
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) {
-        setMounted(false);
-      }
+  const finishClose = useCallback(() => {
+    closingRef.current = false;
+    setMounted(false);
+  }, []);
+
+  const dismiss = useCallback(() => {
+    if (closingRef.current || !mounted) {
+      return;
+    }
+
+    closingRef.current = true;
+    runOut(() => {
+      finishClose();
+      onClose();
     });
-  }, [opacity, scale]);
+  }, [mounted, onClose, runOut, finishClose]);
 
   useEffect(() => {
     if (visible) {
+      closingRef.current = false;
       setMounted(true);
       return;
     }
 
-    if (mounted) {
-      animateOut();
+    if (!mounted || closingRef.current) {
+      return;
     }
-  }, [visible, mounted, animateOut]);
+
+    closingRef.current = true;
+    runOut(finishClose);
+  }, [visible, mounted, runOut, finishClose]);
 
   useEffect(() => {
     if (mounted && visible) {
@@ -90,35 +134,50 @@ export const OverlayHost = ({ visible, onClose, children }: OverlayHostProps) =>
     }
   }, [mounted, visible, animateIn]);
 
+  const panel =
+    typeof children === 'function' ? children(dismiss) : children;
+
+  if (visible) {
+    contentRef.current = panel;
+  }
+
+  const shown = contentRef.current;
+
   if (!mounted) {
     return null;
   }
 
   const body = (
     <View style={styles.overlay}>
-      <TouchableWithoutFeedback onPress={onClose}>
+      <TouchableWithoutFeedback onPress={dismiss}>
         <Animated.View style={[styles.backdrop, { opacity }]} />
       </TouchableWithoutFeedback>
       <Animated.View style={[styles.panelWrap, { opacity, transform: [{ scale }] }]}>
-        {children}
+        {shown}
       </Animated.View>
     </View>
   );
 
   if (Platform.OS === 'ios') {
-    return <FullWindowOverlay>{body}</FullWindowOverlay>;
+    return (
+      <OverlayDismissContext.Provider value={dismiss}>
+        <FullWindowOverlay>{body}</FullWindowOverlay>
+      </OverlayDismissContext.Provider>
+    );
   }
 
   return (
-    <Modal
-      visible
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      {body}
-    </Modal>
+    <OverlayDismissContext.Provider value={dismiss}>
+      <Modal
+        visible
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={dismiss}
+      >
+        {body}
+      </Modal>
+    </OverlayDismissContext.Provider>
   );
 };
 
