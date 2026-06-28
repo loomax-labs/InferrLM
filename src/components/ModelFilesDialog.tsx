@@ -135,8 +135,6 @@ export default function ModelFilesDialog({
     }
   };
 
-  if (!visible) return null;
-
   const isRequiredMLXFile = (filename: string): boolean => {
     if (!isMLXModel || !modelDetails.mlxFileGroup) return false;
     return modelDetails.mlxFileGroup.required.some(f => f.rfilename === filename);
@@ -228,6 +226,8 @@ export default function ModelFilesDialog({
 
   return (
     <OverlayHost visible={visible} onClose={onClose}>
+      {(dismiss) => (
+        <>
       {showLoading ? (
         <View style={[styles.loadingCard, panelElevation, { backgroundColor: themeColors.background }]}>
           <ActivityIndicator size="large" color={themeColors.primary} />
@@ -261,7 +261,7 @@ export default function ModelFilesDialog({
                 )}
               </View>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={dismiss} style={styles.closeButton}>
               <MaterialCommunityIcons name="close" size={24} color={themeColors.text} />
             </TouchableOpacity>
           </View>
@@ -359,12 +359,14 @@ export default function ModelFilesDialog({
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity onPress={onClose} style={styles.closeActionButton}>
+            <TouchableOpacity onPress={dismiss} style={styles.closeActionButton}>
               <Text style={[styles.closeActionText, { color: themeColors.primary }]}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       ) : null}
+        </>
+      )}
     </OverlayHost>
   );
 }
