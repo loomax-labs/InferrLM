@@ -353,24 +353,57 @@ export class BackgroundDownloadService {
     }
   }
 
-  async abortTransfer(modelName: string): Promise<void> {
+  async abortTransfer(modelName: string, nativeTransferId?: string): Promise<void> {
     const transfer = this.activeTransfers.get(modelName);
-    if (!transfer) {
+
+    if (transfer) {
+      transfer.state.isCancelling = true;
+
+      try {
+        if (TransferModule) {
+          await TransferModule.cancelTransfer(transfer.downloadId);
+        }
+
+        this.activeTransfers.delete(modelName);
+        this.staleMap.delete(modelName);
+        return;
+      } catch (error) {
+        this.activeTransfers.delete(modelName);
+        this.staleMap.delete(modelName);
+        throw error;
+      }
+    }
+
+    if (!TransferModule) {
       return;
     }
 
-    transfer.state.isCancelling = true;
+    const idsToCancel = new Set<string>();
+    if (nativeTransferId) {
+      idsToCancel.add(nativeTransferId);
+    }
 
     try {
-      if (TransferModule) {
-        await TransferModule.cancelTransfer(transfer.downloadId);
+      const ongoing = await TransferModule.getOngoingTransfers();
+      for (const item of ongoing) {
+        const name = item.modelName || this.extractModelName(item.destination, item.url);
+        if (name === modelName && item.id) {
+          idsToCancel.add(item.id);
+        }
       }
-
-      this.activeTransfers.delete(modelName);
-    } catch (error) {
-      this.activeTransfers.delete(modelName);
-      throw error;
+    } catch {
     }
+
+    for (const transferId of idsToCancel) {
+      try {
+        await TransferModule.cancelTransfer(transferId);
+        console.log('native_transfer_aborted', transferId);
+      } catch {
+      }
+    }
+
+    this.activeTransfers.delete(modelName);
+    this.staleMap.delete(modelName);
   }
 
   private extractModelName(destination?: string, fallbackPath?: string): string | undefined {
