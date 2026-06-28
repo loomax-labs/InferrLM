@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus, BackHandler, Platform, Text, TextInput, ToastAndroid, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar, setStatusBarStyle } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -31,6 +31,7 @@ import { initializeBindings } from '../src/utils/llamaBinding';
 import UpdateDialog from '../src/components/UpdateDialog';
 import SkillRuntimeHost from '../src/components/skills/SkillRuntimeHost';
 import { updateService } from '../src/services/UpdateService';
+import { useResponsiveLayout } from '../src/hooks/useResponsiveLayout';
 
 SplashScreen.preventAutoHideAsync();
 initializeBindings().catch(() => {});
@@ -84,7 +85,9 @@ function ThemedPaper({ children }: { children: React.ReactNode }) {
 
 function InnerLayout() {
   const { theme: currentTheme } = useTheme();
+  const { isWideScreen } = useResponsiveLayout();
   const themeColors = theme[currentTheme as ThemeColors];
+  const statusBarStyle = Platform.OS === 'android' || isWideScreen ? 'light' : themeColors.statusBarStyle;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const appStateRef = useRef(AppState.currentState);
@@ -139,10 +142,14 @@ function InnerLayout() {
   }, []);
 
   useEffect(() => {
+    setStatusBarStyle(statusBarStyle, true);
+  }, [statusBarStyle]);
+
+  useEffect(() => {
     if (Platform.OS !== 'android') return;
     NavigationBar.setBackgroundColorAsync?.(themeColors.navigationBar);
-    NavigationBar.setButtonStyleAsync?.(currentTheme === 'dark' ? 'light' : 'dark');
-  }, [currentTheme, themeColors]);
+    NavigationBar.setButtonStyleAsync?.('light');
+  }, [themeColors]);
 
   return (
     <>
@@ -158,7 +165,7 @@ function InnerLayout() {
         }}
         pointerEvents="none"
       />
-      <StatusBar style={themeColors.statusBarStyle} translucent />
+      <StatusBar style={statusBarStyle} translucent />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
