@@ -4,8 +4,6 @@ import {
   ActivityIndicator,
   Alert,
   Clipboard,
-  Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +14,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
+import Dialog from '../components/Dialog';
 import ModelSelector from '../components/ModelSelector';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
@@ -34,7 +33,6 @@ import {
   defaultTemplateOpts,
   getTemplatePrefix,
   type PromptTemplate,
-  type TemplateOption,
 } from './promptLabTemplates';
 
 const HISTORY_KEY = '@prompt_lab_history_v1';
@@ -105,102 +103,45 @@ function ParamStepper({
   );
 }
 
-function OptionSelect({
-  opt,
-  value,
-  onPick,
-  themeColors,
+function ModeTile({
+  item,
+  active,
+  onPress,
   disabled,
-}: {
-  opt: TemplateOption;
-  value: string;
-  onPick: (val: string) => void;
-  themeColors: typeof theme['light'];
-  disabled: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <TouchableOpacity
-        style={[styles.optionBtn, { backgroundColor: themeColors.cardBackground }]}
-        onPress={() => setOpen(true)}
-        disabled={disabled}
-        activeOpacity={0.75}
-      >
-        <Text style={[styles.optionBtnText, { color: themeColors.text }]}>
-          {opt.label}: {value}
-        </Text>
-        <MaterialCommunityIcons name="chevron-down" size={18} color={themeColors.secondaryText} />
-      </TouchableOpacity>
-
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.optOverlay} onPress={() => setOpen(false)}>
-          <View style={[styles.optSheet, { backgroundColor: themeColors.background }]}>
-            <Text style={[styles.optSheetTitle, { color: themeColors.text }]}>{opt.label}</Text>
-            {opt.choices.map(choice => {
-              const active = choice === value;
-              return (
-                <TouchableOpacity
-                  key={choice}
-                  style={[styles.optRow, active && { backgroundColor: themeColors.primary + '18' }]}
-                  onPress={() => {
-                    onPick(choice);
-                    setOpen(false);
-                  }}
-                >
-                  <Text style={[styles.optRowText, { color: active ? themeColors.primary : themeColors.text }]}>
-                    {choice}
-                  </Text>
-                  {active && <MaterialCommunityIcons name="check" size={18} color={themeColors.primary} />}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Pressable>
-      </Modal>
-    </>
-  );
-}
-
-function ExampleSheet({
-  visible,
-  template,
-  onClose,
-  onPick,
   themeColors,
+  fonts,
 }: {
-  visible: boolean;
-  template: PromptTemplate;
-  onClose: () => void;
-  onPick: (text: string) => void;
+  item: PromptTemplate;
+  active: boolean;
+  onPress: () => void;
+  disabled: boolean;
   themeColors: typeof theme['light'];
+  fonts: ReturnType<typeof OpenSansFont>['fonts'];
 }) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.sheetOverlay} onPress={onClose}>
-        <Pressable style={[styles.sheet, { backgroundColor: themeColors.background }]}>
-          <View style={styles.sheetHandle} />
-          <Text style={[styles.sheetTitle, { color: themeColors.text }]}>Select an example</Text>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {template.examples.map((example, idx) => (
-              <TouchableOpacity
-                key={`${template.id}-ex-${idx}`}
-                style={[styles.sheetRow, { backgroundColor: themeColors.cardBackground }]}
-                onPress={() => {
-                  onPick(example);
-                  onClose();
-                }}
-                activeOpacity={0.75}
-              >
-                <MaterialCommunityIcons name="file-document-outline" size={20} color={themeColors.primary} />
-                <Text style={[styles.sheetRowText, { color: themeColors.text }]}>{example}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <TouchableOpacity
+      style={[
+        styles.modeTile,
+        { backgroundColor: active ? themeColors.primary + '28' : themeColors.cardBackground },
+      ]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.75}
+    >
+      <View style={[styles.modeIcon, { backgroundColor: active ? themeColors.primary + '35' : themeColors.primary + '18' }]}>
+        <MaterialCommunityIcons
+          name={item.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
+          size={22}
+          color={themeColors.primary}
+        />
+      </View>
+      <Text style={[styles.modeLabel, fonts.semibold, { color: active ? themeColors.primary : themeColors.text }]} numberOfLines={1}>
+        {item.label}
+      </Text>
+      <Text style={[styles.modeHint, { color: themeColors.secondaryText }]} numberOfLines={2}>
+        {item.hint}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -223,7 +164,6 @@ export default function PromptLabScreen() {
   const [tab, setTab] = useState<'output' | 'history'>('output');
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATE.id);
   const [templateOpts, setTemplateOpts] = useState<Record<string, string>>(() => defaultTemplateOpts(DEFAULT_TEMPLATE));
-  const [showPreview, setShowPreview] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [showParams, setShowParams] = useState(false);
 
@@ -243,7 +183,7 @@ export default function PromptLabScreen() {
   );
 
   const hasWrapper = Boolean(activeTemplate.buildPrompt);
-  const canPreview = hasWrapper && content.trim().length > 0;
+  const showCompiled = hasWrapper && content.trim().length > 0;
   const canRun = content.trim().length > 0 && !isRunning;
 
   const localModelPath = engineService.getActiveModelPath() || (selectedModelPath && !remoteProviders.has(OnlineModelService.getBaseProvider(selectedModelPath)) ? selectedModelPath : null);
@@ -286,14 +226,12 @@ export default function PromptLabScreen() {
     setTopP(DEFAULT_TOP_P);
     setTemplateId(DEFAULT_TEMPLATE.id);
     setTemplateOpts(defaultTemplateOpts(DEFAULT_TEMPLATE));
-    setShowPreview(false);
     handleClearOutput();
   };
 
   const handleTemplatePick = (id: string) => {
     const next = PROMPT_TEMPLATES.find(t => t.id === id) ?? DEFAULT_TEMPLATE;
     setContent('');
-    setShowPreview(false);
     setTemplateId(next.id);
     setTemplateOpts(defaultTemplateOpts(next));
   };
@@ -430,107 +368,106 @@ export default function PromptLabScreen() {
 
         <ModelSelector isGenerating={isRunning} />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.templateTabs}>
-          {PROMPT_TEMPLATES.map(item => {
-            const active = item.id === templateId;
-            return (
-              <TouchableOpacity
+        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }, fonts.semibold]}>Mode</Text>
+          <View style={styles.modeGrid}>
+            {PROMPT_TEMPLATES.map(item => (
+              <ModeTile
                 key={item.id}
-                style={[styles.templateTab, active && { backgroundColor: themeColors.primary + '18' }]}
+                item={item}
+                active={item.id === templateId}
                 onPress={() => handleTemplatePick(item.id)}
                 disabled={isRunning}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.templateTabText, fonts.semibold, { color: active ? themeColors.primary : themeColors.secondaryText }]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {activeTemplate.options && activeTemplate.options.length > 0 && (
-          <View style={[styles.optionRow, { backgroundColor: themeColors.borderColor }]}>
-            {activeTemplate.options.map(opt => (
-              <OptionSelect
-                key={opt.key}
-                opt={opt}
-                value={templateOpts[opt.key] ?? opt.default}
-                onPick={val => handleOptionPick(opt.key, val)}
                 themeColors={themeColors}
-                disabled={isRunning}
+                fonts={fonts}
               />
             ))}
           </View>
-        )}
-
-        <View style={[styles.inputCard, { backgroundColor: themeColors.borderColor }]}>
-          {showPreview && canPreview ? (
-            <View style={[styles.previewBox, { backgroundColor: themeColors.cardBackground }]}>
-              <Text style={[styles.previewText, { color: themeColors.primary }]}>{promptPrefix}</Text>
-              <Text style={[styles.previewText, { color: themeColors.text }]}>{content}</Text>
-            </View>
-          ) : (
-            <TextInput
-              multiline
-              value={content}
-              onChangeText={setContent}
-              placeholder={activeTemplate.placeholder}
-              placeholderTextColor={themeColors.secondaryText + '80'}
-              style={[styles.contentInput, { color: themeColors.text }]}
-              editable={!isRunning}
-            />
-          )}
-
-          <View style={styles.inputActions}>
-            {canPreview && (
-              <TouchableOpacity
-                style={[styles.inputActionBtn, showPreview && { backgroundColor: themeColors.primary + '22' }]}
-                onPress={() => setShowPreview(v => !v)}
-                activeOpacity={0.75}
-              >
-                <MaterialCommunityIcons
-                  name={showPreview ? 'eye' : 'eye-off'}
-                  size={18}
-                  color={showPreview ? themeColors.primary : themeColors.secondaryText}
-                />
-                <Text style={[styles.inputActionText, { color: showPreview ? themeColors.primary : themeColors.secondaryText }]}>
-                  Preview prompt
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.inputActionsRight}>
-              {content.trim().length > 0 && (
-                <TouchableOpacity
-                  style={[styles.iconCircle, { backgroundColor: themeColors.cardBackground }]}
-                  onPress={handleCopyPrompt}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <MaterialCommunityIcons name="content-copy" size={18} color={themeColors.text} />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[styles.iconCircle, { backgroundColor: themeColors.cardBackground }]}
-                onPress={() => setShowExamples(true)}
-                disabled={isRunning}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <MaterialCommunityIcons name="plus" size={20} color={themeColors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.sendBtn, { backgroundColor: canRun ? themeColors.primary + '22' : themeColors.cardBackground }]}
-                onPress={handleRun}
-                disabled={!canRun}
-                activeOpacity={0.8}
-              >
-                {isRunning
-                  ? <ActivityIndicator color={themeColors.primary} size="small" />
-                  : <MaterialCommunityIcons name="send" size={18} color={canRun ? themeColors.primary : themeColors.secondaryText + '55'} />}
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
+
+        {activeTemplate.options?.map(opt => (
+          <View key={opt.key} style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+            <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>{opt.label.toUpperCase()}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+              {opt.choices.map(choice => {
+                const active = templateOpts[opt.key] === choice;
+                return (
+                  <TouchableOpacity
+                    key={choice}
+                    style={[styles.chip, { backgroundColor: active ? themeColors.primary : themeColors.cardBackground }]}
+                    onPress={() => handleOptionPick(opt.key, choice)}
+                    disabled={isRunning}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.chipText, fonts.semibold, { color: active ? '#FFF' : themeColors.text }]} numberOfLines={1}>
+                      {choice}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        ))}
+
+        <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
+          <View style={styles.inputHeader}>
+            <Text style={[styles.sectionTitle, { color: themeColors.text, marginBottom: 0 }, fonts.semibold]}>Your text</Text>
+            <TouchableOpacity onPress={() => setShowExamples(true)} disabled={isRunning} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={[styles.linkText, { color: themeColors.primary }, fonts.semibold]}>Examples</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            multiline
+            value={content}
+            onChangeText={setContent}
+            placeholder={activeTemplate.placeholder}
+            placeholderTextColor={themeColors.secondaryText + '80'}
+            style={[styles.contentInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
+            editable={!isRunning}
+          />
+
+          {showCompiled && (
+            <View style={[styles.compiledBox, { backgroundColor: themeColors.primary + '14' }]}>
+              <Text style={[styles.compiledLabel, { color: themeColors.primary }, fonts.semibold]}>SENT TO MODEL</Text>
+              <Text style={[styles.compiledPrefix, { color: themeColors.primary }]}>{promptPrefix}</Text>
+              <Text style={[styles.compiledBody, { color: themeColors.text }]}>{content}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.toolRow}>
+          <TouchableOpacity
+            style={[styles.toolBtn, { backgroundColor: themeColors.borderColor }]}
+            onPress={handleCopyPrompt}
+            disabled={!content.trim()}
+          >
+            <MaterialCommunityIcons name="content-copy" size={18} color={content.trim() ? themeColors.text : themeColors.secondaryText} />
+            <Text style={[styles.toolBtnText, { color: content.trim() ? themeColors.text : themeColors.secondaryText }]}>Copy prompt</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: themeColors.borderColor }]} onPress={handleClearOutput}>
+            <MaterialCommunityIcons name="eraser-variant" size={18} color={themeColors.text} />
+            <Text style={[styles.toolBtnText, { color: themeColors.text }]}>Clear output</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: themeColors.borderColor }]} onPress={handleResetLab}>
+            <MaterialCommunityIcons name="restore" size={18} color={themeColors.text} />
+            <Text style={[styles.toolBtnText, { color: themeColors.text }]}>Reset</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.runBtn, { backgroundColor: canRun ? themeColors.primary : themeColors.borderColor }]}
+          onPress={handleRun}
+          disabled={!canRun}
+          activeOpacity={0.8}
+        >
+          {isRunning
+            ? <ActivityIndicator color="#FFF" size="small" />
+            : <MaterialCommunityIcons name="play" size={20} color={canRun ? '#FFF' : themeColors.secondaryText} />}
+          <Text style={[styles.runBtnText, fonts.bold, { color: canRun ? '#FFF' : themeColors.secondaryText }]}>
+            {isRunning ? 'Running…' : 'Run prompt'}
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.paramsToggle, { backgroundColor: themeColors.borderColor }]}
@@ -590,30 +527,6 @@ export default function PromptLabScreen() {
           </View>
         )}
 
-        <View style={styles.outputActions}>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
-            onPress={handleClearOutput}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <MaterialCommunityIcons name="eraser-variant" size={20} color={themeColors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
-            onPress={handleResetLab}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <MaterialCommunityIcons name="restore" size={20} color={themeColors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: themeColors.borderColor }]}
-            onPress={handleCopyOutput}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <MaterialCommunityIcons name="content-copy" size={20} color={themeColors.text} />
-          </TouchableOpacity>
-        </View>
-
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
           <View style={styles.tabRow}>
             <TouchableOpacity
@@ -630,6 +543,11 @@ export default function PromptLabScreen() {
                 History {history.length > 0 ? `(${history.length})` : ''}
               </Text>
             </TouchableOpacity>
+            {output.length > 0 && (
+              <TouchableOpacity style={styles.copyOutBtn} onPress={handleCopyOutput} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <MaterialCommunityIcons name="content-copy" size={18} color={themeColors.secondaryText} />
+              </TouchableOpacity>
+            )}
           </View>
 
           {tab === 'output' && (
@@ -681,7 +599,6 @@ export default function PromptLabScreen() {
                       setTopK(entry.topK);
                       setTopP(entry.topP);
                       setTemplateId(DEFAULT_TEMPLATE.id);
-                      setShowPreview(false);
                       setStats({ durationMs: entry.durationMs, firstTokenMs: entry.firstTokenMs, tokens: entry.tokens });
                       setTab('output');
                     }}
@@ -700,13 +617,23 @@ export default function PromptLabScreen() {
 
       </ScrollView>
 
-      <ExampleSheet
-        visible={showExamples}
-        template={activeTemplate}
-        onClose={() => setShowExamples(false)}
-        onPick={setContent}
-        themeColors={themeColors}
-      />
+      <Dialog visible={showExamples} onDismiss={() => setShowExamples(false)} title="Example prompts">
+        <ScrollView style={styles.exampleScroll} showsVerticalScrollIndicator={false}>
+          {activeTemplate.examples.map((example, idx) => (
+            <TouchableOpacity
+              key={`${activeTemplate.id}-ex-${idx}`}
+              style={[styles.exampleItem, { backgroundColor: themeColors.cardBackground }]}
+              onPress={() => {
+                setContent(example);
+                setShowExamples(false);
+              }}
+              activeOpacity={0.75}
+            >
+              <Text style={[styles.exampleItemText, { color: themeColors.text }]}>{example}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </Dialog>
     </View>
   );
 }
@@ -714,111 +641,93 @@ export default function PromptLabScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 40, gap: 10 },
+  content: { padding: 16, paddingBottom: 40, gap: 12 },
 
-  templateTabs: { gap: 4, paddingVertical: 4 },
-  templateTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  templateTabText: { fontSize: 14 },
+  card: { borderRadius: 18, padding: 16 },
+  sectionTitle: { fontSize: 17, marginBottom: 12 },
+  cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
 
-  optionRow: {
+  modeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    gap: 10,
+  },
+  modeTile: {
+    width: '47%',
+    flexGrow: 1,
+    borderRadius: 14,
+    padding: 12,
+    minHeight: 108,
+  },
+  modeIcon: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-  },
-  optionBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  optionBtnText: { fontSize: 13, fontWeight: '600' },
-
-  optOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
-    padding: 24,
+    marginBottom: 8,
   },
-  optSheet: {
-    borderRadius: 16,
-    padding: 16,
-    maxHeight: '70%',
+  modeLabel: { fontSize: 14, marginBottom: 4 },
+  modeHint: { fontSize: 12, lineHeight: 16 },
+
+  chipRow: { gap: 8 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
+    maxWidth: 260,
   },
-  optSheetTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12 },
-  optRow: {
+  chipText: { fontSize: 13 },
+
+  inputHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    marginBottom: 4,
+    marginBottom: 12,
   },
-  optRowText: { fontSize: 14, flex: 1 },
+  linkText: { fontSize: 14 },
 
-  inputCard: {
-    borderRadius: 16,
-    minHeight: 180,
-    overflow: 'hidden',
-  },
   contentInput: {
-    flex: 1,
-    minHeight: 140,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-    fontSize: 16,
-    lineHeight: 24,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    lineHeight: 22,
+    minHeight: 130,
     textAlignVertical: 'top',
   },
-  previewBox: {
-    minHeight: 140,
-    margin: 12,
-    borderRadius: 12,
-    padding: 14,
-  },
-  previewText: { fontSize: 15, lineHeight: 23 },
 
-  inputActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  compiledBox: {
+    marginTop: 12,
+    borderRadius: 14,
+    padding: 14,
+    gap: 4,
   },
-  inputActionBtn: {
+  compiledLabel: { fontSize: 10, letterSpacing: 0.8, marginBottom: 4 },
+  compiledPrefix: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  compiledBody: { fontSize: 14, lineHeight: 21 },
+
+  toolRow: { flexDirection: 'row', gap: 8 },
+  toolBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 12,
+    borderRadius: 14,
   },
-  inputActionText: { fontSize: 12, fontWeight: '600' },
-  inputActionsRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  toolBtnText: { fontSize: 12, fontWeight: '600' },
+
+  runBtn: {
+    height: 52,
+    borderRadius: 16,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 10,
   },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  runBtnText: { fontSize: 16 },
 
   paramsToggle: {
     flexDirection: 'row',
@@ -826,12 +735,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
   },
   paramsToggleText: { flex: 1, fontSize: 13 },
-
-  card: { borderRadius: 18, padding: 16 },
-  cardLabel: { fontSize: 11, letterSpacing: 0.8, marginBottom: 10 },
 
   systemInput: {
     borderRadius: 12,
@@ -851,12 +757,10 @@ const styles = StyleSheet.create({
   stepperValue: { fontSize: 16, fontWeight: '700' },
   hint: { fontSize: 12, marginTop: 12, lineHeight: 17 },
 
-  outputActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
-  iconBtn: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-
-  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16, alignItems: 'center' },
   tabPill: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20 },
   tabPillText: { fontSize: 13 },
+  copyOutBtn: { marginLeft: 'auto', padding: 4 },
 
   runningPlaceholder: { alignItems: 'center', paddingVertical: 32, gap: 10 },
   runningText: { fontSize: 14 },
@@ -871,35 +775,11 @@ const styles = StyleSheet.create({
   historyPrompt: { fontSize: 14 },
   historyMeta: { fontSize: 12, marginTop: 3 },
 
-  sheetOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-    maxHeight: '70%',
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(128,128,128,0.4)',
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 12,
-  },
-  sheetTitle: { fontSize: 20, fontWeight: '700', marginBottom: 12 },
-  sheetRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    padding: 14,
+  exampleScroll: { maxHeight: 360 },
+  exampleItem: {
     borderRadius: 12,
+    padding: 14,
     marginBottom: 8,
   },
-  sheetRowText: { flex: 1, fontSize: 14, lineHeight: 20 },
+  exampleItemText: { fontSize: 14, lineHeight: 20 },
 });
