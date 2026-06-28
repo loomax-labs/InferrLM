@@ -360,7 +360,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       if (hasActiveRef.current) {
         InteractionManager.runAfterInteractions(run);
       }
-    }, 5000);
+    }, 1000);
 
     return () => clearInterval(id);
   }, []);
