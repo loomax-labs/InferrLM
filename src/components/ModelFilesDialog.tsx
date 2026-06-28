@@ -7,7 +7,7 @@ import MlxIcon from './icons/MlxIcon';
 import { HFModelDetails, HFFile } from '../services/HuggingFaceService';
 import { huggingFaceService } from '../services/HuggingFaceService';
 import { ModelFormat } from '../types/models';
-import { OverlayHost } from '../services/adapters/ModalOverlayAdapter';
+import { OverlayHost, panelElevation } from '../services/adapters/ModalOverlayAdapter';
 
 interface ModelFilesDialogProps {
   visible: boolean;
@@ -229,7 +229,7 @@ export default function ModelFilesDialog({
   return (
     <OverlayHost visible={visible} onClose={onClose}>
       {showLoading ? (
-        <View style={[styles.loadingCard, { backgroundColor: themeColors.background }]} pointerEvents="auto">
+        <View style={[styles.loadingCard, panelElevation, { backgroundColor: themeColors.background }]}>
           <ActivityIndicator size="large" color={themeColors.primary} />
           <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading model details...</Text>
           {loadingModelId ? (
@@ -239,7 +239,7 @@ export default function ModelFilesDialog({
           ) : null}
         </View>
       ) : modelDetails ? (
-        <View style={[styles.modalContent, { backgroundColor: themeColors.background, width: modalWidth, maxHeight: height - 100 }]} pointerEvents="auto">
+        <View style={[styles.modalContent, panelElevation, { backgroundColor: themeColors.background, width: modalWidth, maxHeight: height - 100 }]}>
           <View style={styles.header}>
             <View style={styles.titleContainer}>
               <Text style={[styles.title, { color: themeColors.text }]}>{modelDetails.id}</Text>
@@ -373,7 +373,6 @@ const styles = StyleSheet.create({
   modalContent: {
     borderRadius: 16,
     padding: 24,
-    overflow: 'hidden',
   },
   loadingCard: {
     padding: 24,
@@ -382,7 +381,6 @@ const styles = StyleSheet.create({
     gap: 16,
     maxWidth: 320,
     marginHorizontal: 24,
-    overflow: 'hidden',
   },
   loadingText: {
     fontSize: 16,
