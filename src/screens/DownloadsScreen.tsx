@@ -90,6 +90,9 @@ export default function DownloadsScreen() {
   const [dialogSecondaryPress, setDialogSecondaryPress] = useState<(() => void) | undefined>(undefined);
   const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
   const [cancelModelName, setCancelModelName] = useState('');
+  const [restartDialogVisible, setRestartDialogVisible] = useState(false);
+  const [restartModelName, setRestartModelName] = useState('');
+  const [isRestarting, setIsRestarting] = useState(false);
   const [isCancellingAll, setIsCancellingAll] = useState(false);
   const [mlxPackageFiles, setMlxPackageFiles] = useState<Record<string, string[]>>({});
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
@@ -100,6 +103,14 @@ export default function DownloadsScreen() {
   const hideCancelDialog = () => {
     setCancelDialogVisible(false);
     setCancelModelName('');
+  };
+
+  const hideRestartDialog = () => {
+    if (isRestarting) {
+      return;
+    }
+    setRestartDialogVisible(false);
+    setRestartModelName('');
   };
 
   interface BtnCfg { label: string; onPress: () => void }
@@ -333,13 +344,21 @@ export default function DownloadsScreen() {
     setCancelDialogVisible(true);
   };
 
-  const handleRestart = useCallback(async (modelName: string) => {
+  const handleRestart = (modelName: string) => {
+    setRestartModelName(modelName);
+    setRestartDialogVisible(true);
+  };
+
+  const confirmRestart = async () => {
+    const modelName = restartModelName;
+
     if (!modelName || buttonProcessingRef.current.has(modelName)) {
       return;
     }
 
     buttonProcessingRef.current.add(modelName);
-    console.log('restart_pressed', modelName);
+    setIsRestarting(true);
+    console.log('restart_confirmed', modelName);
 
     try {
       setDownloadProgress(prev => ({
@@ -359,8 +378,11 @@ export default function DownloadsScreen() {
       showDialog('Error', 'Failed to restart download');
     } finally {
       buttonProcessingRef.current.delete(modelName);
+      setIsRestarting(false);
+      setRestartDialogVisible(false);
+      setRestartModelName('');
     }
-  }, [setDownloadProgress, showDialog]);
+  };
 
   const confirmCancellation = async () => {
     const modelName = cancelModelName;
@@ -589,6 +611,20 @@ export default function DownloadsScreen() {
         onPrimaryPress={confirmCancellation}
         secondaryButtonText="No"
         onSecondaryPress={hideCancelDialog}
+      />
+
+      <Dialog
+        visible={restartDialogVisible}
+        onClose={hideRestartDialog}
+        title="Restart Download"
+        description="This will stop the current download, remove any partial files, and start over from the beginning. Continue?"
+        iconName="restart"
+        primaryButtonText="Yes"
+        onPrimaryPress={confirmRestart}
+        primaryButtonLoading={isRestarting}
+        primaryButtonDisabled={isRestarting}
+        secondaryButtonText="No"
+        onSecondaryPress={hideRestartDialog}
       />
     </View>
   );
