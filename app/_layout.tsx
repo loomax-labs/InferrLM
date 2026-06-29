@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus, BackHandler, Platform, Text, TextInput, ToastAndroid, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar, setStatusBarStyle } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -19,7 +18,6 @@ import { ModelProvider } from '../src/context/ModelContext';
 import { DownloadProvider } from '../src/context/DownloadContext';
 import { modelDownloader } from '../src/services/ModelDownloader';
 import { engineService } from '../src/services/inference-engine-service';
-import { ThemeColors } from '../src/types/theme';
 import { notificationService } from '../src/services/NotificationService';
 import { initializeAuth } from '../src/services/AuthService';
 import { initGeminiService } from '../src/services/GeminiInitializer';
@@ -32,6 +30,7 @@ import UpdateDialog from '../src/components/UpdateDialog';
 import SkillRuntimeHost from '../src/components/skills/SkillRuntimeHost';
 import { updateService } from '../src/services/UpdateService';
 import { useResponsiveLayout } from '../src/hooks/useResponsiveLayout';
+import { StatusBarHost } from '../src/services/adapters/StatusBarAdapter';
 
 SplashScreen.preventAutoHideAsync();
 initializeBindings().catch(() => {});
@@ -86,11 +85,7 @@ function ThemedPaper({ children }: { children: React.ReactNode }) {
 function InnerLayout() {
   const { theme: currentTheme } = useTheme();
   const { isWideScreen } = useResponsiveLayout();
-  const themeColors = theme[currentTheme as ThemeColors];
-  const statusBarStyle =
-    Platform.OS === 'android' || isWideScreen
-      ? 'light'
-      : themeColors.statusBarStyle;
+  const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const appStateRef = useRef(AppState.currentState);
@@ -145,11 +140,6 @@ function InnerLayout() {
   }, []);
 
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-    setStatusBarStyle(statusBarStyle, true);
-  }, [statusBarStyle]);
-
-  useEffect(() => {
     if (Platform.OS !== 'android') return;
     NavigationBar.setBackgroundColorAsync?.(themeColors.navigationBar);
     NavigationBar.setButtonStyleAsync?.('light');
@@ -164,13 +154,22 @@ function InnerLayout() {
           left: 0,
           right: 0,
           height: insets.top,
-          backgroundColor: themeColors.statusBarBg,
+          backgroundColor: 'transparent',
           zIndex: 999,
         }}
         pointerEvents="none"
       />
-      <StatusBar key={currentTheme} style={statusBarStyle} translucent />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBarHost
+        themeName={currentTheme}
+        forceLight={Platform.OS === 'android' || isWideScreen}
+        translucent
+      />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          statusBarStyle: Platform.OS === 'ios' ? (isWideScreen ? 'light' : 'auto') : undefined,
+        }}
+      >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="register" options={{ animation: 'slide_from_bottom' }} />
