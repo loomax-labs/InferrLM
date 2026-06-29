@@ -172,7 +172,7 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
         statusBarTranslucent={true}
         onRequestClose={onClose}
       >
-        <StatusBar hidden={true} />
+        {Platform.OS === 'android' && <StatusBar hidden={true} />}
         <View style={[styles.fullScreenContainer, { backgroundColor: themeColors.background }]}>
           <View style={styles.permissionContainer}>
             <MaterialCommunityIcons 
@@ -213,11 +213,11 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
       animationType="fade"
       transparent={false}
       statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      <StatusBar hidden={true} />
-      <View style={styles.fullScreenContainer}>
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        onRequestClose={onClose}
+      >
+        {Platform.OS === 'android' && <StatusBar hidden={true} />}
+        <View style={styles.fullScreenContainer}>
+          <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity style={styles.headerButton} onPress={onClose}>
             <MaterialCommunityIcons name="close" size={24} color="#fff" />
           </TouchableOpacity>
