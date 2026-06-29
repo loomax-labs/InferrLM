@@ -41,7 +41,6 @@ export default {
         NSLocalNetworkUsageDescription: "InferrLM uses local network access to share your AI chat interface with other devices on your WiFi network, allowing you to access your assistant from browsers on computers, tablets, or other phones.",
         NSBonjourServices: ["_http._tcp"],
         ITSAppUsesNonExemptEncryption: false,
-        UIStatusBarStyle: "UIStatusBarStyleDefault",
         UIViewControllerBasedStatusBarAppearance: false,
         UIGestureRecognizerShouldBegin: false,
         UINavigationControllerHidesBarsOnSwipe: false,
