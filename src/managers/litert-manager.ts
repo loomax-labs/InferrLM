@@ -201,15 +201,18 @@ class LiteRTManager implements InferenceManager {
   }
 
   private extractSystemPrompt(messages: Msg[], settings?: Partial<GenSettings>): string | undefined {
+    const fallback = settings?.systemPrompt?.trim();
     const firstMessage = messages[0];
     if (firstMessage?.role === 'system') {
       const text = this.extractText(firstMessage.content);
       if (text) {
+        if (fallback && fallback !== text) {
+          return fallback;
+        }
         return text;
       }
     }
 
-    const fallback = settings?.systemPrompt?.trim();
     return fallback || undefined;
   }
 
@@ -387,35 +390,49 @@ class LiteRTManager implements InferenceManager {
   }
 
   private buildFullConversationPrompt(messages: Msg[]): string {
-    const lines: string[] = [];
+    const priorLines: string[] = [];
+    const nonSystem = messages.filter(message => message.role !== 'system');
+    let lastUserIndex = -1;
 
-    for (const message of messages) {
-      if (message.role === 'system') {
+    for (let index = nonSystem.length - 1; index >= 0; index -= 1) {
+      if (nonSystem[index].role === 'user') {
+        lastUserIndex = index;
+        break;
+      }
+    }
+
+    for (let index = 0; index < nonSystem.length; index += 1) {
+      if (index === lastUserIndex) {
         continue;
       }
 
-      const text = this.getMessageText(message);
+      const text = this.getMessageText(nonSystem[index]);
       if (!text) {
         continue;
       }
 
-      if (message.role === 'user') {
-        lines.push(`User: ${text}`);
+      if (nonSystem[index].role === 'user') {
+        priorLines.push(`User: ${text}`);
         continue;
       }
 
-      if (message.role === 'assistant') {
-        lines.push(`Assistant: ${text}`);
+      if (nonSystem[index].role === 'assistant') {
+        priorLines.push(`Assistant: ${text}`);
       }
     }
 
-    if (lines.length === 0 || !lines[lines.length - 1].startsWith('User:')) {
+    const input = this.getLastUserInput(messages);
+    const question = input.text?.trim() || '';
+    if (!question) {
       return '';
     }
 
-    lines.push('Assistant:');
-    let prompt = lines.join('\n\n');
-    const maxChars = 12000;
+    if (priorLines.length === 0) {
+      return question;
+    }
+
+    let prompt = `Here is the conversation so far:\n${priorLines.join('\n')}\n\nAnswer this follow-up question: ${question}`;
+    const maxChars = 8000;
     if (prompt.length > maxChars) {
       prompt = prompt.slice(-maxChars);
       console.log('litert_prompt_trim', { maxChars });

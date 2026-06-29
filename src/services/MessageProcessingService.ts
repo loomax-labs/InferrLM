@@ -1164,17 +1164,26 @@ export class MessageProcessingService {
     if (!usedRAG) {
       const userTurns = baseMessages.filter(msg => msg.role === 'user').length;
       let genSettings = settings;
+      let genMessages = baseMessages;
       if (userTurns > 1 && isAgentSkillsPrompt(settings.systemPrompt)) {
+        const chatPrompt = await skillManager.buildConversationalSystemPrompt();
         genSettings = {
           ...settings,
-          systemPrompt: await skillManager.buildConversationalSystemPrompt(),
+          systemPrompt: chatPrompt,
+          maxTokens: Math.min(settings.maxTokens || 1024, 1024),
         };
+        genMessages = baseMessages.map((msg, index) => {
+          if (index === 0 && msg.role === 'system') {
+            return { role: 'system', content: chatPrompt };
+          }
+          return msg;
+        });
         console.log('local_chat_prompt', { userTurns });
       }
 
-      console.log('local_gen_direct', { baseMessageCount: baseMessages.length, userTurns });
+      console.log('local_gen_direct', { baseMessageCount: genMessages.length, userTurns });
       await engineService.mgr().gen(
-        baseMessages as any,
+        genMessages as any,
         {
           onToken: streamCallback,
           settings: genSettings,
