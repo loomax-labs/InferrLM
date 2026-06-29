@@ -1167,7 +1167,10 @@ export default function ChatInput({
 
 
   return (
-    <View style={[styles.wrapper, isKbOpen && styles.wrapperCompact]}>
+    <View style={[
+      styles.wrapper,
+      isKbOpen && (Platform.OS === 'android' ? styles.wrapperCompactAndroid : styles.wrapperCompact),
+    ]}>
       {isProcessingWithRAG && (
         <View
           style={[
@@ -1728,8 +1731,13 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   wrapperCompact: {
-    paddingBottom: Platform.OS === 'ios' ? 0 : 4,
+    paddingBottom: 0,
     paddingTop: 4,
+  },
+  wrapperCompactAndroid: {
+    paddingBottom: 0,
+    paddingTop: 0,
+    marginBottom: -20,
   },
   ragBanner: {
     flexDirection: 'row',
