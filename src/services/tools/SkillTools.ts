@@ -64,7 +64,7 @@ const RUN_INTENT_TOOL: ToolSchema = {
   type: 'function',
   function: {
     name: 'run_intent',
-    description: 'Execute a supported native intent with structured parameters.',
+    description: 'Execute a device action intent such as schedule_notification, get_current_date_and_time, read_calendar_events, create_calendar_event, send_email, or open_map.',
     parameters: {
       type: 'object',
       properties: {

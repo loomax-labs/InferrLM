@@ -30,6 +30,7 @@ import UpdateDialog from './src/components/UpdateDialog';
 import SkillRuntimeHost from './src/components/skills/SkillRuntimeHost';
 import { updateService } from './src/services/UpdateService';
 import { StatusBarHost } from './src/services/adapters/StatusBarAdapter';
+import { skillManager } from './src/services/SkillManager';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,6 +50,11 @@ const initializeServices = async () => {
   initGeminiService();
   initOpenAIService();
   initClaudeService();
+
+  try {
+    await skillManager.syncTools();
+  } catch {
+  }
 };
 
 initializeServices();

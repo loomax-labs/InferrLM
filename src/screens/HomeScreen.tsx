@@ -601,9 +601,20 @@ export default function HomeScreen() {
         : await getEffectiveSettings();
 
       await skillManager.syncTools();
+
+      let basePrompt = settings.systemPrompt;
+      const isOnlineModel = !!provider
+        && ['gemini', 'chatgpt', 'claude'].includes(OnlineModelService.getBaseProvider(provider));
+      if (isOnlineModel && provider) {
+        const providerInstruction = await onlineModelService.getSystemInstruction(provider);
+        if (providerInstruction?.trim()) {
+          basePrompt = providerInstruction.trim();
+        }
+      }
+
       settings = {
         ...settings,
-        systemPrompt: await skillManager.buildSystemPrompt(settings.systemPrompt),
+        systemPrompt: await skillManager.buildSystemPrompt(basePrompt),
       };
 
       await messageProcessingService.processMessage(

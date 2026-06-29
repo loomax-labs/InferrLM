@@ -5,6 +5,11 @@ import * as SecureStore from 'expo-secure-store';
 
 import { fs as FileSystem } from './fs';
 import type { Skill, SkillImportPayload } from '../types/skill';
+import {
+  AGENT_SKILLS_PLACEHOLDER,
+  AGENT_SKILLS_SYSTEM_PROMPT,
+  isAgentSkillsPrompt,
+} from '../constants/agentSkillsPrompt';
 import { registerSkillTools, unregisterSkillTools } from './tools/SkillTools';
 
 const CUSTOM_SKILLS_KEY = '@skills_custom_v1';
@@ -478,11 +483,14 @@ class SkillManager {
     }
 
     const skillList = enabled
-      .map(skill => `- ${skill.name}: ${skill.description}`)
-      .join('\n');
+      .map(skill => `- Skill name: "${skill.name}"\n- Description: ${skill.description}`)
+      .join('\n\n');
 
-    const skillPrompt = `You have access to the following skills:\n${skillList}\nUse load_skill to read a skill's instructions before using it.`;
-    return [basePrompt?.trim(), skillPrompt].filter(Boolean).join('\n\n');
+    const template = isAgentSkillsPrompt(basePrompt)
+      ? basePrompt!.trim()
+      : AGENT_SKILLS_SYSTEM_PROMPT;
+
+    return template.replace(AGENT_SKILLS_PLACEHOLDER, skillList);
   }
 
   async syncTools(): Promise<void> {
