@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+<script>
+function parseInput(input) {
+  if (!input) return {};
+  let raw = input;
+  if (typeof input === 'object' && input !== null) {
+    if ('data' in input) raw = input.data;
+    else if (!('skillId' in input)) return input;
+    else raw = input.data;
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch { return { text: t }; }
+  }
+  return raw || {};
+}
+
+window.runSkill = async function(input) {
+  const params = parseInput(input);
+  const text = String(params.text ?? '').trim();
+  if (!text) return { error: 'missing_text' };
+
+  const words = text.split(/\s+/).filter(Boolean);
+  const chars = text.length;
+  const charsNoSpace = text.replace(/\s/g, '').length;
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(words.length / 200));
+
+  return {
+    result: [
+      'Words: ' + words.length,
+      'Characters: ' + chars,
+      'Characters (no spaces): ' + charsNoSpace,
+      'Sentences: ' + sentences,
+      'Reading time: ~' + minutes + ' min',
+    ].join('\n'),
+  };
+};
+</script>
+</body>
+</html>

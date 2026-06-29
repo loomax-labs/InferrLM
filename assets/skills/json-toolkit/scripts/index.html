@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+<script>
+function parseInput(input) {
+  if (!input) return {};
+  let raw = input;
+  if (typeof input === 'object' && input !== null) {
+    if ('data' in input) raw = input.data;
+    else if (!('skillId' in input)) return input;
+    else raw = input.data;
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch { return { text: t }; }
+  }
+  return raw || {};
+}
+
+window.runSkill = async function(input) {
+  const params = parseInput(input);
+  const action = String(params.action || 'format').toLowerCase();
+  const text = String(params.text ?? params.data ?? '').trim();
+  if (!text) return { error: 'missing_text' };
+
+  try {
+    const parsed = JSON.parse(text);
+    if (action === 'validate') {
+      return { result: 'Valid JSON.' };
+    }
+    if (action === 'minify') {
+      return { result: JSON.stringify(parsed) };
+    }
+    return { result: JSON.stringify(parsed, null, 2) };
+  } catch (e) {
+    if (action === 'validate') {
+      return { result: 'Invalid JSON: ' + (e instanceof Error ? e.message : String(e)) };
+    }
+    return { error: 'invalid_json' };
+  }
+};
+</script>
+</body>
+</html>
