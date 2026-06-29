@@ -16,6 +16,9 @@ export type SkillMetadata = {
 export type SkillResult = {
   result?: string;
   error?: string;
+  title?: string;
+  summary?: string;
+  facts?: string[];
   image?: {
     base64: string;
     mimeType: string;
