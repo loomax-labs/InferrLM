@@ -259,6 +259,16 @@ class SkillManager {
     await this.syncTools();
   }
 
+  async setAllEnabled(enabled: boolean): Promise<void> {
+    const skills = await this.getAll();
+    const enabledMap = await this.getEnabledMap();
+    for (const skill of skills) {
+      enabledMap[skill.id] = enabled;
+    }
+    await this.saveEnabledMap(enabledMap);
+    await this.syncTools();
+  }
+
   async remove(id: string): Promise<void> {
     const skills = await this.getCustomSkills();
     const next = skills.filter(skill => skill.id !== id);
@@ -268,6 +278,23 @@ class SkillManager {
     delete enabledMap[id];
     await this.saveEnabledMap(enabledMap);
     await SecureStore.deleteItemAsync(`${SECRET_PREFIX}${id}`);
+    await this.syncTools();
+  }
+
+  async removeMany(ids: string[]): Promise<void> {
+    if (ids.length === 0) {
+      return;
+    }
+    const idSet = new Set(ids);
+    const skills = await this.getCustomSkills();
+    await this.saveCustomSkills(skills.filter(skill => !idSet.has(skill.id)));
+
+    const enabledMap = await this.getEnabledMap();
+    for (const id of ids) {
+      delete enabledMap[id];
+      await SecureStore.deleteItemAsync(`${SECRET_PREFIX}${id}`);
+    }
+    await this.saveEnabledMap(enabledMap);
     await this.syncTools();
   }
 
