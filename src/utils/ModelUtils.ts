@@ -28,11 +28,25 @@ export const getDisplayName = (filename: string) => {
   return filename.replace(/\.(gguf|bin)$/i, '');
 };
 
+export const isActiveDownload = (download: any): boolean => {
+  if (!download || typeof download !== 'object') {
+    return false;
+  }
+
+  const status = download.status || '';
+  if (status === 'completed' || status === 'failed' || status === 'cancelled') {
+    return false;
+  }
+
+  const progress = typeof download.progress === 'number' ? download.progress : 0;
+  if (progress >= 100 && status !== 'transferring' && status !== 'starting') {
+    return false;
+  }
+
+  return true;
+};
+
 export const getActiveDownloadsCount = (downloads: any): number => {
   if (!downloads) return 0;
-  return Object.values(downloads).filter((download: any) =>
-    download.status !== 'completed' &&
-    download.status !== 'failed' &&
-    download.status !== 'cancelled'
-  ).length;
+  return Object.values(downloads).filter(isActiveDownload).length;
 }; 
