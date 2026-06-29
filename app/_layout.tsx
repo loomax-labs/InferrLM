@@ -84,10 +84,15 @@ function ThemedPaper({ children }: { children: React.ReactNode }) {
 }
 
 function InnerLayout() {
-  const { theme: currentTheme } = useTheme();
+  const { theme: currentTheme, selectedTheme } = useTheme();
   const { isWideScreen } = useResponsiveLayout();
   const themeColors = theme[currentTheme as ThemeColors];
-  const statusBarStyle = Platform.OS === 'android' || isWideScreen ? 'light' : themeColors.statusBarStyle;
+  const statusBarStyle =
+    Platform.OS === 'android' || isWideScreen
+      ? 'light'
+      : selectedTheme === 'system'
+        ? 'auto'
+        : themeColors.statusBarStyle;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const appStateRef = useRef(AppState.currentState);
@@ -143,7 +148,7 @@ function InnerLayout() {
 
   useEffect(() => {
     setStatusBarStyle(statusBarStyle, true);
-  }, [statusBarStyle]);
+  }, [statusBarStyle, currentTheme, selectedTheme]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
