@@ -1,8 +1,7 @@
 ---
 name: Web Search
-description: Structure grounded web research before using web-enabled tools.
+description: Search the web for current information.
 type: text
-homepage: https://ai.google.dev/edge/gallery
 ---
 Use this skill when the user needs recent facts, corroboration, or source-backed answers.
 

@@ -2,7 +2,6 @@
 name: Calculate Hash
 description: Compute a deterministic SHA-256 hash for a string or small JSON payload.
 type: js
-homepage: https://ai.google.dev/edge/gallery
 scriptName: hash
 ---
 Use this skill when the user needs a SHA-256 hash for text, JSON, or a short payload.
