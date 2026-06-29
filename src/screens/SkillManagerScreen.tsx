@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Clipboard,
   Linking,
   Modal,
   Pressable,
@@ -17,16 +18,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
 import Dialog from '../components/Dialog';
-import SkillResultRenderer from '../components/chat/SkillResultRenderer';
 import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { skillManager } from '../services/SkillManager';
-import {
-  getSkillPreviewHint,
-  getSkillPreviewInput,
-  runSkillPreview,
-} from '../services/adapters/SkillPreviewAdapter';
-import type { Skill, SkillResult } from '../types/skill';
+import type { Skill } from '../types/skill';
 
 const MAX_SKILL_COUNT = 15;
 const COMMUNITY_SKILLS_URL = 'https://github.com/topics/agent-skills';
@@ -175,8 +170,6 @@ export default function SkillManagerScreen() {
   const [viewSkill, setViewSkill] = useState<Skill | null>(null);
   const [secretSkill, setSecretSkill] = useState<Skill | null>(null);
   const [secretVal, setSecretVal] = useState('');
-  const [previewIn, setPreviewIn] = useState('');
-  const [previewOut, setPreviewOut] = useState<SkillResult | null>(null);
 
   const listRef = useRef<ScrollView>(null);
   const initExpand = useRef(false);
@@ -256,16 +249,6 @@ export default function SkillManagerScreen() {
     };
     loadSecret();
   }, [secretSkill?.id, secretSkill?.secret]);
-
-  useEffect(() => {
-    setPreviewOut(null);
-    if (!viewSkill) {
-      setPreviewIn('');
-      return;
-    }
-    setPreviewIn(getSkillPreviewInput(viewSkill));
-    console.log('skill_preview_open', viewSkill.id);
-  }, [viewSkill?.id]);
 
   const handleToggle = async (skillId: string) => {
     try {
@@ -353,20 +336,13 @@ export default function SkillManagerScreen() {
     }
   };
 
-  const handlePreview = async () => {
-    if (!viewSkill) {
+  const handleCopyView = () => {
+    if (!viewSkill?.instructions) {
       return;
     }
-    try {
-      setBusyId(`preview-${viewSkill.id}`);
-      setPreviewOut(await runSkillPreview(viewSkill, previewIn));
-    } catch (error) {
-      setPreviewOut({
-        error: error instanceof Error ? error.message : 'Preview failed',
-      });
-    } finally {
-      setBusyId(null);
-    }
+    Clipboard.setString(viewSkill.instructions);
+    console.log('skill_view_copied', viewSkill.id);
+    Alert.alert('Copied', 'Skill content copied to clipboard.');
   };
 
   const openDelete = (ids: string[]) => {
@@ -699,35 +675,26 @@ export default function SkillManagerScreen() {
                 <Text style={[styles.homeLink, { color: themeColors.primary }]}>Homepage</Text>
               </TouchableOpacity>
             ) : null}
-            <Text style={[styles.instructions, { color: themeColors.text }]}>
-              {viewSkill?.instructions}
-            </Text>
-
-            <View style={[styles.previewBox, { backgroundColor: themeColors.cardBackground }]}>
-              <Text style={[styles.previewTitle, { color: themeColors.text }]}>
-                {viewSkill?.type === 'js' ? 'Skill Preview' : 'Prompt Preview'}
-              </Text>
-              <TextInput
-                value={previewIn}
-                onChangeText={setPreviewIn}
-                placeholder={viewSkill ? getSkillPreviewHint(viewSkill) : 'Preview input'}
-                placeholderTextColor={themeColors.secondaryText}
-                multiline
-                style={[styles.previewInput, { color: themeColors.text, backgroundColor: themeColors.background }]}
-              />
+            <View style={styles.viewFieldHead}>
+              <Text style={[styles.viewFieldLabel, { color: themeColors.text }]}>Skill</Text>
               <TouchableOpacity
-                style={[styles.tonalBtn, { backgroundColor: themeColors.borderColor, alignSelf: 'flex-start' }]}
-                onPress={handlePreview}
-                disabled={busyId === `preview-${viewSkill?.id}`}
+                style={[styles.tonalBtn, { backgroundColor: themeColors.borderColor }]}
+                onPress={handleCopyView}
               >
-                <MaterialCommunityIcons name="play-outline" size={16} color={themeColors.text} />
-                <Text style={[styles.tonalText, { color: themeColors.text }]}>Run Preview</Text>
+                <MaterialCommunityIcons name="content-copy" size={16} color={themeColors.text} />
+                <Text style={[styles.tonalText, { color: themeColors.text }]}>Copy</Text>
               </TouchableOpacity>
-              {busyId === `preview-${viewSkill?.id}` ? (
-                <ActivityIndicator size="small" color={themeColors.primary} />
-              ) : null}
-              {previewOut ? <SkillResultRenderer result={previewOut} /> : null}
             </View>
+            <TextInput
+              value={viewSkill?.instructions ?? ''}
+              editable={false}
+              multiline
+              scrollEnabled={false}
+              style={[
+                styles.viewField,
+                { color: themeColors.text, backgroundColor: themeColors.cardBackground },
+              ]}
+            />
           </ScrollView>
         </Dialog.Content>
         <Dialog.Actions>
@@ -985,26 +952,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 10,
   },
-  instructions: {
-    fontSize: 14,
-    lineHeight: 21,
-    marginBottom: 12,
+  viewFieldHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  previewBox: {
-    borderRadius: 16,
-    padding: 12,
-    gap: 10,
-  },
-  previewTitle: {
+  viewFieldLabel: {
     fontSize: 14,
     fontWeight: '700',
   },
-  previewInput: {
+  viewField: {
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 14,
-    minHeight: 88,
+    lineHeight: 21,
+    minHeight: 160,
     textAlignVertical: 'top',
+    marginBottom: 8,
   },
 });
