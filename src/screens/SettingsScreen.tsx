@@ -7,7 +7,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { engineService } from '../services/runtime-service';
 import AppHeader from '../components/AppHeader';
 import * as Device from 'expo-device';
@@ -246,8 +245,7 @@ export default function SettingsScreen() {
 
   const handleThemeChange = async (newTheme: ThemeOption) => {
     try {
-      await AsyncStorage.setItem('@theme_preference', newTheme);
-      toggleTheme(newTheme);
+      await toggleTheme(newTheme);
     } catch (error) {
     }
   };
