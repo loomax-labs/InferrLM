@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="UTF-8"></head><body><canvas id="card-canvas" style="display:none"></canvas><script>
+
+function parseInput(input) {
+  if (!input) return {};
+  let raw = input;
+  let scriptName = '';
+  if (typeof input === 'object' && input !== null) {
+    scriptName = String(input.scriptName || '');
+    if ('data' in input) raw = input.data;
+    else if (!('skillId' in input)) return input;
+    else raw = input.data;
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return { __scriptName: scriptName };
+    try { const p = JSON.parse(t); p.__scriptName = scriptName; return p; } catch { return { text: t, __scriptName: scriptName }; }
+  }
+  return Object.assign({}, raw || {}, { __scriptName: scriptName });
+}
+
+async function runQuery(params) {
+  const topic = params.topic || 'Unknown';
+  const lang = params.lang || 'en';
+  const baseUrl = 'https://' + lang + '.wikipedia.org/w/api.php';
+  const searchParams = new URLSearchParams({ action: 'query', format: 'json', generator: 'search', gsrsearch: topic, gsrlimit: '1', prop: 'extracts', explaintext: '1', exintro: '1', origin: '*' });
+  const searchRes = await fetch(baseUrl + '?' + searchParams.toString());
+  if (!searchRes.ok) throw new Error('HTTP error ' + searchRes.status);
+  const searchData = await searchRes.json();
+  if (!searchData.query || !searchData.query.pages) return { result: 'Not found' };
+  const pages = searchData.query.pages;
+  const page = pages[Object.keys(pages)[0]];
+  return { result: JSON.stringify({ title: page.title, extract: page.extract }) };
+}
+
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    if (context.measureText(testLine).width > maxWidth && n > 0) {
+      context.fillText(line, x, currentY);
+      line = words[n] + ' ';
+      currentY += lineHeight;
+    } else line = testLine;
+  }
+  context.fillText(line, x, currentY);
+  return currentY;
+}
+
+async function runCard(params) {
+  const topic = params.topic || 'Unknown Topic';
+  let description = params.description || '';
+  const canvas = document.getElementById('card-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 1080; canvas.height = 1080;
+  const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
+  gradient.addColorStop(0, '#FF9A9E');
+  gradient.addColorStop(0.5, '#FECFEF');
+  gradient.addColorStop(1, '#A1C4FD');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 1080, 1080);
+  ctx.fillStyle = '#FFFFFF';
+  const x = 60, y = 60, w = 960, h = 960, r = 40;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#FF6B6B';
+  ctx.font = 'bold 32px system-ui, sans-serif';
+  ctx.fillText('TODAY I LEARNED', 120, 150);
+  ctx.fillStyle = '#2D3436';
+  ctx.font = 'bold 72px system-ui, sans-serif';
+  const nextYAfterTopic = wrapText(ctx, topic, 120, 250, 840, 85);
+  if (description.length > 320) {
+    let cutIndex = -1;
+    for (let i = 319; i >= 0; i--) {
+      if ('.!?'.includes(description[i])) { cutIndex = i + 1; break; }
+    }
+    description = cutIndex > 0 ? description.substring(0, cutIndex).trim() : description.substring(0, 317) + '...';
+  }
+  ctx.fillStyle = '#636E72';
+  ctx.font = '42px system-ui, sans-serif';
+  wrapText(ctx, description, 120, nextYAfterTopic + 90, 840, 60);
+  ctx.fillStyle = '#2D3436';
+  ctx.font = 'bold 36px system-ui, sans-serif';
+  ctx.fillText('InferrLM', 120, 920);
+  ctx.fillStyle = '#B2BEC3';
+  ctx.font = '28px system-ui, sans-serif';
+  ctx.fillText('Daily learning card', 120, 960);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  const base64 = dataUrl.replace(/^data:image\/jpeg;base64,/, '');
+  return { result: 'Card generated successfully.', image: { base64, mimeType: 'image/jpeg' } };
+}
+
+window.runSkill = async function(input) {
+  try {
+    const params = parseInput(input);
+    const script = String(params.__scriptName || '');
+    if (script.includes('query')) return await runQuery(params);
+    return await runCard(params);
+  } catch (err) {
+    return { error: err.message };
+  }
+};
+</script></body></html>

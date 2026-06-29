@@ -1,0 +1,54 @@
+<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script></head><body><div id="qrcode-container" style="display:none"></div><canvas id="qr-canvas" style="display:none"></canvas><script>
+
+function parseInput(input) {
+  if (!input) return {};
+  let raw = input;
+  if (typeof input === 'object' && input !== null) {
+    if ('data' in input) raw = input.data;
+    else if (!('skillId' in input)) return input;
+    else raw = input.data;
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch { return { text: t }; }
+  }
+  return raw || {};
+}
+function toDataUrl(html) {
+  return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+}
+
+window.runSkill = async function(input) {
+  try {
+    const params = parseInput(input);
+    const url = params.url;
+    const shape = params.shape || 'square';
+    if (!url) throw new Error('URL is required.');
+    const container = document.getElementById('qrcode-container');
+    container.innerHTML = '';
+    new QRCode(container, { text: url, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.H });
+    const qrElement = await new Promise((resolve, reject) => {
+      let attempts = 0;
+      const check = setInterval(() => {
+        const canvas = container.querySelector('canvas');
+        const img = container.querySelector('img');
+        if (canvas) { clearInterval(check); resolve(canvas); }
+        else if (img && img.src && img.src.length > 10) { clearInterval(check); resolve(img); }
+        if (attempts++ > 100) { clearInterval(check); reject(new Error('QR Generation timed out')); }
+      }, 50);
+    });
+    const finalCanvas = document.getElementById('qr-canvas');
+    const ctx = finalCanvas.getContext('2d');
+    finalCanvas.width = 512; finalCanvas.height = 512;
+    ctx.clearRect(0, 0, 512, 512);
+    if (shape === 'circle') { ctx.beginPath(); ctx.arc(256, 256, 256, 0, Math.PI * 2); ctx.closePath(); ctx.clip(); }
+    ctx.drawImage(qrElement, 0, 0, 512, 512);
+    const dataUrl = finalCanvas.toDataURL('image/png');
+    const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
+    return { result: 'QR code generated.', image: { base64, mimeType: 'image/png' } };
+  } catch (err) {
+    return { error: err.message };
+  }
+};
+</script></body></html>

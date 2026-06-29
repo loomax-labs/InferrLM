@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body><script>
+
+function parseInput(input) {
+  if (!input) return {};
+  let raw = input;
+  if (typeof input === 'object' && input !== null) {
+    if ('data' in input) raw = input.data;
+    else if (!('skillId' in input)) return input;
+    else raw = input.data;
+  }
+  if (typeof raw === 'string') {
+    const t = raw.trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch { return { text: t }; }
+  }
+  return raw || {};
+}
+function toDataUrl(html) {
+  return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+}
+
+async function fetchWikiFuzzyAndInfobox(topic, lang) {
+  const baseUrl = 'https://' + lang + '.wikipedia.org/w/api.php';
+  const searchParams = new URLSearchParams({ action: 'query', format: 'json', generator: 'search', gsrsearch: topic, gsrlimit: '1', prop: 'extracts', explaintext: '1', exintro: '1', origin: '*' });
+  const searchRes = await fetch(baseUrl + '?' + searchParams.toString());
+  if (!searchRes.ok) throw new Error('HTTP error ' + searchRes.status);
+  const searchData = await searchRes.json();
+  if (!searchData.query || !searchData.query.pages) return { error: "No Wikipedia articles found matching '" + topic + "' in language '" + lang + "'." };
+  const pages = searchData.query.pages;
+  const page = pages[Object.keys(pages)[0]];
+  const title = page?.title;
+  let extract = page?.extract || '';
+  let infoboxText = '';
+  try {
+    const parseParams = new URLSearchParams({ action: 'parse', page: title, section: '0', prop: 'text', format: 'json', origin: '*' });
+    const parseRes = await fetch(baseUrl + '?' + parseParams.toString());
+    const parseData = await parseRes.json();
+    const html = parseData?.parse?.text['*'];
+    if (html) {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const infobox = doc.querySelector('table.infobox');
+      if (infobox) {
+        infobox.querySelectorAll('tr').forEach((row) => {
+          const th = row.querySelector('th');
+          const td = row.querySelector('td');
+          if (th && td) {
+            const key = th.textContent.replace(/\[\d+\]/g, '').trim();
+            const value = td.textContent.replace(/\[\d+\]/g, '').trim().replace(/\n+/g, ' | ');
+            infoboxText += key + ': ' + value + '\n';
+          }
+        });
+      }
+    }
+  } catch (e) {}
+  let finalResult = '';
+  if (infoboxText) finalResult += '--- INFOBOX ---\n' + infoboxText + '\n\n';
+  if (extract) finalResult += '--- SUMMARY ---\n' + extract;
+  if (!finalResult.trim()) return { error: "Found page '" + title + "' but no text or infobox was available." };
+  const caps = { zh: 1500, fr: 4300, es: 4500, en: 5000 };
+  const maxChars = caps[(lang || 'en').toLowerCase()] || 5000;
+  if (finalResult.length > maxChars) finalResult = finalResult.substring(0, maxChars) + '\n\n... [TRUNCATED TO SAVE CONTEXT]';
+  return { title, result: finalResult };
+}
+window.runSkill = async function(input) {
+  try {
+    const jsonData = parseInput(input);
+    if (!jsonData.topic) return { error: 'No topic provided to search.' };
+    if (!jsonData.lang) return { error: 'No language code (lang) provided.' };
+    return await fetchWikiFuzzyAndInfobox(jsonData.topic, jsonData.lang);
+  } catch (e) {
+    return { error: 'Failed to query Wikipedia: ' + e.message };
+  }
+};
+</script></body></html>
