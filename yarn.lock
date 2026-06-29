@@ -3210,6 +3210,11 @@ babel-preset-jest@^29.6.3:
     babel-plugin-jest-hoist "^29.6.3"
     babel-preset-current-node-syntax "^1.0.0"
 
+badgin@^1.1.5:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/badgin/-/badgin-1.2.3.tgz#994b5f519827d7d5422224825b2c8faea2bc43ad"
+  integrity sha512-NQGA7LcfCpSzIbGRbkgjgdWkjy7HI+Th5VLxTJfW5EeaAf3fnS+xWQaQOCYiny+q6QSvxqoSO04vCx+4u++EJw==
+
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
@@ -4637,6 +4642,11 @@ expo-apple-authentication@~56.0.4:
   resolved "https://registry.yarnpkg.com/expo-apple-authentication/-/expo-apple-authentication-56.0.4.tgz#138c8b2933ab80c19e873efe1233be95324a9211"
   integrity sha512-y9cIfulRCKyWrbWBx6lV172dnJZ+aNHdyEPC7tIlGJAO2zn3J1Vq6/mcKr2eynzjdt3e5Z02qeZWQN2R7rcbrg==
 
+expo-application@~56.0.3:
+  version "56.0.3"
+  resolved "https://registry.yarnpkg.com/expo-application/-/expo-application-56.0.3.tgz#ec3f39fb0016fd5b7d93f6b2bfbe0581e7628292"
+  integrity sha512-DdGGPlMuM6cSTeKhbvh6OeLr2O/+EI5BHKYrD+Do8sJPYgLwzGrgESELfyjJCpEhFzT+TgKIdmLmWXhNUQnHiw==
+
 expo-asset@~56.0.17:
   version "56.0.17"
   resolved "https://registry.yarnpkg.com/expo-asset/-/expo-asset-56.0.17.tgz#e58dbeaa45dfe6ad3ee4a3000182ed17af4f54e2"
@@ -4867,6 +4877,17 @@ expo-network@~56.0.5:
   version "56.0.5"
   resolved "https://registry.yarnpkg.com/expo-network/-/expo-network-56.0.5.tgz#cc6b42c1d9e190b860d00d0201eacbdeb4fb1b96"
   integrity sha512-zmuyO95jayDY9jyUfOAlNp9XXJrJaAOkBXXLy0TS/nh2kppj7CHirRPkQ/tf0rsxhIL3AEd9nsRTiPtNsGT9Lw==
+
+expo-notifications@~56.0.18:
+  version "56.0.18"
+  resolved "https://registry.yarnpkg.com/expo-notifications/-/expo-notifications-56.0.18.tgz#dc65d103dd4714127325e9ef60c25216a0e9753d"
+  integrity sha512-HHnrwyCLC5srFojcHYS2KskbNroy9o2fwPKdyhjrdjjrBu4sNRKm4LepcuZjDy98cZKEm89WIPW8O45vut8Rgw==
+  dependencies:
+    "@expo/image-utils" "^0.10.1"
+    abort-controller "^3.0.0"
+    badgin "^1.1.5"
+    expo-application "~56.0.3"
+    expo-constants "~56.0.18"
 
 expo-router@~56.2.11:
   version "56.2.11"

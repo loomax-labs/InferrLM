@@ -1,5 +1,6 @@
 import * as Calendar from 'expo-calendar';
 import * as Contacts from 'expo-contacts';
+import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
 
 import { toolRegistry, type ToolSchema } from './ToolRegistry';
@@ -300,6 +301,30 @@ const ensureContactsPermission = async () => {
   }
 };
 
+const ensureCalendarPermission = async () => {
+  const permission = await Calendar.requestCalendarPermissionsAsync();
+  if (!permission.granted) {
+    throw new Error('calendar_permission_denied');
+  }
+};
+
+const ensureNotificationPermission = async () => {
+  const permission = await Notifications.requestPermissionsAsync();
+  if (!permission.granted) {
+    throw new Error('notification_permission_denied');
+  }
+};
+
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const parseDayDate = (value: string): Date | null => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const normalizeRecord = (value: unknown): Record<string, any> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -326,11 +351,13 @@ export const executeMobileActionIntent = async (
   }
 
   if (name === 'send_email') {
-    const recipient = String(params.to || '').trim();
+    const recipient = String(params.to || params.extra_email || '').trim();
     if (!isValidEmail(recipient)) {
       throw new Error('invalid_email');
     }
-    const emailUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(String(params.subject || ''))}&body=${encodeURIComponent(String(params.body || ''))}`;
+    const subject = String(params.subject || params.extra_subject || '');
+    const body = String(params.body || params.extra_text || '');
+    const emailUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     await openExternalUrl(emailUrl);
     onAction?.({ tool: 'send_email', summary: recipient, createdAt: Date.now() });
     return `Drafted email to ${recipient}`;
@@ -388,26 +415,125 @@ export const executeMobileActionIntent = async (
 
   if (name === 'create_calendar_event') {
     const title = String(params.title || '').trim();
-    const startDate = parseDateValue(params.start);
+    const startDate = parseDateValue(params.start || params.begin_time);
     if (!title || !startDate) {
       throw new Error('invalid_event');
     }
 
     const allDay = Boolean(params.allDay);
-    const requestedEndDate = parseDateValue(params.end);
+    const requestedEndDate = parseDateValue(params.end || params.end_time);
     const endDate = requestedEndDate || new Date(startDate.getTime() + (allDay ? 24 : 1) * 60 * 60 * 1000);
+    const notes = String(params.notes || params.description || '').trim() || undefined;
 
+    await ensureCalendarPermission();
     await Calendar.createEventInCalendarAsync({
       title,
       startDate,
       endDate,
       location: String(params.location || '').trim() || undefined,
-      notes: String(params.notes || '').trim() || undefined,
+      notes,
       url: String(params.url || '').trim() || undefined,
       allDay,
     });
     onAction?.({ tool: 'create_calendar_event', summary: title, createdAt: Date.now() });
     return `Opened calendar event form for ${title}`;
+  }
+
+  if (name === 'get_current_date_and_time') {
+    const now = new Date();
+    const payload = {
+      date: now.toISOString().slice(0, 10),
+      time: now.toTimeString().slice(0, 8),
+      dayOfWeek: dayNames[now.getDay()],
+      iso: now.toISOString(),
+    };
+    onAction?.({ tool: 'get_current_date_and_time', summary: payload.date, createdAt: Date.now() });
+    return JSON.stringify(payload);
+  }
+
+  if (name === 'read_calendar_events') {
+    const dateValue = String(params.date || '').trim();
+    const day = parseDayDate(dateValue);
+    if (!day) {
+      throw new Error('invalid_date');
+    }
+
+    await ensureCalendarPermission();
+    const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+    const startDate = new Date(day);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(day);
+    endDate.setHours(23, 59, 59, 999);
+    const events = await Calendar.getEventsAsync(
+      calendars.map(calendar => calendar.id),
+      startDate,
+      endDate,
+    );
+    const payload = events.map(event => ({
+      title: event.title,
+      start: event.startDate,
+      end: event.endDate,
+      location: event.location,
+      notes: event.notes,
+      allDay: event.allDay,
+    }));
+    onAction?.({ tool: 'read_calendar_events', summary: dateValue, createdAt: Date.now() });
+    return JSON.stringify(payload);
+  }
+
+  if (name === 'schedule_notification') {
+    const title = String(params.title || '').trim();
+    const message = String(params.message || '').trim();
+    const hour = Number(params.hour);
+    const minute = Number(params.minute ?? 0);
+    const repeatDaily = Boolean(params.repeat_daily);
+
+    if (!title || !message || Number.isNaN(hour) || Number.isNaN(minute)) {
+      throw new Error('invalid_notification');
+    }
+
+    await ensureNotificationPermission();
+
+    let trigger: Notifications.NotificationTriggerInput;
+    if (repeatDaily) {
+      trigger = {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      };
+    } else {
+      const year = Number(params.year);
+      const month = Number(params.month);
+      const day = Number(params.day);
+      const target = !Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)
+        ? new Date(year, month - 1, day, hour, minute, 0, 0)
+        : new Date();
+      if (Number.isNaN(year)) {
+        target.setHours(hour, minute, 0, 0);
+        if (target.getTime() <= Date.now()) {
+          target.setDate(target.getDate() + 1);
+        }
+      }
+      trigger = {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: target,
+      };
+    }
+
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body: message,
+        data: {
+          taskId: params.task_id,
+          modelName: params.model_name,
+          deeplink: params.deeplink,
+        },
+      },
+      trigger,
+    });
+    onAction?.({ tool: 'schedule_notification', summary: title, createdAt: Date.now() });
+    return `Scheduled notification ${id}`;
   }
 
   throw new Error('unsupported_intent');
