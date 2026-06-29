@@ -136,6 +136,7 @@ class LiteRTManager implements InferenceManager {
       topK: config.topK ?? 40,
       topP: config.topP ?? 0.95,
       systemPrompt: config.systemPrompt ?? '',
+      tools: config.tools?.map(tool => tool.name).join(',') ?? '',
     });
   }
 
