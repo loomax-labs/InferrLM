@@ -12,6 +12,8 @@ import { toolExecutor } from './tools/ToolExecutor';
 import type { ToolCall } from './tools/ToolRegistry';
 import { ThinkTagParser } from '../utils/thinkTagParser';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
+import { localSkillsOrchestrator } from './LocalSkillsOrchestrator';
+import { toLitertTools } from './adapters/LitertToolsAdapter';
 
 export interface MessageProcessingCallbacks {
   setMessages: (messages: ChatMessage[]) => void;
@@ -943,6 +945,28 @@ export class MessageProcessingService {
     console.log('local_model_start', { messageId, skipRag, msgCount: processedMessages.length });
     console.log('local_model_settings', { systemPrompt: settings.systemPrompt, temperature: settings.temperature, maxTokens: settings.maxTokens });
 
+    const lastUserText = this.getLastUserText(processedMessages);
+
+    if (await localSkillsOrchestrator.shouldHandle()) {
+      console.log('local_skills_try');
+      const skillResponse = await localSkillsOrchestrator.run(processedMessages, settings, lastUserText);
+      if (skillResponse && !this.cancelGenerationRef.current) {
+        console.log('local_skills_done', { len: skillResponse.length });
+        this.callbacks.setStreamingMessage(skillResponse);
+        await chatManager.updateMessageContent(
+          messageId,
+          skillResponse,
+          '',
+          {
+            duration: (Date.now() - startTime) / 1000,
+            tokens: Math.max(skillResponse.length / 4, 1),
+          },
+        );
+        return;
+      }
+      console.log('local_skills_fallback');
+    }
+
     const thinkParser = new ThinkTagParser();
 
     const streamCallback = (token: string) => {
@@ -1093,12 +1117,17 @@ export class MessageProcessingService {
 
     if (!usedRAG) {
       console.log('local_gen_direct', { baseMessageCount: baseMessages.length });
+      const genOpts: any = {
+        onToken: streamCallback,
+        settings,
+      };
+      if (await localSkillsOrchestrator.shouldHandle()) {
+        genOpts.tools = toLitertTools();
+        console.log('local_litert_tools', { count: genOpts.tools.length });
+      }
       await engineService.mgr().gen(
         baseMessages as any,
-        {
-          onToken: streamCallback,
-          settings
-        }
+        genOpts,
       );
     }
 
@@ -1164,6 +1193,39 @@ export class MessageProcessingService {
 
     const base = OnlineModelService.getBaseProvider(activeProvider);
     return base || undefined;
+  }
+
+  private getLastUserText(messages: Array<{ role: string; content: string }>): string {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const entry = messages[index];
+      if (entry.role !== 'user') {
+        continue;
+      }
+      const raw = entry.content;
+      if (typeof raw !== 'string') {
+        continue;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.type === 'multimodal' && Array.isArray(parsed.content)) {
+          const textPart = parsed.content.find((item: { type?: string; text?: string }) => item?.type === 'text');
+          if (textPart?.text) {
+            return String(textPart.text).trim();
+          }
+        }
+        if (typeof parsed?.userContent === 'string' && parsed.userContent.trim()) {
+          return parsed.userContent.trim();
+        }
+        if (typeof parsed?.userPrompt === 'string' && parsed.userPrompt.trim()) {
+          return parsed.userPrompt.trim();
+        }
+      } catch {
+      }
+      if (raw.trim()) {
+        return raw.trim();
+      }
+    }
+    return '';
   }
 
   private getLocalModelName(path: string): string {
