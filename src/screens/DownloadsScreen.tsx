@@ -21,6 +21,7 @@ import AppHeader from '../components/AppHeader';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { Text } from 'react-native-paper';
 import Dialog from '../components/Dialog';
+import { isActiveDownload } from '../utils/ModelUtils';
 
 const formatBytes = (bytes: number) => {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
@@ -128,12 +129,7 @@ export default function DownloadsScreen() {
 
   const downloads: DownloadItem[] = useMemo(() => {
     return Object.entries(downloadProgress)
-      .filter(([_, data]) => {
-        return data.status !== 'completed' &&
-               data.status !== 'failed' &&
-               data.status !== 'cancelled' &&
-               (data.progress < 100 || data.status === 'transferring');
-      })
+      .filter(([_, data]) => isActiveDownload(data))
       .map(([name, data]) => {
         const progress = data.progress || 0;
         const bytesDownloaded = data.bytesDownloaded || 0;

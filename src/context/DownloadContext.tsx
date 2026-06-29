@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 import { modelDownloader } from '../services/ModelDownloader';
+import { isActiveDownload } from '../utils/ModelUtils';
 
 interface DownloadProgressData {
   progress: number;
@@ -23,6 +25,30 @@ type SetDownloadProgress = React.Dispatch<React.SetStateAction<DownloadProgress>
 const DownloadProgressContext = createContext<DownloadProgress>({});
 const DownloadDispatchContext = createContext<SetDownloadProgress>(() => {});
 
+const removeProgressEntries = (
+  prev: DownloadProgress,
+  data: { modelName?: string; displayName?: string; downloadId?: number },
+): DownloadProgress => {
+  const next = { ...prev };
+  const names = new Set<string>();
+  if (data.modelName) {
+    names.add(data.modelName);
+  }
+  if (data.displayName) {
+    names.add(data.displayName);
+  }
+
+  for (const [key, value] of Object.entries(next)) {
+    const nameMatch = names.has(key);
+    const idMatch = Boolean(data.downloadId && value.downloadId === data.downloadId);
+    if (nameMatch || idMatch) {
+      delete next[key];
+    }
+  }
+
+  return next;
+};
+
 export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({});
   const isLoadedRef = useRef(false);
@@ -43,11 +69,7 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (key.startsWith('com.inferra.transfer.')) {
               return acc;
             }
-            if (value && typeof value === 'object' &&
-                'status' in value &&
-                value.status !== 'completed' &&
-                value.status !== 'failed' &&
-                value.status !== 'cancelled') {
+            if (value && typeof value === 'object' && 'status' in value && isActiveDownload(value)) {
               acc[key] = value as DownloadProgressData;
             }
             return acc;
@@ -141,27 +163,16 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearTimeout(timerRef.current[data.modelName]);
         delete timerRef.current[data.modelName];
       }
+      if (data.displayName && timerRef.current[data.displayName]) {
+        clearTimeout(timerRef.current[data.displayName]);
+        delete timerRef.current[data.displayName];
+      }
       delete pendingRef.current[data.modelName];
+      delete pendingRef.current[data.displayName ?? ''];
       delete lastUpdateRef.current[data.modelName];
+      delete lastUpdateRef.current[data.displayName ?? ''];
 
-      setDownloadProgress(prev => {
-        const newProgress = { ...prev };
-        if (newProgress[data.modelName]) {
-          newProgress[data.modelName] = {
-            ...newProgress[data.modelName],
-            progress: 100,
-            status: 'completed'
-          };
-        }
-        return newProgress;
-      });
-      setTimeout(() => {
-        setDownloadProgress(prev => {
-          const next = { ...prev };
-          delete next[data.modelName];
-          return next;
-        });
-      }, 3000);
+      setDownloadProgress(prev => removeProgressEntries(prev, data));
     };
 
     const handleDownloadFailed = (data: any) => {
@@ -169,30 +180,41 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      if (timerRef.current[data.modelName]) {
+      const uiKey = data.displayName ?? data.modelName;
+
+      if (timerRef.current[uiKey]) {
+        clearTimeout(timerRef.current[uiKey]);
+        delete timerRef.current[uiKey];
+      }
+      if (data.modelName !== uiKey && timerRef.current[data.modelName]) {
         clearTimeout(timerRef.current[data.modelName]);
         delete timerRef.current[data.modelName];
       }
+      delete pendingRef.current[uiKey];
       delete pendingRef.current[data.modelName];
+      delete lastUpdateRef.current[uiKey];
       delete lastUpdateRef.current[data.modelName];
 
       setDownloadProgress(prev => {
-        const newProgress = { ...prev };
-        if (newProgress[data.modelName]) {
-          newProgress[data.modelName] = {
-            ...newProgress[data.modelName],
-            status: 'failed',
-            error: data.error,
-          };
-        }
-        return newProgress;
+        const existing =
+          prev[uiKey] ??
+          prev[data.modelName] ??
+          (data.displayName ? prev[data.displayName] : undefined);
+
+        const next = removeProgressEntries(prev, data);
+        next[uiKey] = {
+          progress: existing?.progress ?? 0,
+          bytesDownloaded: existing?.bytesDownloaded ?? 0,
+          totalBytes: existing?.totalBytes ?? 0,
+          status: 'failed',
+          downloadId: data.downloadId || existing?.downloadId || 0,
+          error: data.error,
+        };
+        return next;
       });
+
       setTimeout(() => {
-        setDownloadProgress(prev => {
-          const next = { ...prev };
-          delete next[data.modelName];
-          return next;
-        });
+        setDownloadProgress(prev => removeProgressEntries(prev, data));
       }, 3000);
     };
 
@@ -273,12 +295,62 @@ export const DownloadProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     modelDownloader.on('downloadCancelled', handleDownloadCancelled);
     modelDownloader.on('downloadProgress', handleProgress);
 
+    const pruneStaleProgress = async () => {
+      if (!isLoadedRef.current) {
+        return;
+      }
+
+      try {
+        const activeList = await modelDownloader.getActiveDownloadsList();
+
+        setDownloadProgress(prev => {
+          let changed = false;
+          const next = { ...prev };
+
+          for (const [key, value] of Object.entries(next)) {
+            if (!isActiveDownload(value)) {
+              delete next[key];
+              changed = true;
+              continue;
+            }
+
+            const stillRunning = activeList.some(item =>
+              item.modelName === key ||
+              (value.downloadId > 0 && item.downloadId === value.downloadId),
+            );
+
+            if (!stillRunning && value.progress >= 99) {
+              delete next[key];
+              changed = true;
+            }
+          }
+
+          return changed ? next : prev;
+        });
+      } catch {
+      }
+    };
+
+    void pruneStaleProgress();
+    const pruneInterval = setInterval(() => {
+      void pruneStaleProgress();
+    }, 5000);
+
+    const appStateSub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        void pruneStaleProgress();
+      }
+    });
+
     return () => {
       modelDownloader.off('downloadStarted', handleDownloadStarted);
       modelDownloader.off('downloadCompleted', handleDownloadCompleted);
       modelDownloader.off('downloadFailed', handleDownloadFailed);
       modelDownloader.off('downloadCancelled', handleDownloadCancelled);
       modelDownloader.off('downloadProgress', handleProgress);
+
+      clearInterval(pruneInterval);
+      appStateSub.remove();
 
       Object.values(timerRef.current).forEach(clearTimeout);
       timerRef.current = {};
