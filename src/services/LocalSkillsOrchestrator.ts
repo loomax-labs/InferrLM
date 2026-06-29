@@ -1,4 +1,4 @@
-import type { Skill } from '../types/skill';
+import type { Skill, SkillResult } from '../types/skill';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
 import { onlineModelService } from './OnlineModelService';
 import { skillExecutor } from './SkillExecutor';
@@ -81,12 +81,25 @@ const buildJsData = (skill: Skill, userText: string): string => {
   return userText.trim();
 };
 
-const formatSkillResult = (skill: Skill, result: { result?: string; error?: string }): string => {
-  if (result.error) {
-    return `Skill "${skill.name}" failed: ${result.error}`;
+const formatSkillResult = (skill: Skill, payload: SkillResult): string => {
+  if (payload.error) {
+    return `Skill "${skill.name}" failed: ${payload.error}`;
   }
-  const body = result.result?.trim() || 'Done.';
-  return `Used ${skill.name}. ${body}`;
+
+  const raw = payload.result;
+  if (typeof raw === 'string' && raw.trim()) {
+    return `Used ${skill.name}. ${raw.trim()}`;
+  }
+
+  if (raw && typeof raw === 'object') {
+    const record = raw as Record<string, unknown>;
+    if (typeof record.result === 'string' && record.result.trim()) {
+      const title = typeof record.title === 'string' ? record.title : skill.name;
+      return `Used ${skill.name} (${title}). ${record.result.trim()}`;
+    }
+  }
+
+  return `Used ${skill.name}. Done.`;
 };
 
 class LocalSkillsOrchestrator {
