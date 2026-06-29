@@ -114,7 +114,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
       `Write a ${opts[langKey] || 'JavaScript'} code snippet to ${content}`,
     examples: [
       'Create an alert box that says "Hello, World!"',
-      'Declare an immutable variable named \'appName\' with the value "AI Gallery"',
+      'Declare an immutable variable named \'appName\' with the value "InferrLM"',
       'Print the numbers from 1 to 5 using a for loop.',
       'Write a function that returns the square of an integer input.',
       'Parse a JSON string and return the value of the "status" key.',

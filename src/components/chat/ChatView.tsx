@@ -190,9 +190,9 @@ export default function ChatView({
       }
 
       await MediaLibrary.saveToLibraryAsync(fullScreenImage);
-      Alert.alert('Saved', 'Image saved to gallery.');
+      Alert.alert('Saved', 'Image saved to your library.');
     } catch (e) {
-      Alert.alert('Save Failed', 'Unable to save image to gallery.');
+      Alert.alert('Save Failed', 'Unable to save image to your library.');
     }
   }, [fullScreenImage, mediaPermission?.granted, requestMediaPermission]);
 

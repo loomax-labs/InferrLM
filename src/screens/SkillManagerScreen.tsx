@@ -25,7 +25,7 @@ import { skillManager } from '../services/SkillManager';
 import type { Skill, SkillResult } from '../types/skill';
 
 const MAX_SKILL_COUNT = 15;
-const SKILLS_DISCUSSIONS = 'https://github.com/google-ai-edge/gallery/discussions/categories/skills';
+const COMMUNITY_SKILLS_URL = 'https://github.com/topics/agent-skills';
 
 type AddOption = {
   id: string;
@@ -417,11 +417,11 @@ export default function SkillManagerScreen() {
     {
       id: 'community',
       title: 'View Community Skills',
-      desc: 'Explore community contributed skills on GitHub discussions',
+      desc: 'Explore community contributed agent skills online',
       icon: 'open-in-new',
       action: () => {
         setShowAdd(false);
-        Linking.openURL(SKILLS_DISCUSSIONS).catch(() => {
+        Linking.openURL(COMMUNITY_SKILLS_URL).catch(() => {
           Alert.alert('Open failed', 'Could not open community skills page.');
         });
       },
