@@ -228,6 +228,7 @@ export class MessageProcessingService {
 
     const userText = this.getLastUserText(processedMessages);
     console.log('skills_try', { provider: activeProvider, userLen: userText.length });
+
     const skillResponse = await skillsOrchestrator.run(
       processedMessages,
       settings,

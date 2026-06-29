@@ -1,5 +1,6 @@
 import type { ProviderType } from './ModelManagementService';
-import type { Skill, SkillResult } from '../types/skill';
+import type { Skill } from '../types/skill';
+import { formatSkillChatText } from './adapters/SkillResultFormatter';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
 import { appleFoundationService } from './AppleFoundationService';
 import { onlineModelService } from './OnlineModelService';
@@ -70,6 +71,9 @@ const pickSkill = (query: string, skills: Skill[]): Skill | null => {
     }
   }
 
+  if (best) {
+    console.log('skill_pick', { id: best.id, score: bestScore });
+  }
   return bestScore >= 6 ? best : null;
 };
 
@@ -85,27 +89,6 @@ const buildJsData = (skill: Skill, userText: string): string => {
   }
 
   return userText.trim();
-};
-
-const formatSkillResult = (skill: Skill, payload: SkillResult): string => {
-  if (payload.error) {
-    return `Skill "${skill.name}" failed: ${payload.error}`;
-  }
-
-  const raw = payload.result;
-  if (typeof raw === 'string' && raw.trim()) {
-    return `Used ${skill.name}. ${raw.trim()}`;
-  }
-
-  if (raw && typeof raw === 'object') {
-    const record = raw as Record<string, unknown>;
-    if (typeof record.result === 'string' && record.result.trim()) {
-      const title = typeof record.title === 'string' ? record.title : skill.name;
-      return `Used ${skill.name} (${title}). ${record.result.trim()}`;
-    }
-  }
-
-  return `Used ${skill.name}. Done.`;
 };
 
 const toLoopMessages = (messages: any[]) => {
@@ -130,9 +113,12 @@ const buildDeviceToolPrompt = (basePrompt: string): string => {
 class SkillsOrchestrator {
   async shouldHandle(): Promise<boolean> {
     if (!(await skillManager.isModeEnabled())) {
+      console.log('skills_mode_off');
       return false;
     }
-    return toolRegistry.hasTools();
+    const ready = toolRegistry.hasTools();
+    console.log('skills_tools_ready', ready);
+    return ready;
   }
 
   supportsDeviceLoop(activeProvider: ProviderType | null): boolean {
@@ -311,7 +297,9 @@ class SkillsOrchestrator {
         data: buildJsData(skill, userText),
       });
       skillActivityAdapter.done(stepId, `Called skill "${skill.name}"`);
-      return formatSkillResult(skill, result);
+      const text = formatSkillChatText(skill, result);
+      console.log('skill_route_ok', { id: skill.id, len: text.length });
+      return text;
     } catch (error) {
       skillActivityAdapter.done(stepId, `Failed skill "${skill.name}"`);
       console.log('skill_route_fail', error instanceof Error ? error.message : 'unknown');
@@ -325,24 +313,27 @@ class SkillsOrchestrator {
     userText: string,
     activeProvider: ProviderType | null,
   ): Promise<string | null> {
+    console.log('skills_run_start', { provider: activeProvider, queryLen: userText.length });
+
     const online = await this.runOnlineLoop(messages, settings);
     if (online) {
-      console.log('skill_orch_done');
+      console.log('skill_orch_done', { len: online.length });
       return online;
     }
 
     const direct = await this.tryDirectRoute(userText);
     if (direct) {
-      console.log('skill_route_done');
+      console.log('skill_route_done', { len: direct.length });
       return direct;
     }
 
     const device = await this.runDeviceToolLoop(activeProvider, messages, settings);
     if (device) {
-      console.log('skill_device_done');
+      console.log('skill_device_done', { len: device.length });
       return device;
     }
 
+    console.log('skills_run_miss');
     return null;
   }
 }

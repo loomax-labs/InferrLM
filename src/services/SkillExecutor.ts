@@ -44,12 +44,15 @@ class SkillExecutor {
       throw new Error('skill_not_js');
     }
 
-    return backgroundWebViewManager.runSkillHtml(skill.scriptHtml, {
+    console.log('skill_js_start', { id: skill.id, script: args.scriptName || 'main' });
+    const out = await backgroundWebViewManager.runSkillHtml(skill.scriptHtml, {
       skillId: skill.id,
       skillName: skill.name,
       scriptName: args.scriptName || skill.metadata?.scriptName || 'main',
       data: this.parseJsInput(args.data),
     });
+    console.log('skill_js_done', { id: skill.id, hasError: !!out.error });
+    return out;
   }
 
   async runIntent(intent: string, parameters: Record<string, any>): Promise<SkillResult> {

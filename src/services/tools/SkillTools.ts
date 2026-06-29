@@ -97,12 +97,14 @@ export const registerSkillTools = async () => {
   unregisterSkillTools();
 
   const enabled = await skillManager.getEnabled();
+  console.log('skill_tools_register', { count: enabled.length });
   if (enabled.length === 0) {
     return;
   }
 
   toolRegistry.register('load_skill', LOAD_SKILL_TOOL, async ({ skillName }) => {
     const name = String(skillName || '').trim();
+    console.log('skill_tool_load', name);
     const stepId = skillActivityAdapter.start(`Loading skill "${name}"`, `Skill: ${name}`);
     try {
       const match = await resolveSkill(name);
@@ -120,6 +122,7 @@ export const registerSkillTools = async () => {
   toolRegistry.register('run_js', RUN_JS_TOOL, async ({ skillName, scriptName, data }) => {
     const name = String(skillName || '').trim();
     const script = String(scriptName || 'main');
+    console.log('skill_tool_js', { name, script });
     const stepId = skillActivityAdapter.start(
       `Calling skill "${name}"`,
       trimDetail({ script, data }),
@@ -148,6 +151,7 @@ export const registerSkillTools = async () => {
 
   toolRegistry.register('run_intent', RUN_INTENT_TOOL, async ({ intent, parameters }) => {
     const intentName = String(intent || '').trim();
+    console.log('skill_tool_intent', intentName);
     const stepId = skillActivityAdapter.start(
       `Calling intent "${intentName}"`,
       trimDetail(parameters),
