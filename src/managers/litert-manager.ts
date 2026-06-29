@@ -39,6 +39,48 @@ class LiteRTManager implements InferenceManager {
   private instance: LiteRTLMInstance | null = null;
   private modelPath: string | null = null;
   private configKey = '';
+  private genQueue: Promise<unknown> = Promise.resolve();
+  private stopRequested = false;
+
+  private async withGenLock<T>(fn: () => Promise<T>): Promise<T> {
+    const prev = this.genQueue;
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    this.genQueue = gate;
+    await prev;
+    try {
+      return await fn();
+    } finally {
+      release();
+    }
+  }
+
+  async resetSession(force = false): Promise<void> {
+    if (!force) {
+      await this.genQueue;
+    }
+    if (!this.instance?.isReady()) {
+      return;
+    }
+    try {
+      await this.instance.resetConversation();
+      console.log('litert_reset_ok');
+    } catch (error) {
+      console.log('litert_reset_fail', error instanceof Error ? error.message : 'unknown');
+    }
+    this.stopRequested = false;
+  }
+
+  private async recoverFromPrefillError(error: unknown): Promise<void> {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (!msg.includes('Prefill') && !msg.includes('already started')) {
+      return;
+    }
+    console.log('litert_prefill_recover');
+    await this.resetSession();
+  }
 
   private normalizePath(path: string): string {
     return path.startsWith('file://') ? path.slice(7) : path;
@@ -348,6 +390,24 @@ class LiteRTManager implements InferenceManager {
   }
 
   async gen(messages: Msg[], opts?: GenOpts) {
+    return this.withGenLock(() => this.runGen(messages, opts));
+  }
+
+  private async runGen(messages: Msg[], opts?: GenOpts): Promise<string> {
+    try {
+      return await this.runGenOnce(messages, opts);
+    } catch (error) {
+      await this.recoverFromPrefillError(error);
+      const msg = error instanceof Error ? error.message : String(error);
+      if (msg.includes('Prefill') || msg.includes('already started')) {
+        console.log('litert_gen_retry');
+        return this.runGenOnce(messages, opts);
+      }
+      throw error;
+    }
+  }
+
+  private async runGenOnce(messages: Msg[], opts?: GenOpts): Promise<string> {
     const input = this.getLastUserInput(messages);
     if (!input.text && !input.imagePath && !input.audioPath) {
       return '';
@@ -402,9 +462,21 @@ class LiteRTManager implements InferenceManager {
       let output = '';
       try {
         call((token, done) => {
+          if (this.stopRequested) {
+            if (done) {
+              resolve(output);
+            }
+            return;
+          }
+          if (token.startsWith('Error: ')) {
+            reject(new Error(token.slice(7)));
+            return;
+          }
           output += token;
           onToken(token);
-          if (done) resolve(output);
+          if (done) {
+            resolve(output);
+          }
         });
       } catch (error) {
         reject(error);
@@ -459,6 +531,8 @@ class LiteRTManager implements InferenceManager {
   }
 
   stop() {
+    this.stopRequested = true;
+    void this.resetSession(true);
   }
 
   caps() {

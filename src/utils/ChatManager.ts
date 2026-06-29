@@ -1,6 +1,7 @@
 import chatDatabase from './ChatDatabase';
 import type { ProviderType } from '../services/ModelManagementService';
 import { RAGService } from '../services/rag/RAGService';
+import { engineService } from '../services/runtime-service';
 import type { SkillActivityStep } from '../types/skillActivity';
 
 const generateRandomId = () => {
@@ -277,6 +278,9 @@ class ChatManager {
 
   async createNewChat(initialMessages: ChatMessage[] = []): Promise<Chat> {
     try {
+      engineService.stop();
+      await engineService.resetChatSession();
+
       await this.ensureInitialized();
       
       if (this.isLoadingChat) {

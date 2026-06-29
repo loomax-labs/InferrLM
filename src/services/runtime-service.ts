@@ -140,6 +140,13 @@ class EngineService {
     this.map[this.engine].stop?.();
   }
 
+  async resetChatSession() {
+    if (this.engine !== 'litert') {
+      return;
+    }
+    await litertManager.resetSession(true);
+  }
+
   ready() {
     return this.map[this.engine].ready();
   }
