@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Appearance, AppState, Platform } from 'react-native';
+import { Appearance, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeType, ThemeColors } from '../types/theme';
 
@@ -16,10 +16,11 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedTheme, setSelectedTheme] = useState<ThemeType>('system');
-  const [theme, setTheme] = useState<ThemeColors>(
-    (Appearance.getColorScheme() as ThemeColors) || 'light'
+  const readScheme = (): ThemeColors => (
+    Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'
   );
+  const [selectedTheme, setSelectedTheme] = useState<ThemeType>('system');
+  const [theme, setTheme] = useState<ThemeColors>(readScheme);
 
   useEffect(() => {
     loadThemePreference();
@@ -28,23 +29,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (selectedTheme !== 'system') {
       setTheme(selectedTheme as ThemeColors);
-      if (Platform.OS === 'android') {
-        Appearance.setColorScheme(selectedTheme as ThemeColors);
-      }
+      Appearance.setColorScheme(selectedTheme as ThemeColors);
       return;
     }
 
-    const readScheme = () => (Appearance.getColorScheme() as ThemeColors) || 'light';
-
-    if (Platform.OS === 'android') {
-      Appearance.setColorScheme('unspecified');
-    }
-
+    Appearance.setColorScheme('unspecified');
     setTheme(readScheme());
 
-    const appearanceSub = Appearance.addChangeListener(({ colorScheme }) => {
-      const next = (colorScheme as ThemeColors) || 'light';
-      setTheme(next);
+    const appearanceSub = Appearance.addChangeListener(() => {
+      setTheme(readScheme());
     });
 
     const appStateSub = AppState.addEventListener('change', (nextState) => {
