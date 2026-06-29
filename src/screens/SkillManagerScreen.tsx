@@ -20,8 +20,12 @@ import Dialog from '../components/Dialog';
 import SkillResultRenderer from '../components/chat/SkillResultRenderer';
 import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { skillExecutor } from '../services/SkillExecutor';
 import { skillManager } from '../services/SkillManager';
+import {
+  getSkillPreviewHint,
+  getSkillPreviewInput,
+  runSkillPreview,
+} from '../services/adapters/SkillPreviewAdapter';
 import type { Skill, SkillResult } from '../types/skill';
 
 const MAX_SKILL_COUNT = 15;
@@ -171,7 +175,7 @@ export default function SkillManagerScreen() {
   const [viewSkill, setViewSkill] = useState<Skill | null>(null);
   const [secretSkill, setSecretSkill] = useState<Skill | null>(null);
   const [secretVal, setSecretVal] = useState('');
-  const [previewIn, setPreviewIn] = useState('hello world');
+  const [previewIn, setPreviewIn] = useState('');
   const [previewOut, setPreviewOut] = useState<SkillResult | null>(null);
 
   const listRef = useRef<ScrollView>(null);
@@ -255,7 +259,12 @@ export default function SkillManagerScreen() {
 
   useEffect(() => {
     setPreviewOut(null);
-    setPreviewIn('hello world');
+    if (!viewSkill) {
+      setPreviewIn('');
+      return;
+    }
+    setPreviewIn(getSkillPreviewInput(viewSkill));
+    console.log('skill_preview_open', viewSkill.id);
   }, [viewSkill?.id]);
 
   const handleToggle = async (skillId: string) => {
@@ -350,16 +359,7 @@ export default function SkillManagerScreen() {
     }
     try {
       setBusyId(`preview-${viewSkill.id}`);
-      if (viewSkill.type === 'js') {
-        setPreviewOut(
-          await skillExecutor.runJs(viewSkill, {
-            scriptName: viewSkill.metadata?.scriptName,
-            data: previewIn,
-          }),
-        );
-        return;
-      }
-      setPreviewOut(await skillExecutor.run(viewSkill, { input: previewIn }));
+      setPreviewOut(await runSkillPreview(viewSkill, previewIn));
     } catch (error) {
       setPreviewOut({
         error: error instanceof Error ? error.message : 'Preview failed',
@@ -710,11 +710,7 @@ export default function SkillManagerScreen() {
               <TextInput
                 value={previewIn}
                 onChangeText={setPreviewIn}
-                placeholder={
-                  viewSkill?.type === 'js'
-                    ? 'Preview input for the skill'
-                    : 'Input passed into the skill context'
-                }
+                placeholder={viewSkill ? getSkillPreviewHint(viewSkill) : 'Preview input'}
                 placeholderTextColor={themeColors.secondaryText}
                 multiline
                 style={[styles.previewInput, { color: themeColors.text, backgroundColor: themeColors.background }]}
