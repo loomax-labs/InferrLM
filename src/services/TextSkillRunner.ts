@@ -1,6 +1,7 @@
 import type { Skill } from '../types/skill';
 import { skillExecutor } from './SkillExecutor';
 import {
+  buildNotifyTarget,
   extractEmailParts,
   extractEventDetails,
   extractMapQuery,
@@ -9,8 +10,8 @@ import {
   extractSearchQuery,
   formatClock,
   formatEventList,
+  formatNotifyWhen,
   parseTargetDate,
-  parseTimeFromText,
   toYmd,
 } from './skillDateParse';
 
@@ -26,26 +27,37 @@ const runScheduleNotification = async (userText: string): Promise<string> => {
   console.log('text_skill_notify');
   const now = await readNow();
   const { title, message } = extractReminderContent(userText);
-  const time = parseTimeFromText(userText) || { hour: 9, minute: 0 };
-  const targetDate = parseTargetDate(userText, now);
-  const repeatDaily = /\bdaily\b|every day/i.test(userText);
+  const { date, repeatDaily } = buildNotifyTarget(userText, now);
 
-  await skillExecutor.runIntent('schedule_notification', {
+  const raw = await skillExecutor.runIntent('schedule_notification', {
     title,
     message,
-    hour: time.hour,
-    minute: time.minute,
-    year: targetDate.getFullYear(),
-    month: targetDate.getMonth() + 1,
-    day: targetDate.getDate(),
+    trigger_at: date.toISOString(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
     repeat_daily: repeatDaily,
   });
 
-  const when = repeatDaily
-    ? `every day at ${formatClock(time.hour, time.minute)}`
-    : `${toYmd(targetDate)} at ${formatClock(time.hour, time.minute)}`;
+  let fireAt = date;
+  if (typeof raw.result === 'string') {
+    try {
+      const payload = JSON.parse(raw.result);
+      if (typeof payload?.fireAt === 'string') {
+        fireAt = new Date(payload.fireAt);
+      }
+      console.log('text_skill_notify_id', payload?.id);
+    } catch {
+    }
+  }
 
-  return `Scheduled notification "${title}" for ${when}.`;
+  const when = repeatDaily
+    ? `every day at ${formatClock(date.getHours(), date.getMinutes())}`
+    : formatNotifyWhen(fireAt);
+
+  return `Scheduled notification "${title}" for ${when}. Keep notifications enabled; it will alert even if the app is in the background.`;
 };
 
 const runReadCalendarEvents = async (userText: string): Promise<string> => {

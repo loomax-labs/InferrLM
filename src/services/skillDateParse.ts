@@ -93,6 +93,68 @@ export const parseTargetDate = (text: string, base: Date): Date => {
   return new Date(base);
 };
 
+export const parseRelativeMinutes = (text: string): number | null => {
+  const match = text.match(/\bin\s+(\d+)\s*(minute|min|hour|hr|second|sec)s?\b/i);
+  if (!match) {
+    return null;
+  }
+
+  const amount = Number(match[1]);
+  if (!amount || amount <= 0) {
+    return null;
+  }
+
+  const unit = match[2].toLowerCase();
+  if (unit.startsWith('hour') || unit === 'hr') {
+    return amount * 60;
+  }
+  if (unit.startsWith('sec')) {
+    return Math.max(1, Math.ceil(amount / 60));
+  }
+  return amount;
+};
+
+export const buildNotifyTarget = (
+  text: string,
+  base: Date,
+): { date: Date; repeatDaily: boolean } => {
+  const relativeMin = parseRelativeMinutes(text);
+  if (relativeMin != null) {
+    return {
+      date: new Date(base.getTime() + relativeMin * 60 * 1000),
+      repeatDaily: false,
+    };
+  }
+
+  const repeatDaily = /\bdaily\b|every day/i.test(text);
+  const time = parseTimeFromText(text) || { hour: 9, minute: 0 };
+  const day = parseTargetDate(text, base);
+  const date = new Date(day);
+  date.setHours(time.hour, time.minute, 0, 0);
+
+  if (!repeatDaily && date.getTime() <= base.getTime()) {
+    date.setDate(date.getDate() + 1);
+    console.log('notify_roll_day');
+  }
+
+  return { date, repeatDaily };
+};
+
+export const formatNotifyWhen = (date: Date): string => {
+  const clock = formatClock(date.getHours(), date.getMinutes());
+  const day = date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const minsAway = Math.round((date.getTime() - Date.now()) / 60_000);
+  if (minsAway <= 90) {
+    return `${day} at ${clock} (in about ${Math.max(minsAway, 1)} min)`;
+  }
+  return `${day} at ${clock}`;
+};
+
 export const extractReminderContent = (text: string): { title: string; message: string } => {
   const remindMatch = text.match(
     /remind(?:er)?(?:\s+me)?\s+to\s+(.+?)(?:\s+(?:on|at|next|tomorrow|today|this|every)\b|$)/i,

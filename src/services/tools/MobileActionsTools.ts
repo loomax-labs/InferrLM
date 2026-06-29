@@ -3,6 +3,11 @@ import * as Contacts from 'expo-contacts';
 import * as Notifications from 'expo-notifications';
 import { Linking, Platform } from 'react-native';
 
+import {
+  getReminderChannelId,
+  initReminderNotifications,
+  requestReminderPermission,
+} from '../adapters/ReminderNotificationAdapter';
 import { toolRegistry, type ToolSchema } from './ToolRegistry';
 
 const TOOL_NAMES = [
@@ -309,10 +314,31 @@ const ensureCalendarPermission = async () => {
 };
 
 const ensureNotificationPermission = async () => {
-  const permission = await Notifications.requestPermissionsAsync();
-  if (!permission.granted) {
+  const granted = await requestReminderPermission();
+  if (!granted) {
     throw new Error('notification_permission_denied');
   }
+};
+
+const parseTriggerAt = (value: unknown): Date | null => {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const buildDateTrigger = (target: Date): Notifications.NotificationTriggerInput => {
+  const minLeadMs = 15_000;
+  let fireAt = target;
+  if (fireAt.getTime() - Date.now() < minLeadMs) {
+    fireAt = new Date(Date.now() + minLeadMs);
+    console.log('notify_lead_bump', { iso: fireAt.toISOString() });
+  }
+  return {
+    type: Notifications.SchedulableTriggerInputTypes.DATE,
+    date: fireAt,
+  };
 };
 
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -488,20 +514,31 @@ export const executeMobileActionIntent = async (
     const minute = Number(params.minute ?? 0);
     const repeatDaily = Boolean(params.repeat_daily);
 
-    if (!title || !message || Number.isNaN(hour) || Number.isNaN(minute)) {
+    if (!title || !message) {
       throw new Error('invalid_notification');
     }
 
     await ensureNotificationPermission();
+    await initReminderNotifications();
 
     let trigger: Notifications.NotificationTriggerInput;
-    if (repeatDaily) {
+    const triggerAt = parseTriggerAt(params.trigger_at);
+    if (triggerAt) {
+      trigger = buildDateTrigger(triggerAt);
+      console.log('notify_trigger_at', { iso: triggerAt.toISOString() });
+    } else if (repeatDaily) {
+      if (Number.isNaN(hour) || Number.isNaN(minute)) {
+        throw new Error('invalid_notification');
+      }
       trigger = {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
       };
     } else {
+      if (Number.isNaN(hour) || Number.isNaN(minute)) {
+        throw new Error('invalid_notification');
+      }
       const year = Number(params.year);
       const month = Number(params.month);
       const day = Number(params.day);
@@ -513,17 +550,28 @@ export const executeMobileActionIntent = async (
         if (target.getTime() <= Date.now()) {
           target.setDate(target.getDate() + 1);
         }
+      } else if (target.getTime() <= Date.now()) {
+        target.setDate(target.getDate() + 1);
+        console.log('notify_day_bump');
       }
-      trigger = {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: target,
-      };
+      trigger = buildDateTrigger(target);
+      console.log('notify_trigger_parts', {
+        iso: target.toISOString(),
+        year,
+        month,
+        day,
+        hour,
+        minute,
+      });
     }
 
+    const channelId = getReminderChannelId();
     const id = await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body: message,
+        sound: true,
+        ...(channelId ? { channelId } : {}),
         data: {
           taskId: params.task_id,
           modelName: params.model_name,
@@ -532,8 +580,15 @@ export const executeMobileActionIntent = async (
       },
       trigger,
     });
+    console.log('notify_scheduled', { id });
     onAction?.({ tool: 'schedule_notification', summary: title, createdAt: Date.now() });
-    return `Scheduled notification ${id}`;
+    return JSON.stringify({
+      id,
+      fireAt: triggerAt?.toISOString()
+        || (trigger && 'date' in trigger && trigger.date instanceof Date
+          ? trigger.date.toISOString()
+          : undefined),
+    });
   }
 
   throw new Error('unsupported_intent');
