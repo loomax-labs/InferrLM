@@ -13,7 +13,8 @@ import type { ToolCall } from './tools/ToolRegistry';
 import { ThinkTagParser } from '../utils/thinkTagParser';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
 import { skillsOrchestrator } from './SkillsOrchestrator';
-import { toLitertTools } from './adapters/LitertToolsAdapter';
+import { skillManager } from './SkillManager';
+import { isAgentSkillsPrompt } from '../constants/agentSkillsPrompt';
 
 export interface MessageProcessingCallbacks {
   setMessages: (messages: ChatMessage[]) => void;
@@ -228,6 +229,10 @@ export class MessageProcessingService {
 
     const userText = this.getLastUserText(processedMessages);
     console.log('skills_try', { provider: activeProvider, userLen: userText.length });
+
+    if (!(await skillsOrchestrator.shouldTryForMessage(userText, processedMessages))) {
+      return false;
+    }
 
     const skillResponse = await skillsOrchestrator.run(
       processedMessages,
@@ -1157,18 +1162,23 @@ export class MessageProcessingService {
     }
 
     if (!usedRAG) {
-      console.log('local_gen_direct', { baseMessageCount: baseMessages.length });
-      const genOpts: any = {
-        onToken: streamCallback,
-        settings,
-      };
-      if (await skillsOrchestrator.shouldHandle()) {
-        genOpts.tools = toLitertTools();
-        console.log('local_litert_tools', { count: genOpts.tools.length });
+      const userTurns = baseMessages.filter(msg => msg.role === 'user').length;
+      let genSettings = settings;
+      if (userTurns > 1 && isAgentSkillsPrompt(settings.systemPrompt)) {
+        genSettings = {
+          ...settings,
+          systemPrompt: await skillManager.buildConversationalSystemPrompt(),
+        };
+        console.log('local_chat_prompt', { userTurns });
       }
+
+      console.log('local_gen_direct', { baseMessageCount: baseMessages.length, userTurns });
       await engineService.mgr().gen(
         baseMessages as any,
-        genOpts,
+        {
+          onToken: streamCallback,
+          settings: genSettings,
+        },
       );
     }
 
