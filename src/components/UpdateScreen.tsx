@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, useColorScheme } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBarHost } from '../services/adapters/StatusBarAdapter';
 
 export default function UpdateScreen() {
   const colorScheme = useColorScheme();
@@ -28,7 +28,7 @@ export default function UpdateScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
-      <StatusBar style="light" />
+      <StatusBarHost themeName={isDark ? 'dark' : 'light'} forceLight />
       <Animated.View style={[styles.spinner, { transform: [{ rotate: spin }] }]}>
         <View style={styles.arc} />
       </Animated.View>

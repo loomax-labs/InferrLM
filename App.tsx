@@ -3,7 +3,6 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { AppState, AppStateStatus, Text, TextInput, LogBox, BackHandler, ToastAndroid } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -30,6 +29,7 @@ import { initializeBindings } from './src/utils/llamaBinding';
 import UpdateDialog from './src/components/UpdateDialog';
 import SkillRuntimeHost from './src/components/skills/SkillRuntimeHost';
 import { updateService } from './src/services/UpdateService';
+import { StatusBarHost } from './src/services/adapters/StatusBarAdapter';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -230,7 +230,7 @@ function Navigation() {
         ref={navigationRef}
         theme={currentTheme === 'dark' ? customDarkTheme : customDefaultTheme}
       >
-        <StatusBar style="light" translucent backgroundColor="transparent" />
+        <StatusBarHost themeName={currentTheme} translucent />
         <RootNavigator />
         <ShowDialog />
       </NavigationContainer>
