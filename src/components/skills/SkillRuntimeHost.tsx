@@ -17,7 +17,7 @@ export default function SkillRuntimeHost() {
         key={task?.id || 'idle'}
         originWhitelist={['*']}
         source={{ html: task?.html || IDLE_HTML }}
-        onLoadEnd={() => backgroundWebViewManager.markReady()}
+        onLoadEnd={() => backgroundWebViewManager.markReady(task?.id)}
         onMessage={event => backgroundWebViewManager.handleMessage(event.nativeEvent.data)}
         javaScriptEnabled
         domStorageEnabled

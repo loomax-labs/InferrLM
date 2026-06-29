@@ -29,7 +29,7 @@ export class WebViewManager {
 
   private sanitizeHtml(html: string): string {
     return html
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<script\b[^>]*\bsrc\s*=[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
       .replace(/<embed[\s\S]*?>/gi, '')
       .replace(/<object[\s\S]*?<\/object>/gi, '');
@@ -94,7 +94,10 @@ export class WebViewManager {
     };
   }
 
-  markReady(): void {
+  markReady(taskId?: string): void {
+    if (taskId && this.activeTask?.id && this.activeTask.id !== taskId) {
+      return;
+    }
     if (!this.isReady) {
       this.isReady = true;
       const waiters = [...this.readyWaiters];
@@ -128,10 +131,12 @@ export class WebViewManager {
         reject,
         timer,
       };
+      this.isReady = false;
       this.activeTask = {
         id: taskId,
         html: this.buildTaskHtml(taskId, html, input),
       };
+      console.log('skill_task_start', taskId);
       this.emit();
     });
   }
@@ -156,6 +161,7 @@ export class WebViewManager {
 
     const { resolve, id } = this.pendingTask;
     this.clearPendingTask(id);
+    console.log('skill_task_done', id);
     resolve(parsed.payload || {});
   }
 
