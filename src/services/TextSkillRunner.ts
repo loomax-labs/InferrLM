@@ -71,12 +71,16 @@ const runReadCalendarEvents = async (userText: string): Promise<string> => {
   return formatEventList(date, Array.isArray(events) ? events : []);
 };
 
-const runCreateCalendarEvent = async (userText: string): Promise<string> => {
+const runCreateCalendarEvent = async (userText: string): Promise<string | null> => {
   console.log('text_skill_calendar_create');
   const now = await readNow();
   const details = extractEventDetails(userText, now);
   if (!details) {
-    throw new Error('event_parse_fail');
+    if (/\b(calendar|event|meeting|appointment)\b/i.test(userText)) {
+      console.log('text_skill_event_need_details');
+      return 'What event should I add? Example: Team meeting tomorrow at 2 PM';
+    }
+    return null;
   }
 
   await skillExecutor.runIntent('create_calendar_event', {
@@ -89,11 +93,15 @@ const runCreateCalendarEvent = async (userText: string): Promise<string> => {
   return `Opened calendar event form for "${details.title}" on ${toYmd(details.start)} at ${formatClock(details.start.getHours(), details.start.getMinutes())}.`;
 };
 
-const runSendEmail = async (userText: string): Promise<string> => {
+const runSendEmail = async (userText: string): Promise<string | null> => {
   console.log('text_skill_email');
   const parts = extractEmailParts(userText);
   if (!parts) {
-    throw new Error('email_parse_fail');
+    if (/\b(email|e-mail|send mail)\b/i.test(userText)) {
+      console.log('text_skill_email_need_addr');
+      return 'What address should I email? Example: Email hello@example.com subject Hello body Thanks';
+    }
+    return null;
   }
 
   await skillExecutor.runIntent('send_email', {
@@ -105,47 +113,63 @@ const runSendEmail = async (userText: string): Promise<string> => {
   return `Drafted email to ${parts.to}.`;
 };
 
-const runQuickCall = async (userText: string): Promise<string> => {
+const runQuickCall = async (userText: string): Promise<string | null> => {
   console.log('text_skill_call');
   const phoneNumber = extractPhoneNumber(userText);
   if (!phoneNumber) {
-    throw new Error('phone_parse_fail');
+    if (/\b(call|dial|phone)\b/i.test(userText)) {
+      console.log('text_skill_call_need_phone');
+      return 'Which number should I call? Example: Call 555-0100';
+    }
+    return null;
   }
 
   await skillExecutor.runIntent('call_phone', { phoneNumber });
   return `Opened dialer for ${phoneNumber}.`;
 };
 
-const runQuickSms = async (userText: string): Promise<string> => {
+const runQuickSms = async (userText: string): Promise<string | null> => {
   console.log('text_skill_sms');
   const phoneNumber = extractPhoneNumber(userText);
   if (!phoneNumber) {
-    throw new Error('phone_parse_fail');
+    if (/\b(sms|text message|send an? sms|text someone)\b/i.test(userText)) {
+      console.log('text_skill_sms_need_phone');
+      return 'Which number should I text? Example: Text 555-0100 saying On my way';
+    }
+    return null;
   }
 
   const bodyMatch = userText.match(/(?:saying|message|text)[:\s]+(.+)/i);
   const body = bodyMatch?.[1]?.trim() || '';
 
   await skillExecutor.runIntent('send_sms', { phoneNumber, body });
-  return `Drafted SMS to ${phoneNumber}.`;
+  return `Drafted SMS to ${phoneNumber}${body ? ` with your message.` : '.'}`;
 };
 
-const runOpenMap = async (userText: string): Promise<string> => {
+const runOpenMap = async (userText: string): Promise<string | null> => {
   console.log('text_skill_map');
   const location = extractMapQuery(userText);
   if (!location) {
-    throw new Error('location_parse_fail');
+    if (/\b(map|directions|navigate|route)\b/i.test(userText)) {
+      console.log('text_skill_map_need_place');
+      return 'Where should I open maps? Example: Directions to Central Park';
+    }
+    return null;
   }
 
   await skillExecutor.runIntent('open_map', { location });
   return `Opened maps for ${location}.`;
 };
 
-const runWebSearch = async (userText: string): Promise<string> => {
+const runWebSearch = async (userText: string): Promise<string | null> => {
   console.log('text_skill_search');
   const query = extractSearchQuery(userText);
   if (!query) {
-    throw new Error('search_parse_fail');
+    if (/\b(search|google|look up)\b/i.test(userText)) {
+      console.log('text_skill_search_need_query');
+      return 'What should I search for? Example: Search the web for React Native';
+    }
+    return null;
   }
 
   const url = `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
