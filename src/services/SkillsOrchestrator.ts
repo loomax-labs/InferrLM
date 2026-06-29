@@ -8,6 +8,11 @@ import { skillExecutor } from './SkillExecutor';
 import { skillManager } from './SkillManager';
 import { parseToolCallsFromText } from './skillsToolParser';
 import { runTextSkill } from './TextSkillRunner';
+import { runLearnSkill } from './LearnSkillRunner';
+import { runKitchenSkill } from './KitchenSkillRunner';
+import { kitchenSessionStore } from './KitchenSessionStore';
+import { runMoodSkill } from './MoodSkillRunner';
+import { runTextStatsSkill } from './TextStatsRunner';
 import { engineService } from './runtime-service';
 import { toolAgentService } from './ToolAgentService';
 import { toolExecutor } from './tools/ToolExecutor';
@@ -25,8 +30,14 @@ type SkillRouteBoost = {
 const ROUTE_BOOSTS: SkillRouteBoost[] = [
   { pattern: /\bwikipedia\b|\bwiki\b/i, skillId: 'query-wikipedia', boost: 12 },
   { pattern: /\bremind\b|\bnotification\b|\bschedule\b/i, skillId: 'schedule-notification', boost: 12 },
+  { pattern: /\b(read|show|list|what).*\bcalendar\b/i, skillId: 'read-calendar-events', boost: 11 },
+  { pattern: /\b(create|add|schedule|book).*\b(event|meeting)\b/i, skillId: 'create-calendar-event', boost: 11 },
+  { pattern: /\bdirections\b|\broute to\b|\bnavigate to\b/i, skillId: 'route-planner', boost: 9 },
   { pattern: /\bhash\b|\bsha-?256\b/i, skillId: 'calculate-hash', boost: 10 },
   { pattern: /\bqr\b|\bqr code\b/i, skillId: 'qr-code', boost: 10 },
+  { pattern: /\bword count\b|\btext stats\b|\breading time\b|\bcharacter count\b/i, skillId: 'text-stats', boost: 10 },
+  { pattern: /\bmood\b|\bfeeling\b|\blog my mood\b/i, skillId: 'mood-tracker', boost: 10 },
+  { pattern: /\bkitchen adventure\b/i, skillId: 'kitchen-adventure', boost: 10 },
   { pattern: /\bmap\b|\blocation\b|\bnavigate\b/i, skillId: 'interactive-map', boost: 8 },
   { pattern: /\bcalendar\b|\bevent\b/i, skillId: 'create-calendar-event', boost: 8 },
   { pattern: /\bemail\b|\bsend mail\b/i, skillId: 'send-email', boost: 8 },
@@ -192,6 +203,11 @@ class SkillsOrchestrator {
   async shouldTryForMessage(userText: string, messages: any[]): Promise<boolean> {
     if (!(await this.shouldHandle())) {
       return false;
+    }
+
+    if (await kitchenSessionStore.isActive()) {
+      console.log('skills_kitchen_active');
+      return true;
     }
 
     const userTurns = messages.filter(entry => entry.role === 'user').length;
@@ -405,11 +421,66 @@ class SkillsOrchestrator {
     }
   }
 
-  async tryDirectRoute(userText: string): Promise<string | null> {
+  async tryDirectRoute(
+    userText: string,
+    messages: any[],
+    settings: any,
+    activeProvider: ProviderType | null,
+  ): Promise<string | null> {
+    if (await kitchenSessionStore.isActive()) {
+      const kitchenText = await runKitchenSkill(
+        userText,
+        messages,
+        settings,
+        activeProvider,
+        (provider, loopMessages, loopSettings) => this.generateDeviceText(provider, loopMessages, loopSettings),
+      );
+      if (kitchenText) {
+        console.log('skill_kitchen_done', kitchenText.length);
+        return kitchenText;
+      }
+    }
+
     const enabled = await skillManager.getEnabled();
     const skill = pickSkill(userText, enabled);
     if (!skill) {
       console.log('skill_route_miss');
+      return null;
+    }
+
+    if (skill.id === 'learn-something-new') {
+      console.log('skill_route_learn');
+      const stepId = skillActivityAdapter.start(`Calling skill "${skill.name}"`);
+      const text = await runLearnSkill(skill, userText, messages);
+      skillActivityAdapter.done(stepId, text ? `Called skill "${skill.name}"` : `Skipped skill "${skill.name}"`);
+      if (text) {
+        console.log('skill_route_learn_ok', text.length);
+        return text;
+      }
+      return null;
+    }
+
+    if (skill.id === 'mood-tracker') {
+      console.log('skill_route_mood');
+      const stepId = skillActivityAdapter.start(`Calling skill "${skill.name}"`);
+      const text = await runMoodSkill(skill, userText);
+      skillActivityAdapter.done(stepId, text ? `Called skill "${skill.name}"` : `Skipped skill "${skill.name}"`);
+      if (text) {
+        console.log('skill_route_mood_ok', text.length);
+        return text;
+      }
+      return null;
+    }
+
+    if (skill.id === 'text-stats') {
+      console.log('skill_route_stats');
+      const stepId = skillActivityAdapter.start(`Calling skill "${skill.name}"`);
+      const text = await runTextStatsSkill(skill, userText);
+      skillActivityAdapter.done(stepId, text ? `Called skill "${skill.name}"` : `Skipped skill "${skill.name}"`);
+      if (text) {
+        console.log('skill_route_stats_ok', text.length);
+        return text;
+      }
       return null;
     }
 
@@ -468,7 +539,7 @@ class SkillsOrchestrator {
       return contextual;
     }
 
-    const direct = await this.tryDirectRoute(userText);
+    const direct = await this.tryDirectRoute(userText, messages, settings, activeProvider);
     if (direct) {
       console.log('skill_route_done', { len: direct.length });
       return direct;
