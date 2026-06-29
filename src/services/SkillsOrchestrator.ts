@@ -121,6 +121,27 @@ class SkillsOrchestrator {
     return ready;
   }
 
+  async shouldTryForMessage(userText: string, messages: any[]): Promise<boolean> {
+    if (!(await this.shouldHandle())) {
+      return false;
+    }
+
+    const userTurns = messages.filter(entry => entry.role === 'user').length;
+    if (userTurns <= 1) {
+      return true;
+    }
+
+    const enabled = await skillManager.getEnabled();
+    const skill = pickSkill(userText, enabled);
+    if (skill) {
+      console.log('skills_follow_hit', skill.id);
+      return true;
+    }
+
+    console.log('skills_skip_followup');
+    return false;
+  }
+
   supportsDeviceLoop(activeProvider: ProviderType | null): boolean {
     return activeProvider === 'local' || activeProvider === 'apple-foundation';
   }

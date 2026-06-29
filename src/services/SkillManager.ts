@@ -493,6 +493,10 @@ class SkillManager {
     return template.replace(AGENT_SKILLS_PLACEHOLDER, skillList);
   }
 
+  async buildConversationalSystemPrompt(): Promise<string> {
+    return 'You are a helpful assistant. Use the conversation history to answer follow-up questions accurately and concisely.';
+  }
+
   async syncTools(): Promise<void> {
     if (!(await this.isModeEnabled())) {
       unregisterSkillTools();
