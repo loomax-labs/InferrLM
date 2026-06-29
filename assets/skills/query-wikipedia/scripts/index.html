@@ -16,52 +16,103 @@ function parseInput(input) {
   }
   return raw || {};
 }
-function toDataUrl(html) {
-  return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+
+function cleanCellText(value) {
+  if (!value) return '';
+  return value
+    .replace(/\[\d+\]/g, '')
+    .replace(/\.mw-[\w-]+/g, '')
+    .replace(/\{[^}]*\}/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isNoisyValue(value) {
+  if (!value) return true;
+  if (value.length > 280) return true;
+  if (value.includes('.mw-parser-output')) return true;
+  if (value.includes('{') && value.includes('}')) return true;
+  return false;
+}
+
+function stripDocNoise(doc) {
+  doc.querySelectorAll('style, script, link, noscript').forEach((node) => node.remove());
 }
 
 async function fetchWikiFuzzyAndInfobox(topic, lang) {
   const baseUrl = 'https://' + lang + '.wikipedia.org/w/api.php';
-  const searchParams = new URLSearchParams({ action: 'query', format: 'json', generator: 'search', gsrsearch: topic, gsrlimit: '1', prop: 'extracts', explaintext: '1', exintro: '1', origin: '*' });
+  const searchParams = new URLSearchParams({
+    action: 'query',
+    format: 'json',
+    generator: 'search',
+    gsrsearch: topic,
+    gsrlimit: '1',
+    prop: 'extracts',
+    explaintext: '1',
+    exintro: '1',
+    origin: '*',
+  });
   const searchRes = await fetch(baseUrl + '?' + searchParams.toString());
   if (!searchRes.ok) throw new Error('HTTP error ' + searchRes.status);
   const searchData = await searchRes.json();
-  if (!searchData.query || !searchData.query.pages) return { error: "No Wikipedia articles found matching '" + topic + "' in language '" + lang + "'." };
+  if (!searchData.query || !searchData.query.pages) {
+    return { error: "No Wikipedia articles found matching '" + topic + "' in language '" + lang + "'." };
+  }
   const pages = searchData.query.pages;
   const page = pages[Object.keys(pages)[0]];
   const title = page?.title;
-  let extract = page?.extract || '';
-  let infoboxText = '';
+  let extract = cleanCellText(page?.extract || '');
+  const facts = [];
+
   try {
-    const parseParams = new URLSearchParams({ action: 'parse', page: title, section: '0', prop: 'text', format: 'json', origin: '*' });
+    const parseParams = new URLSearchParams({
+      action: 'parse',
+      page: title,
+      section: '0',
+      prop: 'text',
+      format: 'json',
+      origin: '*',
+    });
     const parseRes = await fetch(baseUrl + '?' + parseParams.toString());
     const parseData = await parseRes.json();
     const html = parseData?.parse?.text['*'];
     if (html) {
       const doc = new DOMParser().parseFromString(html, 'text/html');
+      stripDocNoise(doc);
       const infobox = doc.querySelector('table.infobox');
       if (infobox) {
+        infobox.querySelectorAll('style, script').forEach((node) => node.remove());
         infobox.querySelectorAll('tr').forEach((row) => {
           const th = row.querySelector('th');
           const td = row.querySelector('td');
-          if (th && td) {
-            const key = th.textContent.replace(/\[\d+\]/g, '').trim();
-            const value = td.textContent.replace(/\[\d+\]/g, '').trim().replace(/\n+/g, ' | ');
-            infoboxText += key + ': ' + value + '\n';
-          }
+          if (!th || !td) return;
+          const key = cleanCellText(th.textContent || '');
+          const value = cleanCellText(td.textContent || '').replace(/\n+/g, ' | ');
+          if (!key || !value || isNoisyValue(value)) return;
+          facts.push(key + ': ' + value);
         });
       }
     }
   } catch (e) {}
-  let finalResult = '';
-  if (infoboxText) finalResult += '--- INFOBOX ---\n' + infoboxText + '\n\n';
-  if (extract) finalResult += '--- SUMMARY ---\n' + extract;
-  if (!finalResult.trim()) return { error: "Found page '" + title + "' but no text or infobox was available." };
+
+  if (!extract && facts.length === 0) {
+    return { error: "Found page '" + title + "' but no text was available." };
+  }
+
   const caps = { zh: 1500, fr: 4300, es: 4500, en: 5000 };
   const maxChars = caps[(lang || 'en').toLowerCase()] || 5000;
-  if (finalResult.length > maxChars) finalResult = finalResult.substring(0, maxChars) + '\n\n... [TRUNCATED TO SAVE CONTEXT]';
-  return { title, result: finalResult };
+  if (extract.length > maxChars) {
+    extract = extract.slice(0, maxChars) + '\n\n... [TRUNCATED]';
+  }
+
+  return {
+    title,
+    summary: extract,
+    facts: facts.slice(0, 8),
+    result: extract,
+  };
 }
+
 window.runSkill = async function(input) {
   try {
     const jsonData = parseInput(input);
