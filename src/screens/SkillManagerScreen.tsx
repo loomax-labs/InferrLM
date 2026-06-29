@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -26,14 +27,6 @@ const COMMUNITY_SKILLS_URL = 'https://github.com/topics/agent-skills';
 
 type FilterTab = 'all' | 'builtin' | 'custom';
 
-type AddOption = {
-  id: string;
-  title: string;
-  desc: string;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-  action: () => void;
-};
-
 type SkillRowProps = {
   skill: Skill;
   themeColors: (typeof theme)['light'];
@@ -47,16 +40,6 @@ type SkillRowProps = {
   onSecret: () => void;
   onDelete: () => void;
   onHome: (url: string) => void;
-};
-
-const skillIcon = (skill: Skill): React.ComponentProps<typeof MaterialCommunityIcons>['name'] => {
-  if (skill.type === 'js') {
-    return 'code-braces';
-  }
-  if (skill.secret) {
-    return 'key-variant';
-  }
-  return 'text-box-outline';
 };
 
 function SkillRow({
@@ -76,7 +59,6 @@ function SkillRow({
   const isCustom = skill.source !== 'builtin';
   const homepage = skill.metadata?.homepage;
   const needsSecret = !!skill.secret;
-  const accent = skill.enabled ? themeColors.primary : themeColors.secondaryText;
 
   return (
     <Pressable
@@ -85,136 +67,63 @@ function SkillRow({
       style={[
         styles.skillRow,
         { backgroundColor: themeColors.cardBackground },
-        skill.enabled ? { backgroundColor: themeColors.primary + '14' } : null,
         inMulti && !isCustom ? styles.dimRow : null,
       ]}
     >
-      <View style={[styles.accentBar, { backgroundColor: accent }]} />
-
       {inMulti && isCustom ? (
-        <TouchableOpacity onPress={onPick} style={styles.pickBtn}>
+        <TouchableOpacity onPress={onPick} style={styles.pickWrap}>
           <MaterialCommunityIcons
-            name={picked ? 'check-circle' : 'checkbox-blank-circle-outline'}
-            size={24}
-            color={picked ? themeColors.primary : themeColors.secondaryText}
+            name={picked ? 'checkbox-marked' : 'checkbox-blank-outline'}
+            size={22}
+            color={themeColors.primary}
           />
         </TouchableOpacity>
-      ) : (
-        <View style={[styles.iconWrap, { backgroundColor: themeColors.background }]}>
-          <MaterialCommunityIcons name={skillIcon(skill)} size={20} color={accent} />
-        </View>
-      )}
+      ) : null}
 
-      <View style={styles.skillBody}>
-        <View style={styles.skillHead}>
+      <View style={styles.skillMain}>
+        <View style={styles.skillTop}>
           <View style={styles.skillText}>
             {homepage ? (
-              <TouchableOpacity style={styles.linkRow} onPress={() => onHome(homepage)}>
-                <Text style={[styles.skillName, { color: themeColors.text }]}>{skill.name}</Text>
-                <MaterialCommunityIcons name="open-in-new" size={13} color={themeColors.primary} />
+              <TouchableOpacity onPress={() => onHome(homepage)}>
+                <Text style={[styles.skillName, { color: themeColors.primary }]}>{skill.name}</Text>
               </TouchableOpacity>
             ) : (
               <Text style={[styles.skillName, { color: themeColors.text }]}>{skill.name}</Text>
             )}
-            <Text style={[styles.skillDesc, { color: themeColors.secondaryText }]} numberOfLines={2}>
+            <Text style={[styles.skillDesc, { color: themeColors.secondaryText }]}>
               {skill.description.replace(/\n/g, ' ')}
             </Text>
-            <View style={styles.metaRow}>
-              <View style={[styles.metaTag, { backgroundColor: themeColors.background }]}>
-                <Text style={[styles.metaText, { color: themeColors.secondaryText }]}>
-                  {skill.type.toUpperCase()}
-                </Text>
-              </View>
-              <View style={[styles.metaTag, { backgroundColor: themeColors.background }]}>
-                <Text style={[styles.metaText, { color: themeColors.secondaryText }]}>
-                  {isCustom ? 'CUSTOM' : 'BUILT-IN'}
-                </Text>
-              </View>
-            </View>
           </View>
-
           {!inMulti ? (
-            <TouchableOpacity
-              onPress={onToggle}
+            <Switch
+              value={skill.enabled}
+              onValueChange={onToggle}
               disabled={busy}
-              style={[
-                styles.statePill,
-                {
-                  backgroundColor: skill.enabled ? themeColors.primary : themeColors.background,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statePillText,
-                  { color: skill.enabled ? '#FFFFFF' : themeColors.secondaryText },
-                ]}
-              >
-                {skill.enabled ? 'On' : 'Off'}
-              </Text>
-            </TouchableOpacity>
+              trackColor={{ false: themeColors.borderColor, true: themeColors.primary + '80' }}
+              thumbColor={skill.enabled ? themeColors.primary : themeColors.secondaryText}
+            />
           ) : null}
         </View>
 
         {!inMulti ? (
           <View style={styles.actionRow}>
-            <TouchableOpacity style={[styles.iconBtn, { backgroundColor: themeColors.background }]} onPress={onView}>
-              <MaterialCommunityIcons name="file-document-outline" size={18} color={themeColors.text} />
+            <TouchableOpacity onPress={onView}>
+              <Text style={[styles.actionText, { color: themeColors.primary }]}>View</Text>
             </TouchableOpacity>
             {needsSecret ? (
-              <TouchableOpacity style={[styles.iconBtn, { backgroundColor: themeColors.background }]} onPress={onSecret}>
-                <MaterialCommunityIcons name="key-outline" size={18} color={themeColors.text} />
+              <TouchableOpacity onPress={onSecret}>
+                <Text style={[styles.actionText, { color: themeColors.primary }]}>Secret</Text>
               </TouchableOpacity>
             ) : null}
             {isCustom ? (
-              <TouchableOpacity style={[styles.iconBtn, { backgroundColor: '#C6282818' }]} onPress={onDelete}>
-                <MaterialCommunityIcons name="trash-can-outline" size={18} color="#C62828" />
+              <TouchableOpacity onPress={onDelete}>
+                <Text style={[styles.actionText, { color: '#C62828' }]}>Delete</Text>
               </TouchableOpacity>
             ) : null}
           </View>
         ) : null}
       </View>
     </Pressable>
-  );
-}
-
-function FilterChip({
-  label,
-  active,
-  count,
-  onPress,
-  themeColors,
-}: {
-  label: string;
-  active: boolean;
-  count: number;
-  onPress: () => void;
-  themeColors: (typeof theme)['light'];
-}) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[
-        styles.filterChip,
-        {
-          backgroundColor: active ? themeColors.primary : themeColors.cardBackground,
-        },
-      ]}
-    >
-      <Text style={[styles.filterChipText, { color: active ? '#FFFFFF' : themeColors.text }]}>
-        {label}
-      </Text>
-      <View
-        style={[
-          styles.filterCount,
-          { backgroundColor: active ? '#FFFFFF30' : themeColors.background },
-        ]}
-      >
-        <Text style={[styles.filterCountText, { color: active ? '#FFFFFF' : themeColors.secondaryText }]}>
-          {count}
-        </Text>
-      </View>
-    </TouchableOpacity>
   );
 }
 
@@ -276,15 +185,6 @@ export default function SkillManagerScreen() {
         skill.description.toLowerCase().includes(q),
     );
   }, [skills, search, filterTab]);
-
-  const builtInCount = useMemo(
-    () => skills.filter(skill => skill.source === 'builtin').length,
-    [skills],
-  );
-  const customCount = useMemo(
-    () => skills.filter(skill => skill.source !== 'builtin').length,
-    [skills],
-  );
 
   const enabledCount = useMemo(
     () => skills.filter(skill => skill.enabled).length,
@@ -437,38 +337,10 @@ export default function SkillManagerScreen() {
     setPickedIds([]);
   };
 
-  const addOptions: AddOption[] = [
-    {
-      id: 'url',
-      title: 'Import from URL',
-      desc: 'Load a skill definition from the web',
-      icon: 'link-variant',
-      action: () => {
-        setShowAdd(false);
-        setShowUrl(true);
-      },
-    },
-    {
-      id: 'file',
-      title: 'Import from device',
-      desc: 'Pick a local skill file',
-      icon: 'folder-upload-outline',
-      action: () => {
-        handleImportFile();
-      },
-    },
-    {
-      id: 'community',
-      title: 'Browse community skills',
-      desc: 'Open the public skills index',
-      icon: 'earth',
-      action: () => {
-        setShowAdd(false);
-        Linking.openURL(COMMUNITY_SKILLS_URL).catch(() => {
-          Alert.alert('Open failed', 'Could not open community skills page.');
-        });
-      },
-    },
+  const tabs: { id: FilterTab; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'builtin', label: 'Built-in' },
+    { id: 'custom', label: 'Custom' },
   ];
 
   return (
@@ -482,123 +354,75 @@ export default function SkillManagerScreen() {
       ) : (
         <View style={styles.body}>
           {inMulti ? (
-            <View style={[styles.multiBar, { backgroundColor: themeColors.primary }]}>
-              <TouchableOpacity onPress={exitMulti} style={styles.multiBtn}>
-                <MaterialCommunityIcons name="close" size={22} color="#FFFFFF" />
+            <View style={styles.multiBar}>
+              <TouchableOpacity onPress={exitMulti}>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>Cancel</Text>
               </TouchableOpacity>
-              <Text style={styles.multiLabel}>{`${pickedIds.length} selected`}</Text>
+              <Text style={[styles.multiLabel, { color: themeColors.text }]}>
+                {`${pickedIds.length} selected`}
+              </Text>
               <TouchableOpacity
                 onPress={() => pickedIds.length > 0 && openDelete(pickedIds)}
                 disabled={pickedIds.length === 0}
-                style={styles.multiBtn}
               >
-                <MaterialCommunityIcons
-                  name="trash-can-outline"
-                  size={22}
-                  color={pickedIds.length > 0 ? '#FFFFFF' : '#FFFFFF60'}
-                />
+                <Text style={[styles.linkText, { color: pickedIds.length > 0 ? '#C62828' : themeColors.secondaryText }]}>
+                  Delete
+                </Text>
               </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={[styles.statsBar, { backgroundColor: themeColors.cardBackground }]}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: themeColors.primary }]}>{enabledCount}</Text>
-                <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>Active</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: themeColors.background }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: themeColors.text }]}>{skills.length}</Text>
-                <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>Total</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: themeColors.background }]} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: themeColors.text }]}>{customCount}</Text>
-                <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>Custom</Text>
-              </View>
-            </View>
-          )}
-
-          {showLimit ? (
-            <View style={[styles.banner, { backgroundColor: '#C6282818' }]}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={18} color="#C62828" />
-              <Text style={[styles.bannerText, { color: themeColors.text }]}>
-                {`Over ${MAX_SKILL_COUNT} active skills may slow responses.`}
-              </Text>
             </View>
           ) : null}
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
-          >
-            <FilterChip
-              label="All"
-              count={skills.length}
-              active={filterTab === 'all'}
-              onPress={() => setFilterTab('all')}
-              themeColors={themeColors}
-            />
-            <FilterChip
-              label="Built-in"
-              count={builtInCount}
-              active={filterTab === 'builtin'}
-              onPress={() => setFilterTab('builtin')}
-              themeColors={themeColors}
-            />
-            <FilterChip
-              label="Yours"
-              count={customCount}
-              active={filterTab === 'custom'}
-              onPress={() => setFilterTab('custom')}
-              themeColors={themeColors}
-            />
-          </ScrollView>
+          {showLimit ? (
+            <Text style={[styles.noteText, { color: themeColors.secondaryText }]}>
+              {`More than ${MAX_SKILL_COUNT} skills enabled may affect performance.`}
+            </Text>
+          ) : null}
 
-          <View style={[styles.searchBox, { backgroundColor: themeColors.cardBackground }]}>
-            <MaterialCommunityIcons name="magnify" size={20} color={themeColors.secondaryText} />
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Filter by name or description"
-              placeholderTextColor={themeColors.secondaryText}
-              style={[styles.searchInput, { color: themeColors.text }]}
-              autoCapitalize="none"
-            />
-            {search ? (
-              <TouchableOpacity onPress={() => setSearch('')}>
-                <MaterialCommunityIcons name="close" size={18} color={themeColors.secondaryText} />
+          <View style={styles.tabRow}>
+            {tabs.map(tab => (
+              <TouchableOpacity key={tab.id} onPress={() => setFilterTab(tab.id)}>
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: filterTab === tab.id ? themeColors.primary : themeColors.secondaryText,
+                      fontWeight: filterTab === tab.id ? '700' : '400',
+                    },
+                  ]}
+                >
+                  {tab.label}
+                </Text>
               </TouchableOpacity>
-            ) : null}
+            ))}
           </View>
 
-          <View style={styles.toolbar}>
-            <TouchableOpacity
-              onPress={() => handleAll(true)}
-              disabled={busyId === 'all'}
-              style={[styles.toolBtn, { backgroundColor: themeColors.cardBackground }]}
-            >
-              <MaterialCommunityIcons name="toggle-switch" size={18} color={themeColors.primary} />
-              <Text style={[styles.toolBtnText, { color: themeColors.text }]}>Enable all</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleAll(false)}
-              disabled={busyId === 'all'}
-              style={[styles.toolBtn, { backgroundColor: themeColors.cardBackground }]}
-            >
-              <MaterialCommunityIcons name="toggle-switch-off" size={18} color={themeColors.secondaryText} />
-              <Text style={[styles.toolBtnText, { color: themeColors.text }]}>Disable all</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setSearch('');
-                setShowAdd(true);
-              }}
-              style={[styles.toolBtn, { backgroundColor: themeColors.primary }]}
-            >
-              <MaterialCommunityIcons name="plus" size={18} color="#FFFFFF" />
-              <Text style={[styles.toolBtnText, { color: '#FFFFFF' }]}>Import</Text>
-            </TouchableOpacity>
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search"
+            placeholderTextColor={themeColors.secondaryText}
+            style={[
+              styles.searchInput,
+              { color: themeColors.text, backgroundColor: themeColors.cardBackground },
+            ]}
+            autoCapitalize="none"
+          />
+
+          <View style={styles.topRow}>
+            <Text style={[styles.countText, { color: themeColors.secondaryText }]}>
+              {`${enabledCount} of ${skills.length} on`}
+            </Text>
+            <View style={styles.topActions}>
+              <TouchableOpacity onPress={() => handleAll(true)} disabled={busyId === 'all'}>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>All on</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleAll(false)} disabled={busyId === 'all'}>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>All off</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowAdd(true)}>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>Import</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView
@@ -607,40 +431,30 @@ export default function SkillManagerScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {filtered.length === 0 ? (
-              <View style={[styles.emptyBox, { backgroundColor: themeColors.cardBackground }]}>
-                <MaterialCommunityIcons name="puzzle-outline" size={36} color={themeColors.secondaryText} />
-                <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No skills here</Text>
-                <Text style={[styles.emptyDesc, { color: themeColors.secondaryText }]}>
-                  Try another filter or import a skill.
-                </Text>
-              </View>
-            ) : (
-              filtered.map(skill => (
-                <SkillRow
-                  key={skill.id}
-                  skill={skill}
-                  themeColors={themeColors}
-                  inMulti={inMulti}
-                  picked={pickedIds.includes(skill.id)}
-                  busy={busyId === skill.id}
-                  onToggle={() => handleToggle(skill.id)}
-                  onPick={() => {
-                    const wasPicked = pickedIds.includes(skill.id);
-                    if (wasPicked && pickedIds.length === 1) {
-                      exitMulti();
-                      return;
-                    }
-                    togglePick(skill.id);
-                  }}
-                  onLong={() => startMulti(skill.id)}
-                  onView={() => setViewSkill(skill)}
-                  onSecret={() => setSecretSkill(skill)}
-                  onDelete={() => openDelete([skill.id])}
-                  onHome={url => Linking.openURL(url).catch(() => Alert.alert('Open failed', 'Could not open homepage.'))}
-                />
-              ))
-            )}
+            {filtered.map(skill => (
+              <SkillRow
+                key={skill.id}
+                skill={skill}
+                themeColors={themeColors}
+                inMulti={inMulti}
+                picked={pickedIds.includes(skill.id)}
+                busy={busyId === skill.id}
+                onToggle={() => handleToggle(skill.id)}
+                onPick={() => {
+                  const wasPicked = pickedIds.includes(skill.id);
+                  if (wasPicked && pickedIds.length === 1) {
+                    exitMulti();
+                    return;
+                  }
+                  togglePick(skill.id);
+                }}
+                onLong={() => startMulti(skill.id)}
+                onView={() => setViewSkill(skill)}
+                onSecret={() => setSecretSkill(skill)}
+                onDelete={() => openDelete([skill.id])}
+                onHome={url => Linking.openURL(url).catch(() => Alert.alert('Open failed', 'Could not open homepage.'))}
+              />
+            ))}
           </ScrollView>
         </View>
       )}
@@ -649,36 +463,43 @@ export default function SkillManagerScreen() {
         visible={showAdd}
         onClose={() => setShowAdd(false)}
         title="Import skill"
-        description="Choose how to add a skill to your agent."
         dismissOnBackdropPress
         secondaryButtonText="Cancel"
         onSecondaryPress={() => setShowAdd(false)}
       >
-        <View style={styles.addList}>
-          {addOptions.map(opt => (
-            <TouchableOpacity
-              key={opt.id}
-              style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
-              onPress={opt.action}
-            >
-              <View style={[styles.addIcon, { backgroundColor: themeColors.background }]}>
-                <MaterialCommunityIcons name={opt.icon} size={22} color={themeColors.primary} />
-              </View>
-              <View style={styles.addText}>
-                <Text style={[styles.addTitle, { color: themeColors.text }]}>{opt.title}</Text>
-                <Text style={[styles.addDesc, { color: themeColors.secondaryText }]}>{opt.desc}</Text>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
-            </TouchableOpacity>
-          ))}
-        </View>
+        <TouchableOpacity
+          style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
+          onPress={() => {
+            setShowAdd(false);
+            setShowUrl(true);
+          }}
+        >
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>From URL</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
+          onPress={handleImportFile}
+        >
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>From file</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
+          onPress={() => {
+            setShowAdd(false);
+            Linking.openURL(COMMUNITY_SKILLS_URL).catch(() => {
+              Alert.alert('Open failed', 'Could not open community skills page.');
+            });
+          }}
+        >
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>Community list</Text>
+        </TouchableOpacity>
       </Dialog>
 
       <Dialog
         visible={showUrl}
         onClose={() => setShowUrl(false)}
         title="Import from URL"
-        description="Enter the URL of a skill definition file."
+        description="Skill file URL"
         dismissOnBackdropPress
         primaryButtonText="Import"
         primaryButtonLoading={busyId === 'import-url'}
@@ -702,12 +523,8 @@ export default function SkillManagerScreen() {
       <Dialog
         visible={showDelete}
         onClose={() => setShowDelete(false)}
-        title={deleteIds.length > 1 ? 'Delete selected skills' : 'Delete skill'}
-        description={
-          deleteIds.length > 1
-            ? `Delete ${deleteIds.length} custom skills? This cannot be undone.`
-            : 'Delete this custom skill? This cannot be undone.'
-        }
+        title={deleteIds.length > 1 ? 'Delete skills' : 'Delete skill'}
+        description="This cannot be undone."
         dismissOnBackdropPress
         primaryButtonText="Delete"
         primaryButtonColor="#C62828"
@@ -720,7 +537,7 @@ export default function SkillManagerScreen() {
       <Dialog
         visible={!!secretSkill}
         onClose={() => setSecretSkill(null)}
-        title="Edit Secret"
+        title="Secret"
         description={secretSkill?.secret?.label}
         dismissOnBackdropPress
         primaryButtonText="Save"
@@ -733,7 +550,7 @@ export default function SkillManagerScreen() {
           value={secretVal}
           onChangeText={setSecretVal}
           secureTextEntry
-          placeholder="Enter secret value"
+          placeholder="Value"
           placeholderTextColor={themeColors.secondaryText}
           style={[
             styles.dialogInput,
@@ -754,37 +571,10 @@ export default function SkillManagerScreen() {
             <Text style={[styles.viewDesc, { color: themeColors.secondaryText }]}>
               {viewSkill?.description}
             </Text>
-            <View style={styles.badgeRow}>
-              <View style={[styles.badge, { backgroundColor: themeColors.primary + '18' }]}>
-                <Text style={[styles.badgeText, { color: themeColors.primary }]}>
-                  {viewSkill?.type.toUpperCase()}
-                </Text>
-              </View>
-              <View style={[styles.badge, { backgroundColor: themeColors.cardBackground }]}>
-                <Text style={[styles.badgeText, { color: themeColors.text }]}>
-                  {viewSkill?.source.toUpperCase()}
-                </Text>
-              </View>
-            </View>
-            {viewSkill?.metadata?.homepage ? (
-              <TouchableOpacity
-                onPress={() =>
-                  Linking.openURL(viewSkill.metadata!.homepage!).catch(() =>
-                    Alert.alert('Open failed', 'Could not open homepage.'),
-                  )
-                }
-              >
-                <Text style={[styles.homeLink, { color: themeColors.primary }]}>Homepage</Text>
-              </TouchableOpacity>
-            ) : null}
-            <View style={styles.viewFieldHead}>
-              <Text style={[styles.viewFieldLabel, { color: themeColors.text }]}>Instructions</Text>
-              <TouchableOpacity
-                style={[styles.copyBtn, { backgroundColor: themeColors.cardBackground }]}
-                onPress={handleCopyView}
-              >
-                <MaterialCommunityIcons name="content-copy" size={16} color={themeColors.text} />
-                <Text style={[styles.copyBtnText, { color: themeColors.text }]}>Copy</Text>
+            <View style={styles.viewHead}>
+              <Text style={[styles.viewLabel, { color: themeColors.text }]}>Instructions</Text>
+              <TouchableOpacity onPress={handleCopyView}>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>Copy</Text>
               </TouchableOpacity>
             </View>
             <TextInput
@@ -800,11 +590,8 @@ export default function SkillManagerScreen() {
           </ScrollView>
         </Dialog.Content>
         <Dialog.Actions>
-          <TouchableOpacity
-            style={[styles.closeBtn, { backgroundColor: themeColors.primary }]}
-            onPress={() => setViewSkill(null)}
-          >
-            <Text style={styles.closeBtnText}>Close</Text>
+          <TouchableOpacity onPress={() => setViewSkill(null)}>
+            <Text style={[styles.linkText, { color: themeColors.primary }]}>Close</Text>
           </TouchableOpacity>
         </Dialog.Actions>
       </Dialog>
@@ -815,132 +602,61 @@ export default function SkillManagerScreen() {
 const styles = StyleSheet.create({
   body: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   loadingWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 10,
-    paddingVertical: 14,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-  },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  bannerText: {
-    flex: 1,
+  noteText: {
     fontSize: 13,
-    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 4,
   },
   multiBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    paddingHorizontal: 8,
     paddingVertical: 10,
-    marginTop: 10,
-    marginBottom: 10,
-    gap: 8,
-  },
-  multiBtn: {
-    padding: 6,
+    gap: 12,
   },
   multiLabel: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  filterRow: {
-    gap: 8,
-    paddingBottom: 10,
-  },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  filterChipText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
-  filterCount: {
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-  },
-  filterCountText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  searchBox: {
+  tabRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    minHeight: 44,
-    gap: 8,
+    gap: 16,
+    marginTop: 8,
     marginBottom: 10,
   },
-  searchInput: {
-    flex: 1,
+  tabText: {
     fontSize: 15,
-    paddingVertical: 8,
   },
-  toolbar: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+  searchInput: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    marginBottom: 10,
   },
-  toolBtn: {
-    flex: 1,
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 8,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  toolBtnText: {
-    fontSize: 12,
+  countText: {
+    fontSize: 13,
+  },
+  topActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  linkText: {
+    fontSize: 14,
     fontWeight: '600',
   },
   listContent: {
@@ -948,36 +664,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   skillRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    borderRadius: 10,
-    overflow: 'hidden',
-    minHeight: 88,
-  },
-  accentBar: {
-    width: 4,
-  },
-  pickBtn: {
-    alignSelf: 'center',
-    paddingHorizontal: 10,
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginLeft: 10,
-  },
-  skillBody: {
-    flex: 1,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    paddingRight: 12,
-    paddingLeft: 10,
+    flexDirection: 'row',
     gap: 8,
   },
-  skillHead: {
+  dimRow: {
+    opacity: 0.5,
+  },
+  pickWrap: {
+    paddingTop: 2,
+  },
+  skillMain: {
+    flex: 1,
+    gap: 8,
+  },
+  skillTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
@@ -986,110 +689,35 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   skillName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   skillDesc: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 2,
-  },
-  metaTag: {
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  metaText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  statePill: {
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    minWidth: 40,
-    alignItems: 'center',
-  },
-  statePillText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    lineHeight: 18,
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 14,
   },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dimRow: {
-    opacity: 0.45,
-  },
-  emptyBox: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  emptyDesc: {
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  addList: {
-    gap: 8,
-    marginTop: 4,
+  actionText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   addRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 10,
-  },
-  addIcon: {
-    width: 44,
-    height: 44,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addText: {
-    flex: 1,
-    gap: 2,
+    padding: 14,
+    marginTop: 8,
   },
   addTitle: {
     fontSize: 15,
     fontWeight: '600',
   },
-  addDesc: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
   dialogInput: {
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     fontSize: 15,
     marginTop: 8,
   },
@@ -1101,68 +729,23 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 10,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
-  },
-  badge: {
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  homeLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  viewFieldHead: {
+  viewHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  viewFieldLabel: {
+  viewLabel: {
     fontSize: 14,
-    fontWeight: '700',
-  },
-  copyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  copyBtnText: {
-    fontSize: 13,
     fontWeight: '600',
   },
   viewField: {
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 14,
-    lineHeight: 21,
-    minHeight: 160,
-    textAlignVertical: 'top',
-    marginBottom: 8,
-  },
-  closeBtn: {
-    borderRadius: 8,
-    paddingHorizontal: 16,
     paddingVertical: 10,
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtnText: {
-    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    lineHeight: 20,
+    minHeight: 140,
+    textAlignVertical: 'top',
   },
 });
