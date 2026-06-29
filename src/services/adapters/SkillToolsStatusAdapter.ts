@@ -46,7 +46,6 @@ const TOOL_LABELS: Record<string, string> = {
   run_js: 'run_js',
   run_intent: 'run_intent',
   script: 'skill script',
-  local_route: 'local direct route',
   api_secret: 'API key',
 };
 
