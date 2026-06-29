@@ -7,6 +7,7 @@ import { onlineModelService } from './OnlineModelService';
 import { skillExecutor } from './SkillExecutor';
 import { skillManager } from './SkillManager';
 import { parseToolCallsFromText } from './skillsToolParser';
+import { runTextSkill } from './TextSkillRunner';
 import { engineService } from './runtime-service';
 import { toolAgentService } from './ToolAgentService';
 import { toolExecutor } from './tools/ToolExecutor';
@@ -37,6 +38,10 @@ const ROUTE_BOOSTS: SkillRouteBoost[] = [
   { pattern: /\bcall\b|\bdial\b/i, skillId: 'quick-call', boost: 6 },
   { pattern: /\bsms\b|\btext message\b/i, skillId: 'quick-sms', boost: 6 },
   { pattern: /\bweb search\b|\bsearch the web\b/i, skillId: 'web-search', boost: 10 },
+  { pattern: /\bpiano\b|\bkeyboard\b/i, skillId: 'virtual-piano', boost: 10 },
+  { pattern: /\brestaurant\b|\broulette\b|\bfood in\b/i, skillId: 'restaurant-roulette', boost: 10 },
+  { pattern: /\bmood music\b|\bmusic for\b|\bplay music\b/i, skillId: 'mood-music', boost: 10 },
+  { pattern: /\blearn something\b|\bteach me\b/i, skillId: 'learn-something-new', boost: 8 },
 ];
 
 const pickSkill = (query: string, skills: Skill[]): Skill | null => {
@@ -129,6 +134,26 @@ const buildJsData = (skill: Skill, userText: string): string => {
       .replace(/^(tell me about|who is|what is)\s+/gi, '')
       .trim();
     return JSON.stringify({ topic: topic || userText.trim(), lang: 'en' });
+  }
+
+  if (skill.id === 'restaurant-roulette') {
+    const locationMatch = userText.match(/\bin\s+([^.?!]+)/i);
+    const cuisineMatch = userText.match(
+      /\b(mexican|italian|indian|sushi|chinese|thai|japanese|korean|french|pizza|burger|vietnamese|mediterranean)\b/i,
+    );
+    return JSON.stringify({
+      location: locationMatch?.[1]?.trim() || 'San Jose',
+      cuisine: cuisineMatch?.[0] || 'Italian',
+    });
+  }
+
+  if (skill.id === 'mood-music') {
+    return JSON.stringify({
+      genre: 'House',
+      duration: 120,
+      energy: 'high',
+      mood: userText.trim(),
+    });
   }
 
   return userText.trim();
@@ -389,6 +414,16 @@ class SkillsOrchestrator {
     }
 
     if (skill.type !== 'js') {
+      if (skill.type === 'text') {
+        console.log('skill_route_text', skill.id);
+        const stepId = skillActivityAdapter.start(`Calling skill "${skill.name}"`);
+        const text = await runTextSkill(skill, userText);
+        skillActivityAdapter.done(stepId, text ? `Called skill "${skill.name}"` : `Skipped skill "${skill.name}"`);
+        if (text) {
+          console.log('skill_route_text_ok', { id: skill.id, len: text.length });
+          return text;
+        }
+      }
       console.log('skill_route_text_skip', skill.id);
       return null;
     }
