@@ -124,6 +124,7 @@ export class DownloadTaskManager extends EventEmitter {
           this.emit('progress', progressData);
           this.emit('downloadCompleted', {
             modelName,
+            displayName,
             downloadId: this.getDownloadIdForModel(modelName),
             finalPath: modelPath,
             nativeDownloadId: downloadInfo?.nativeDownloadId,
@@ -142,7 +143,8 @@ export class DownloadTaskManager extends EventEmitter {
           await this.saveDownloadProgress();
 
           this.emit('downloadFailed', {
-            modelName: displayName,
+            modelName,
+            displayName,
             downloadId: this.getDownloadIdForModel(modelName),
             error: error instanceof Error ? error.message : 'Unknown error',
             nativeDownloadId: downloadInfo?.nativeDownloadId,
