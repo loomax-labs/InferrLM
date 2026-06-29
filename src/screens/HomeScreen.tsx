@@ -50,6 +50,8 @@ import type { ProviderType } from '../services/ModelManagementService';
 import { ChatLifecycleService } from '../services/ChatLifecycleService';
 import { appleFoundationService } from '../services/AppleFoundationService';
 import { skillManager } from '../services/SkillManager';
+import { skillActivityAdapter } from '../services/adapters/SkillActivityAdapter';
+import type { SkillActivityStep } from '../types/skillActivity';
 import { homeScreenStyles } from './homeScreenStyles';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
@@ -86,6 +88,7 @@ export default function HomeScreen() {
 
   const [isCooldown, setIsCooldown] = useState(false);
   const [justCancelled, setJustCancelled] = useState(false);
+  const [skillSteps, setSkillSteps] = useState<SkillActivityStep[]>([]);
 
   const { dialogVisible, dialogTitle, dialogMessage, dialogPrimaryText, dialogPrimaryPress, dialogSecondaryText, dialogSecondaryPress, showDialog, hideDialog } = useDialog();
   const { showCopyToast, copyToastMessage, showToast } = useCopyToast();
@@ -178,6 +181,10 @@ export default function HomeScreen() {
       ChatLifecycleService.initializeSessionAndReview();
     }, [])
   );
+
+  useEffect(() => {
+    return skillActivityAdapter.subscribe(setSkillSteps);
+  }, []);
 
   const loadChatIdRef = useRef<string | null>(null);
   const isLoadingChatRef = useRef(false);
@@ -411,13 +418,15 @@ export default function HomeScreen() {
     setIsRegenerating(false);
     
     if (currentMessageId) {
+      const snapSteps = skillActivityAdapter.snapshot();
       const updatedMessages = messages.map(msg => {
         if (msg.id === currentMessageId) {
           return {
             ...msg,
             content: currentContent,
             thinking: currentThinking,
-            stats: currentStats
+            stats: currentStats,
+            skillSteps: snapSteps.length > 0 ? snapSteps : msg.skillSteps,
           };
         }
         return msg;
@@ -426,6 +435,7 @@ export default function HomeScreen() {
       setMessages(updatedMessages);
       saveMessagesDebounced.cancel();
       await saveMessagesImmediate(updatedMessages);
+      skillActivityAdapter.clear();
     }
     
     if (activeProvider === 'local') {
@@ -819,6 +829,7 @@ export default function HomeScreen() {
            streamingMessage={streamingMessage}
            streamingThinking={streamingThinking}
            streamingStats={streamingStats}
+           skillSteps={skillSteps}
            onCopyText={copyToClipboard}
            onRegenerateResponse={handleRegenerate}
            isRegenerating={isRegenerating}

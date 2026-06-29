@@ -17,11 +17,13 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ChatMarkdown from './ChatMarkdown';
 import MarkdownBoundary from './MarkdownBoundary';
+import SkillProgressPanel from './SkillProgressPanel';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import chatManager from '../../utils/ChatManager';
 import { useRouter } from 'expo-router';
 import * as MediaLibrary from 'expo-media-library';
+import type { SkillActivityStep } from '../../types/skillActivity';
 
 export type Message = {
   id: string;
@@ -36,6 +38,7 @@ export type Message = {
     avgTokenTime?: number;
   };
   isLoading?: boolean;
+  skillSteps?: SkillActivityStep[];
 };
 
 type ChatViewProps = {
@@ -45,6 +48,7 @@ type ChatViewProps = {
   streamingMessage: string;
   streamingThinking: string;
   streamingStats: { tokens: number; duration: number; firstTokenTime?: number; avgTokenTime?: number } | null;
+  skillSteps?: SkillActivityStep[];
   onCopyText: (text: string) => void;
   onRegenerateResponse: () => void;
   isRegenerating: boolean;
@@ -88,6 +92,7 @@ export default function ChatView({
   streamingMessage,
   streamingThinking,
   streamingStats,
+  skillSteps = [],
   onCopyText,
   onRegenerateResponse,
   isRegenerating,
@@ -237,7 +242,8 @@ export default function ChatView({
     const branchInfo = branchInfoMap.get(origIndex);
     const forkInfo = forkInfoMap.get(origIndex);
     const isCurrentlyStreaming = isStreaming && !justCancelled && item.id === streamingMessageId;
-    const showLoadingIndicator = isCurrentlyStreaming && !streamingMessage;
+    const showLoadingIndicator = isCurrentlyStreaming && !streamingMessage && skillSteps.length === 0;
+    const panelSteps = isCurrentlyStreaming ? skillSteps : (item.skillSteps || []);
     
     let fileAttachment: { name: string; type?: string } | null = null;
     let audioAttachment: { name: string } | null = null;
@@ -616,6 +622,10 @@ export default function ChatView({
             </View>
           </View>
 
+          {item.role === 'assistant' && panelSteps.length > 0 ? (
+            <SkillProgressPanel steps={panelSteps} />
+          ) : null}
+
           {showLoadingIndicator ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator 
@@ -893,7 +903,7 @@ export default function ChatView({
         ) : null}
       </View>
     );
-  }, [themeColors, messages, isStreaming, streamingMessageId, streamingMessage, streamingThinking, streamingStats, onCopyText, isRegenerating, onRegenerateResponse, justCancelled, openImageViewer, startEditing, formatTime, formatDuration, branchInfoMap, forkInfoMap, onSwitchBranch, onForkChat]);
+  }, [themeColors, messages, isStreaming, streamingMessageId, streamingMessage, streamingThinking, streamingStats, skillSteps, onCopyText, isRegenerating, onRegenerateResponse, justCancelled, openImageViewer, startEditing, formatTime, formatDuration, branchInfoMap, forkInfoMap, onSwitchBranch, onForkChat]);
 
   const renderContent = () => {
     if (messages.length === 0) {
