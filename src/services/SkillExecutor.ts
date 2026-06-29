@@ -1,5 +1,6 @@
 import { executeMobileActionIntent } from './tools/MobileActionsTools';
 import { backgroundWebViewManager } from './WebViewManager';
+import { skillManager } from './SkillManager';
 import type { Skill, SkillResult } from '../types/skill';
 
 type SkillArgs = Record<string, any>;
@@ -45,11 +46,13 @@ class SkillExecutor {
     }
 
     console.log('skill_js_start', { id: skill.id, script: args.scriptName || 'main' });
+    const secret = await skillManager.getSecret(skill.id);
     const out = await backgroundWebViewManager.runSkillHtml(skill.scriptHtml, {
       skillId: skill.id,
       skillName: skill.name,
       scriptName: args.scriptName || skill.metadata?.scriptName || 'main',
       data: this.parseJsInput(args.data),
+      secret: secret || '',
     });
     console.log('skill_js_done', { id: skill.id, hasError: !!out.error });
     return out;

@@ -120,6 +120,21 @@ const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
     id: 'web-search',
     markdown: require('../../assets/skills/web-search/SKILL.md'),
   },
+  {
+    id: 'virtual-piano',
+    markdown: require('../../assets/skills/virtual-piano/SKILL.md'),
+    html: require('../../assets/skills/virtual-piano/scripts/index.html'),
+  },
+  {
+    id: 'restaurant-roulette',
+    markdown: require('../../assets/skills/restaurant-roulette/SKILL.md'),
+    html: require('../../assets/skills/restaurant-roulette/scripts/index.html'),
+  },
+  {
+    id: 'mood-music',
+    markdown: require('../../assets/skills/mood-music/SKILL.md'),
+    html: require('../../assets/skills/mood-music/scripts/index.html'),
+  },
 ];
 
 class SkillManager {
@@ -199,8 +214,9 @@ class SkillManager {
     }
 
     const { body, meta } = this.parseFrontMatter(content);
-    const secretLabel = meta.secretLabel?.trim();
-    const secretRequired = meta.secretRequired?.toLowerCase() === 'true';
+    const secretLabel = meta.secretLabel?.trim() || meta['require-secret-description']?.trim();
+    const secretRequired = meta.secretRequired?.toLowerCase() === 'true'
+      || meta['require-secret']?.toLowerCase() === 'true';
 
     return {
       name: meta.name?.trim() || fallbackName,
