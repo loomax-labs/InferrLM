@@ -29,9 +29,19 @@ const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
     markdown: require('../../assets/skills/create-calendar-event/SKILL.md'),
   },
   {
+    id: 'encode-tool',
+    markdown: require('../../assets/skills/encode-tool/SKILL.md'),
+    html: require('../../assets/skills/encode-tool/scripts/index.html'),
+  },
+  {
     id: 'interactive-map',
     markdown: require('../../assets/skills/interactive-map/SKILL.md'),
     html: require('../../assets/skills/interactive-map/scripts/index.html'),
+  },
+  {
+    id: 'json-toolkit',
+    markdown: require('../../assets/skills/json-toolkit/SKILL.md'),
+    html: require('../../assets/skills/json-toolkit/scripts/index.html'),
   },
   {
     id: 'kitchen-adventure',
@@ -58,6 +68,14 @@ const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
     html: require('../../assets/skills/query-wikipedia/scripts/index.html'),
   },
   {
+    id: 'quick-call',
+    markdown: require('../../assets/skills/quick-call/SKILL.md'),
+  },
+  {
+    id: 'quick-sms',
+    markdown: require('../../assets/skills/quick-sms/SKILL.md'),
+  },
+  {
     id: 'read-calendar-events',
     markdown: require('../../assets/skills/read-calendar-events/SKILL.md'),
   },
@@ -74,9 +92,24 @@ const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
     markdown: require('../../assets/skills/send-email/SKILL.md'),
   },
   {
+    id: 'text-stats',
+    markdown: require('../../assets/skills/text-stats/SKILL.md'),
+    html: require('../../assets/skills/text-stats/scripts/index.html'),
+  },
+  {
     id: 'text-spinner',
     markdown: require('../../assets/skills/text-spinner/SKILL.md'),
     html: require('../../assets/skills/text-spinner/scripts/index.html'),
+  },
+  {
+    id: 'tip-split',
+    markdown: require('../../assets/skills/tip-split/SKILL.md'),
+    html: require('../../assets/skills/tip-split/scripts/index.html'),
+  },
+  {
+    id: 'unit-convert',
+    markdown: require('../../assets/skills/unit-convert/SKILL.md'),
+    html: require('../../assets/skills/unit-convert/scripts/index.html'),
   },
   {
     id: 'web-search',
