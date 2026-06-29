@@ -236,6 +236,42 @@ export const extractEventDetails = (text: string, base: Date): {
   return { title, start, end };
 };
 
+export const parseMoodDateLabel = (text: string, base: Date): string => {
+  const lower = text.toLowerCase();
+  if (/\byesterday\b/.test(lower)) {
+    return 'yesterday';
+  }
+  if (/\btoday\b/.test(lower)) {
+    return 'today';
+  }
+
+  const iso = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  if (iso) {
+    return iso[1];
+  }
+
+  return toYmd(parseTargetDate(text, base));
+};
+
+export const parseHistoryDays = (text: string): number => {
+  const lower = text.toLowerCase();
+  if (/\blast week\b/.test(lower)) {
+    return 7;
+  }
+  if (/\blast month\b/.test(lower)) {
+    return 30;
+  }
+  const match = lower.match(/\b(?:past|last)\s+(\d+)\s+days?\b/);
+  if (match) {
+    return Math.max(1, Number(match[1]));
+  }
+  const monthMatch = lower.match(/\bthis month\b/);
+  if (monthMatch) {
+    return 30;
+  }
+  return 7;
+};
+
 export const formatEventList = (dateLabel: string, events: Array<Record<string, unknown>>): string => {
   if (!events.length) {
     return `No calendar events on ${dateLabel}.`;
