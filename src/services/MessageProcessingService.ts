@@ -12,7 +12,7 @@ import { toolExecutor } from './tools/ToolExecutor';
 import type { ToolCall } from './tools/ToolRegistry';
 import { ThinkTagParser } from '../utils/thinkTagParser';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
-import { localSkillsOrchestrator } from './LocalSkillsOrchestrator';
+import { skillsOrchestrator } from './SkillsOrchestrator';
 import { toLitertTools } from './adapters/LitertToolsAdapter';
 
 export interface MessageProcessingCallbacks {
@@ -134,6 +134,28 @@ export class MessageProcessingService {
       
       let updateCounter = 0;
 
+      if (!isOnlineModel) {
+        const skillsHandled = await this.trySkillsResponse(
+          processedMessages,
+          settings,
+          messageId,
+          startTime,
+          activeProvider,
+        );
+        if (skillsHandled) {
+          if (!this.cancelGenerationRef.current) {
+            await this.persistSkillSteps(messageId);
+            this.callbacks.setIsStreaming(false);
+            this.callbacks.setStreamingMessageId(null);
+            this.callbacks.setStreamingThinking('');
+            this.callbacks.setStreamingStats(null);
+            this.callbacks.setIsRegenerating(false);
+            skillActivityAdapter.clear();
+          }
+          return;
+        }
+      }
+
       if (isOnlineModel) {
         await this.processOnlineModel(
           activeProvider,
@@ -191,6 +213,44 @@ export class MessageProcessingService {
       }
       throw error;
     }
+  }
+
+  private async trySkillsResponse(
+    processedMessages: any[],
+    settings: any,
+    messageId: string,
+    startTime: number,
+    activeProvider: ProviderType | null,
+  ): Promise<boolean> {
+    if (!(await skillsOrchestrator.shouldHandle())) {
+      return false;
+    }
+
+    const userText = this.getLastUserText(processedMessages);
+    console.log('skills_try', { provider: activeProvider, userLen: userText.length });
+    const skillResponse = await skillsOrchestrator.run(
+      processedMessages,
+      settings,
+      userText,
+      activeProvider,
+    );
+
+    if (!skillResponse || this.cancelGenerationRef.current) {
+      return false;
+    }
+
+    console.log('skills_handled', { len: skillResponse.length });
+    this.callbacks.setStreamingMessage(skillResponse);
+    await chatManager.updateMessageContent(
+      messageId,
+      skillResponse,
+      '',
+      {
+        duration: (Date.now() - startTime) / 1000,
+        tokens: Math.max(Math.ceil(skillResponse.length / 4), 1),
+      },
+    );
+    return true;
   }
 
   private async processOnlineModel(
@@ -947,26 +1007,6 @@ export class MessageProcessingService {
 
     const lastUserText = this.getLastUserText(processedMessages);
 
-    if (await localSkillsOrchestrator.shouldHandle()) {
-      console.log('local_skills_try');
-      const skillResponse = await localSkillsOrchestrator.run(processedMessages, settings, lastUserText);
-      if (skillResponse && !this.cancelGenerationRef.current) {
-        console.log('local_skills_done', { len: skillResponse.length });
-        this.callbacks.setStreamingMessage(skillResponse);
-        await chatManager.updateMessageContent(
-          messageId,
-          skillResponse,
-          '',
-          {
-            duration: (Date.now() - startTime) / 1000,
-            tokens: Math.max(skillResponse.length / 4, 1),
-          },
-        );
-        return;
-      }
-      console.log('local_skills_fallback');
-    }
-
     const thinkParser = new ThinkTagParser();
 
     const streamCallback = (token: string) => {
@@ -1121,7 +1161,7 @@ export class MessageProcessingService {
         onToken: streamCallback,
         settings,
       };
-      if (await localSkillsOrchestrator.shouldHandle()) {
+      if (await skillsOrchestrator.shouldHandle()) {
         genOpts.tools = toLitertTools();
         console.log('local_litert_tools', { count: genOpts.tools.length });
       }
