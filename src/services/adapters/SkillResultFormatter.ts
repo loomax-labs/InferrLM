@@ -14,7 +14,7 @@ const stripWikiNoise = (value: string): string => {
     .trim();
 };
 
-const pickSentences = (text: string, max = 3): string => {
+export const pickSentences = (text: string, max = 3): string => {
   const clean = stripWikiNoise(text);
   if (!clean) {
     return '';
