@@ -31,8 +31,11 @@ import SkillRuntimeHost from './src/components/skills/SkillRuntimeHost';
 import { updateService } from './src/services/UpdateService';
 import { StatusBarHost } from './src/services/adapters/StatusBarAdapter';
 import { skillManager } from './src/services/SkillManager';
+import { initReminderNotifications } from './src/services/adapters/ReminderNotificationAdapter';
 
 SplashScreen.preventAutoHideAsync();
+
+initReminderNotifications().catch(() => {});
 
 initializeBindings().catch(() => {});
 
