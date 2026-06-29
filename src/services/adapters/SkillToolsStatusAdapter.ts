@@ -42,13 +42,6 @@ const SKILL_TOOL_MAP: Record<string, string[]> = {
   'mood-music': ['run_js'],
 };
 
-const LOCAL_ROUTE_GAPS = new Set([
-  'kitchen-adventure',
-  'learn-something-new',
-  'mood-tracker',
-  'text-stats',
-]);
-
 const TOOL_LABELS: Record<string, string> = {
   run_js: 'run_js',
   run_intent: 'run_intent',
@@ -100,10 +93,6 @@ export const getSkillMissingTools = async (
     if (!isToolReady(tool, skillsModeOn)) {
       missing.push(tool);
     }
-  }
-
-  if (skillsModeOn && LOCAL_ROUTE_GAPS.has(skill.id)) {
-    missing.push('local_route');
   }
 
   if (skill.secret?.required) {
