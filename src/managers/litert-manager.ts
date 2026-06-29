@@ -374,6 +374,59 @@ class LiteRTManager implements InferenceManager {
     return { text: '' };
   }
 
+  private getMessageText(message: Msg): string {
+    if (typeof message.content !== 'string') {
+      return '';
+    }
+
+    if (message.role === 'assistant') {
+      return message.content.trim();
+    }
+
+    return this.parseInput(message.content).text.trim();
+  }
+
+  private buildFullConversationPrompt(messages: Msg[]): string {
+    const lines: string[] = [];
+
+    for (const message of messages) {
+      if (message.role === 'system') {
+        continue;
+      }
+
+      const text = this.getMessageText(message);
+      if (!text) {
+        continue;
+      }
+
+      if (message.role === 'user') {
+        lines.push(`User: ${text}`);
+        continue;
+      }
+
+      if (message.role === 'assistant') {
+        lines.push(`Assistant: ${text}`);
+      }
+    }
+
+    if (lines.length === 0 || !lines[lines.length - 1].startsWith('User:')) {
+      return '';
+    }
+
+    lines.push('Assistant:');
+    let prompt = lines.join('\n\n');
+    const maxChars = 12000;
+    if (prompt.length > maxChars) {
+      prompt = prompt.slice(-maxChars);
+      console.log('litert_prompt_trim', { maxChars });
+    }
+    return prompt;
+  }
+
+  private countUserTurns(messages: Msg[]): number {
+    return messages.filter(message => message.role === 'user').length;
+  }
+
   async init(modelPath: string) {
     this.modelPath = this.normalizePath(modelPath);
     const config = await this.createConfig();
@@ -414,7 +467,21 @@ class LiteRTManager implements InferenceManager {
     }
 
     const instance = await this.ensureLoaded(await this.buildConfig(messages, opts?.settings, opts?.tools as LitertTool[] | undefined));
-    const prompt = input.text || 'Describe this input.';
+    const userTurns = this.countUserTurns(messages);
+    const historyPrompt = userTurns > 1 ? this.buildFullConversationPrompt(messages) : '';
+    let prompt = input.text || 'Describe this input.';
+
+    if (historyPrompt) {
+      try {
+        await instance.resetConversation();
+        console.log('litert_multi_reset', { userTurns });
+      } catch (error) {
+        console.log('litert_multi_reset_fail', error instanceof Error ? error.message : 'unknown');
+      }
+      prompt = historyPrompt;
+      console.log('litert_multi_prompt', { userTurns, len: prompt.length });
+    }
+
     const onToken = opts?.onToken;
 
     // Streaming multimodal
