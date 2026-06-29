@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus, BackHandler, Platform, Text, TextInput, ToastAndroid, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar, setStatusBarStyle } from 'expo-status-bar';
+import { StatusBar } from 'expo-status-bar';
 import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -84,15 +84,13 @@ function ThemedPaper({ children }: { children: React.ReactNode }) {
 }
 
 function InnerLayout() {
-  const { theme: currentTheme, selectedTheme } = useTheme();
+  const { theme: currentTheme } = useTheme();
   const { isWideScreen } = useResponsiveLayout();
   const themeColors = theme[currentTheme as ThemeColors];
   const statusBarStyle =
     Platform.OS === 'android' || isWideScreen
       ? 'light'
-      : selectedTheme === 'system'
-        ? 'auto'
-        : themeColors.statusBarStyle;
+      : themeColors.statusBarStyle;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const appStateRef = useRef(AppState.currentState);
@@ -145,10 +143,6 @@ function InnerLayout() {
       }).catch(() => {});
     };
   }, []);
-
-  useEffect(() => {
-    setStatusBarStyle(statusBarStyle, true);
-  }, [statusBarStyle, currentTheme, selectedTheme]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
