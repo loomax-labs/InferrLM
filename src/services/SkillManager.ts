@@ -25,12 +25,62 @@ const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
     html: require('../../assets/skills/calculate-hash/scripts/index.html'),
   },
   {
-    id: 'web-search',
-    markdown: require('../../assets/skills/web-search/SKILL.md'),
+    id: 'create-calendar-event',
+    markdown: require('../../assets/skills/create-calendar-event/SKILL.md'),
+  },
+  {
+    id: 'interactive-map',
+    markdown: require('../../assets/skills/interactive-map/SKILL.md'),
+    html: require('../../assets/skills/interactive-map/scripts/index.html'),
+  },
+  {
+    id: 'kitchen-adventure',
+    markdown: require('../../assets/skills/kitchen-adventure/SKILL.md'),
+  },
+  {
+    id: 'learn-something-new',
+    markdown: require('../../assets/skills/learn-something-new/SKILL.md'),
+    html: require('../../assets/skills/learn-something-new/scripts/index.html'),
+  },
+  {
+    id: 'mood-tracker',
+    markdown: require('../../assets/skills/mood-tracker/SKILL.md'),
+    html: require('../../assets/skills/mood-tracker/scripts/index.html'),
+  },
+  {
+    id: 'qr-code',
+    markdown: require('../../assets/skills/qr-code/SKILL.md'),
+    html: require('../../assets/skills/qr-code/scripts/index.html'),
+  },
+  {
+    id: 'query-wikipedia',
+    markdown: require('../../assets/skills/query-wikipedia/SKILL.md'),
+    html: require('../../assets/skills/query-wikipedia/scripts/index.html'),
+  },
+  {
+    id: 'read-calendar-events',
+    markdown: require('../../assets/skills/read-calendar-events/SKILL.md'),
   },
   {
     id: 'route-planner',
     markdown: require('../../assets/skills/route-planner/SKILL.md'),
+  },
+  {
+    id: 'schedule-notification',
+    markdown: require('../../assets/skills/schedule-notification/SKILL.md'),
+  },
+  {
+    id: 'send-email',
+    markdown: require('../../assets/skills/send-email/SKILL.md'),
+  },
+  {
+    id: 'text-spinner',
+    markdown: require('../../assets/skills/text-spinner/SKILL.md'),
+    html: require('../../assets/skills/text-spinner/scripts/index.html'),
+  },
+  {
+    id: 'web-search',
+    markdown: require('../../assets/skills/web-search/SKILL.md'),
   },
 ];
 
