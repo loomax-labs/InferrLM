@@ -373,7 +373,7 @@ export const executeMobileActionIntent = async (
     }
     await openExternalUrl(value);
     onAction?.({ tool: 'open_url', summary: value, createdAt: Date.now() });
-    return `Opened ${value}`;
+    return 'succeeded';
   }
 
   if (name === 'send_email') {
@@ -386,7 +386,7 @@ export const executeMobileActionIntent = async (
     const emailUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     await openExternalUrl(emailUrl);
     onAction?.({ tool: 'send_email', summary: recipient, createdAt: Date.now() });
-    return `Drafted email to ${recipient}`;
+    return 'succeeded';
   }
 
   if (name === 'open_map') {
@@ -399,13 +399,13 @@ export const executeMobileActionIntent = async (
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
     await openExternalUrl(mapUrl);
     onAction?.({ tool: 'open_map', summary: query, createdAt: Date.now() });
-    return `Opened maps for ${query}`;
+    return 'succeeded';
   }
 
   if (name === 'open_settings') {
     await Linking.openSettings();
     onAction?.({ tool: 'open_settings', summary: 'Device settings', createdAt: Date.now() });
-    return 'Opened device settings';
+    return 'succeeded';
   }
 
   if (name === 'call_phone') {
@@ -416,7 +416,7 @@ export const executeMobileActionIntent = async (
 
     await openExternalUrl(`tel:${encodeURIComponent(phoneNumber)}`);
     onAction?.({ tool: 'call_phone', summary: phoneNumber, createdAt: Date.now() });
-    return `Opened dialer for ${phoneNumber}`;
+    return 'succeeded';
   }
 
   if (name === 'send_sms') {
@@ -428,7 +428,7 @@ export const executeMobileActionIntent = async (
     const body = String(params.body || '');
     await openExternalUrl(buildSmsUrl(phoneNumber, body));
     onAction?.({ tool: 'send_sms', summary: phoneNumber, createdAt: Date.now() });
-    return `Drafted SMS to ${phoneNumber}`;
+    return 'succeeded';
   }
 
   if (name === 'create_contact') {
@@ -436,7 +436,7 @@ export const executeMobileActionIntent = async (
     await ensureContactsPermission();
     await Contacts.presentFormAsync(null, contact);
     onAction?.({ tool: 'create_contact', summary: contact.name, createdAt: Date.now() });
-    return `Opened contact form for ${contact.name}`;
+    return 'succeeded';
   }
 
   if (name === 'create_calendar_event') {
@@ -462,7 +462,7 @@ export const executeMobileActionIntent = async (
       allDay,
     });
     onAction?.({ tool: 'create_calendar_event', summary: title, createdAt: Date.now() });
-    return `Opened calendar event form for ${title}`;
+    return 'succeeded';
   }
 
   if (name === 'get_current_date_and_time') {
