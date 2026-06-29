@@ -1,5 +1,6 @@
 import type { Skill } from '../types/skill';
 import { skillExecutor } from './SkillExecutor';
+import { kitchenSessionStore, isKitchenStartPhrase } from './KitchenSessionStore';
 import {
   buildNotifyTarget,
   extractEmailParts,
@@ -152,12 +153,13 @@ const runWebSearch = async (userText: string): Promise<string> => {
   return `Opened web search for "${query}".`;
 };
 
-const runKitchenAdventure = (userText: string): string | null => {
-  if (!/kitchen adventure|start kitchen/i.test(userText)) {
+const runKitchenAdventure = async (userText: string): Promise<string | null> => {
+  if (!isKitchenStartPhrase(userText)) {
     return null;
   }
 
   console.log('text_skill_kitchen');
+  await kitchenSessionStore.start();
   return [
     '### The Stainless Steel Plains',
     '',
@@ -206,7 +208,7 @@ export const runTextSkill = async (skill: Skill, userText: string): Promise<stri
       case 'web-search':
         return await runWebSearch(userText);
       case 'kitchen-adventure':
-        return runKitchenAdventure(userText);
+        return await runKitchenAdventure(userText);
       case 'learn-something-new':
         return runLearnPrompt(userText);
       default:
