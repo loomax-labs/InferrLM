@@ -77,6 +77,49 @@ const pickSkill = (query: string, skills: Skill[]): Skill | null => {
   return bestScore >= 6 ? best : null;
 };
 
+const extractWikiTitle = (messages: any[]): string | null => {
+  const lastAssistant = [...messages].reverse().find(entry => entry.role === 'assistant');
+  if (!lastAssistant) {
+    return null;
+  }
+
+  const text = typeof lastAssistant.content === 'string' ? lastAssistant.content.trim() : '';
+  if (!text) {
+    return null;
+  }
+
+  const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+  if (lines.length < 2) {
+    return null;
+  }
+
+  const hasWikiFacts = /\b(Born|Origin|Genres|Occupations):/i.test(text);
+  if (!hasWikiFacts) {
+    return null;
+  }
+
+  return lines[0] || null;
+};
+
+const isContextualFollowUp = (userText: string): boolean => {
+  return /\b(he|she|they|him|her|them|his|hers|their|it|that|this)\b/i.test(userText)
+    || /\b(how|what|when|where|why|who|tall|height|age|born)\b/i.test(userText);
+};
+
+const canTryContextualFollowUp = (messages: any[], userText: string): boolean => {
+  const userTurns = messages.filter(entry => entry.role === 'user').length;
+  if (userTurns <= 1) {
+    return false;
+  }
+
+  const title = extractWikiTitle(messages);
+  if (!title) {
+    return false;
+  }
+
+  return isContextualFollowUp(userText);
+};
+
 const buildJsData = (skill: Skill, userText: string): string => {
   if (skill.id === 'query-wikipedia') {
     const topic = userText
@@ -135,6 +178,11 @@ class SkillsOrchestrator {
     const skill = pickSkill(userText, enabled);
     if (skill) {
       console.log('skills_follow_hit', skill.id);
+      return true;
+    }
+
+    if (canTryContextualFollowUp(messages, userText)) {
+      console.log('skills_context_try');
       return true;
     }
 
@@ -295,6 +343,43 @@ class SkillsOrchestrator {
     return null;
   }
 
+  async tryContextualFollowUp(messages: any[], userText: string): Promise<string | null> {
+    if (!canTryContextualFollowUp(messages, userText)) {
+      return null;
+    }
+
+    const title = extractWikiTitle(messages);
+    if (!title) {
+      return null;
+    }
+
+    const enabled = await skillManager.getEnabled();
+    const skill = enabled.find(entry => entry.id === 'query-wikipedia' && entry.type === 'js');
+    if (!skill) {
+      return null;
+    }
+
+    const topic = `${title} ${userText}`.trim();
+    console.log('skill_ctx_wiki', { title, topicLen: topic.length });
+    const loadId = skillActivityAdapter.start(`Loading skill "${skill.name}"`, `Skill: ${skill.name}`);
+    skillActivityAdapter.done(loadId, `Loaded skill "${skill.name}"`);
+    const stepId = skillActivityAdapter.start(`Calling skill "${skill.name}"`);
+    try {
+      const result = await skillExecutor.runJs(skill, {
+        scriptName: skill.metadata?.scriptName || 'main',
+        data: JSON.stringify({ topic, lang: 'en' }),
+      });
+      skillActivityAdapter.done(stepId, `Called skill "${skill.name}"`);
+      const text = formatSkillChatText(skill, result);
+      console.log('skill_ctx_ok', { len: text.length });
+      return text;
+    } catch (error) {
+      skillActivityAdapter.done(stepId, `Failed skill "${skill.name}"`);
+      console.log('skill_ctx_fail', error instanceof Error ? error.message : 'unknown');
+      return null;
+    }
+  }
+
   async tryDirectRoute(userText: string): Promise<string | null> {
     const enabled = await skillManager.getEnabled();
     const skill = pickSkill(userText, enabled);
@@ -340,6 +425,12 @@ class SkillsOrchestrator {
     if (online) {
       console.log('skill_orch_done', { len: online.length });
       return online;
+    }
+
+    const contextual = await this.tryContextualFollowUp(messages, userText);
+    if (contextual) {
+      console.log('skill_ctx_done', { len: contextual.length });
+      return contextual;
     }
 
     const direct = await this.tryDirectRoute(userText);
