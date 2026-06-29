@@ -7,9 +7,6 @@ import { appleFoundationService } from './AppleFoundationService';
 import type { ProviderType } from './ModelManagementService';
 import { RAGService } from './rag/RAGService';
 import type { Message as RAGMessage } from 'react-native-rag';
-import { toolRegistry } from './tools/ToolRegistry';
-import { toolExecutor } from './tools/ToolExecutor';
-import type { ToolCall } from './tools/ToolRegistry';
 import { ThinkTagParser } from '../utils/thinkTagParser';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
 import { skillsOrchestrator } from './SkillsOrchestrator';
@@ -135,26 +132,24 @@ export class MessageProcessingService {
       
       let updateCounter = 0;
 
-      if (!isOnlineModel) {
-        const skillsHandled = await this.trySkillsResponse(
-          processedMessages,
-          settings,
-          messageId,
-          startTime,
-          activeProvider,
-        );
-        if (skillsHandled) {
-          if (!this.cancelGenerationRef.current) {
-            await this.persistSkillSteps(messageId);
-            this.callbacks.setIsStreaming(false);
-            this.callbacks.setStreamingMessageId(null);
-            this.callbacks.setStreamingThinking('');
-            this.callbacks.setStreamingStats(null);
-            this.callbacks.setIsRegenerating(false);
-            skillActivityAdapter.clear();
-          }
-          return;
+      const skillsHandled = await this.trySkillsResponse(
+        processedMessages,
+        settings,
+        messageId,
+        startTime,
+        activeProvider,
+      );
+      if (skillsHandled) {
+        if (!this.cancelGenerationRef.current) {
+          await this.persistSkillSteps(messageId);
+          this.callbacks.setIsStreaming(false);
+          this.callbacks.setStreamingMessageId(null);
+          this.callbacks.setStreamingThinking('');
+          this.callbacks.setStreamingStats(null);
+          this.callbacks.setIsRegenerating(false);
+          skillActivityAdapter.clear();
         }
+        return;
       }
 
       if (isOnlineModel) {
@@ -227,33 +222,106 @@ export class MessageProcessingService {
       return false;
     }
 
-    const userText = this.getLastUserText(processedMessages);
-    console.log('skills_try', { provider: activeProvider, userLen: userText.length });
+    console.log('skills_try', { provider: activeProvider });
 
-    if (!(await skillsOrchestrator.shouldTryForMessage(userText, processedMessages))) {
+    if (!(await skillsOrchestrator.shouldTryForMessage())) {
       return false;
     }
+
+    const isOnlineModel = !!activeProvider
+      && ['gemini', 'chatgpt', 'claude'].includes(OnlineModelService.getBaseProvider(activeProvider));
+
+    let fullResponse = '';
+    let thinking = '';
+    let tokenCount = 0;
+    let firstTokenTime: number | null = null;
+    let updateCounter = 0;
+    const thinkParser = isOnlineModel ? new ThinkTagParser() : null;
+    let isThinking = false;
 
     const skillResponse = await skillsOrchestrator.run(
       processedMessages,
       settings,
-      userText,
       activeProvider,
+      {
+        shouldCancel: () => this.cancelGenerationRef.current,
+        onToolRound: () => {
+          fullResponse = '';
+          this.callbacks.setStreamingMessage('');
+        },
+        onToken: (token: string) => {
+          if (this.cancelGenerationRef.current) {
+            return false;
+          }
+
+          if (thinkParser) {
+            const chunks = thinkParser.feed(token);
+            for (const chunk of chunks) {
+              if (chunk.type === 'open') {
+                isThinking = true;
+                continue;
+              }
+              if (chunk.type === 'close') {
+                isThinking = false;
+                continue;
+              }
+              if (isThinking) {
+                thinking += chunk.text;
+                this.callbacks.setStreamingThinking(thinking.trim());
+                continue;
+              }
+              if (firstTokenTime === null && chunk.text.trim().length > 0) {
+                firstTokenTime = Date.now() - startTime;
+              }
+              tokenCount += 1;
+              fullResponse += chunk.text;
+            }
+          } else {
+            if (firstTokenTime === null && token.trim().length > 0) {
+              firstTokenTime = Date.now() - startTime;
+            }
+            tokenCount = Math.max(tokenCount, Math.ceil(token.length / 4));
+            fullResponse += token;
+          }
+
+          const duration = (Date.now() - startTime) / 1000;
+          this.callbacks.setStreamingMessage(fullResponse);
+          this.callbacks.setStreamingStats({
+            tokens: tokenCount,
+            duration,
+            firstTokenTime: firstTokenTime || undefined,
+          });
+
+          updateCounter += 1;
+          if (updateCounter % 10 === 0) {
+            this.callbacks.updateMessageContentDebounced(
+              messageId,
+              fullResponse,
+              thinking.trim(),
+              { duration, tokens: tokenCount, firstTokenTime: firstTokenTime || undefined },
+            );
+          }
+
+          return !this.cancelGenerationRef.current;
+        },
+      },
     );
 
-    if (!skillResponse || this.cancelGenerationRef.current) {
+    const text = skillResponse?.trim() || fullResponse.trim();
+    if (!text || this.cancelGenerationRef.current) {
       return false;
     }
 
-    console.log('skills_handled', { len: skillResponse.length });
-    this.callbacks.setStreamingMessage(skillResponse);
+    console.log('skills_handled', { len: text.length });
+    this.callbacks.setStreamingMessage(text);
     await chatManager.updateMessageContent(
       messageId,
-      skillResponse,
-      '',
+      text,
+      thinking.trim(),
       {
         duration: (Date.now() - startTime) / 1000,
-        tokens: Math.max(Math.ceil(skillResponse.length / 4), 1),
+        tokens: Math.max(tokenCount, Math.ceil(text.length / 4), 1),
+        firstTokenTime: firstTokenTime || undefined,
       },
     );
     return true;
@@ -512,201 +580,8 @@ export class MessageProcessingService {
     }
 
     try {
-      /*
-        Tool call loop for OpenAI: if tools are registered, send with tools
-        and handle the tool call response loop (max 5 iterations).
-      */
-      if (isGemini && toolRegistry.hasTools()) {
-        console.log('msgproc_gemini_tools_start', { toolCount: toolRegistry.getAllTools().length });
-        let iteration = 0;
-        let loopMessages: any[] = [...messageParams];
-        const tools = toolRegistry.getAllTools();
-
-        while (!toolExecutor.hasReachedLimit(iteration)) {
-          if (this.cancelGenerationRef.current) break;
-          iteration++;
-          console.log('msgproc_gemini_iter', { iteration, msgCount: loopMessages.length });
-
-          const response = await onlineModelService.sendGeminiWithTools(
-            loopMessages,
-            tools,
-            apiParams,
-            undefined,
-            activeProvider
-          );
-
-          if (response.toolCalls && response.toolCalls.length > 0) {
-            this.callbacks.setStreamingMessage('');
-            console.log('msgproc_gemini_tool_calls', {
-              count: response.toolCalls.length,
-              rawParts: response.rawParts ? response.rawParts.length : 0,
-            });
-
-            loopMessages.push({
-              id: generateRandomId(),
-              role: 'assistant' as const,
-              content: JSON.stringify({ type: 'gemini_tool_use_response', rawParts: response.rawParts || [] }),
-            });
-
-            const results = await toolExecutor.executeAll(response.toolCalls);
-            console.log('msgproc_gemini_tool_results', { count: results.length });
-
-            const toolMap = new Map<string, ToolCall>();
-            for (const tc of response.toolCalls) {
-              toolMap.set(tc.id, tc);
-            }
-
-            for (const result of results) {
-              const toolCall = toolMap.get(result.toolCallId);
-              loopMessages.push({
-                id: generateRandomId(),
-                role: 'user' as const,
-                toolCallId: result.toolCallId,
-                content: JSON.stringify({
-                  type: 'function_response',
-                  id: result.toolCallId,
-                  name: toolCall?.function.name || 'tool_result',
-                  response: { result: result.content },
-                }),
-              });
-            }
-
-            const hasOnlyBuiltins = response.toolCalls.every(
-              (tc: ToolCall) => toolRegistry.isBuiltin(tc.function.name)
-            );
-            if (hasOnlyBuiltins) {
-              console.log('msgproc_gemini_builtin_only');
-              break;
-            }
-            continue;
-          }
-
-          fullResponse = response.fullResponse;
-          tokenCount = response.tokenCount;
-          console.log('msgproc_gemini_done', { tokenCount, textLen: fullResponse.length });
-          legacyStreamCallback(fullResponse);
-          break;
-        }
-      } else if (isOpenAI && toolRegistry.hasTools()) {
-        console.log('msgproc_openai_tools_start', { toolCount: toolRegistry.getAllTools().length });
-        let iteration = 0;
-        let loopMessages = [...messageParams];
-        const tools = toolRegistry.getAllTools();
-
-        while (!toolExecutor.hasReachedLimit(iteration)) {
-          if (this.cancelGenerationRef.current) break;
-          iteration++;
-          console.log('msgproc_openai_iter', { iteration, msgCount: loopMessages.length });
-
-          const response = await onlineModelService.sendOpenAIWithTools(
-            loopMessages,
-            tools,
-            apiParams,
-            undefined,
-            activeProvider
-          );
-
-          if (response.toolCalls && response.toolCalls.length > 0) {
-            this.callbacks.setStreamingMessage('');
-            console.log('msgproc_openai_tool_calls', { count: response.toolCalls.length });
-
-            loopMessages.push({
-              id: generateRandomId(),
-              role: 'assistant' as const,
-              content: response.fullResponse || '',
-            });
-
-            const results = await toolExecutor.executeAll(response.toolCalls);
-            console.log('msgproc_openai_tool_results', { count: results.length });
-            for (const result of results) {
-              loopMessages.push({
-                id: generateRandomId(),
-                role: 'user' as const,
-                content: `[Tool result for ${result.toolCallId}]: ${result.content}`,
-              });
-            }
-
-            const hasOnlyBuiltins = response.toolCalls.every(
-              tc => toolRegistry.isBuiltin(tc.function.name)
-            );
-            if (hasOnlyBuiltins) {
-              console.log('msgproc_openai_builtin_only');
-              break;
-            }
-            continue;
-          }
-
-          fullResponse = response.fullResponse;
-          tokenCount = response.tokenCount;
-          console.log('msgproc_openai_done', { tokenCount, textLen: fullResponse.length });
-          legacyStreamCallback(fullResponse);
-          break;
-        }
-      } else if (isClaude && toolRegistry.hasTools()) {
-        console.log('msgproc_claude_tools_start', { toolCount: toolRegistry.getAllTools().length });
-        let iteration = 0;
-        let loopMessages: any[] = [...messageParams];
-        const tools = toolRegistry.getAllTools();
-
-        while (!toolExecutor.hasReachedLimit(iteration)) {
-          if (this.cancelGenerationRef.current) break;
-          iteration++;
-          console.log('msgproc_claude_iter', { iteration, msgCount: loopMessages.length });
-
-          const response = await onlineModelService.sendClaudeWithTools(
-            loopMessages,
-            tools,
-            apiParams,
-            undefined,
-            activeProvider
-          );
-
-          if (response.toolCalls && response.toolCalls.length > 0) {
-            this.callbacks.setStreamingMessage('');
-            console.log('msgproc_claude_tool_calls', {
-              count: response.toolCalls.length,
-              rawBlocks: response.rawContent ? response.rawContent.length : 0,
-            });
-
-            loopMessages.push({
-              id: generateRandomId(),
-              role: 'assistant' as const,
-              content: JSON.stringify({ type: 'tool_use_response', rawContent: response.rawContent }),
-            });
-            console.log('msgproc_claude_push_assistant', { msgCount: loopMessages.length });
-
-            const results = await toolExecutor.executeAll(response.toolCalls);
-            console.log('msgproc_claude_tool_results', { count: results.length });
-            for (const result of results) {
-              loopMessages.push({
-                id: generateRandomId(),
-                role: 'user' as const,
-                content: result.content,
-                toolCallId: result.toolCallId,
-              });
-            }
-            console.log('msgproc_claude_push_results', { msgCount: loopMessages.length });
-
-            const hasOnlyBuiltins = response.toolCalls.every(
-              tc => toolRegistry.isBuiltin(tc.function.name)
-            );
-            if (hasOnlyBuiltins) {
-              console.log('msgproc_claude_builtin_only');
-              break;
-            }
-            continue;
-          }
-
-          fullResponse = response.fullResponse;
-          tokenCount = response.tokenCount;
-          console.log('msgproc_claude_done', { tokenCount, textLen: fullResponse.length });
-          legacyStreamCallback(fullResponse);
-          break;
-        }
-      } else {
-        console.log('msgproc_send_plain', { provider: activeProvider, msgCount: messageParams.length });
-        await onlineModelService.sendMessage(activeProvider, messageParams, apiParams, legacyStreamCallback);
-      }
+      console.log('msgproc_send_plain', { provider: activeProvider, msgCount: messageParams.length });
+      await onlineModelService.sendMessage(activeProvider, messageParams, apiParams, legacyStreamCallback);
     } catch (error) {
       console.log('online_model_error', error instanceof Error ? error.message : 'unknown');
       console.log('online_model_error_stack', error instanceof Error ? error.stack : '');
@@ -1165,7 +1040,8 @@ export class MessageProcessingService {
       const userTurns = baseMessages.filter(msg => msg.role === 'user').length;
       let genSettings = settings;
       let genMessages = baseMessages;
-      if (userTurns > 1 && isAgentSkillsPrompt(settings.systemPrompt)) {
+      const skillsOn = await skillManager.isModeEnabled();
+      if (userTurns > 1 && isAgentSkillsPrompt(settings.systemPrompt) && !skillsOn) {
         const chatPrompt = await skillManager.buildConversationalSystemPrompt();
         genSettings = {
           ...settings,
