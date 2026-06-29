@@ -1,6 +1,7 @@
 import chatDatabase from './ChatDatabase';
 import type { ProviderType } from '../services/ModelManagementService';
 import { RAGService } from '../services/rag/RAGService';
+import type { SkillActivityStep } from '../types/skillActivity';
 
 const generateRandomId = () => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
@@ -18,6 +19,7 @@ export type ChatMessage = {
     firstTokenTime?: number;
     avgTokenTime?: number;
   };
+  skillSteps?: SkillActivityStep[];
 };
 
 export type Chat = {
@@ -400,7 +402,8 @@ class ChatManager {
     messageId: string,
     content: string,
     thinking?: string,
-    stats?: { duration: number; tokens: number; firstTokenTime?: number; avgTokenTime?: number }
+    stats?: { duration: number; tokens: number; firstTokenTime?: number; avgTokenTime?: number },
+    skillSteps?: SkillActivityStep[],
   ): Promise<boolean> {
     try {
       await this.ensureInitialized();
@@ -416,6 +419,7 @@ class ChatManager {
       message.content = content;
       if (thinking !== undefined) message.thinking = thinking;
       if (stats) message.stats = stats;
+      if (skillSteps) message.skillSteps = skillSteps;
 
       this.debouncedSaveChat(this.currentChatId);
       return true;

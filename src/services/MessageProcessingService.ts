@@ -11,6 +11,7 @@ import { toolRegistry } from './tools/ToolRegistry';
 import { toolExecutor } from './tools/ToolExecutor';
 import type { ToolCall } from './tools/ToolRegistry';
 import { ThinkTagParser } from '../utils/thinkTagParser';
+import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
 
 export interface MessageProcessingCallbacks {
   setMessages: (messages: ChatMessage[]) => void;
@@ -36,6 +37,32 @@ export class MessageProcessingService {
     this.callbacks = callbacks;
   }
 
+  private async persistSkillSteps(messageId: string): Promise<void> {
+    const steps = skillActivityAdapter.snapshot();
+    if (steps.length === 0) {
+      return;
+    }
+    const chat = chatManager.getCurrentChat();
+    if (!chat) {
+      return;
+    }
+    const message = chat.messages.find(item => item.id === messageId);
+    if (!message) {
+      return;
+    }
+    await chatManager.updateMessageContent(
+      messageId,
+      message.content,
+      message.thinking,
+      message.stats,
+      steps,
+    );
+    const updated = chatManager.getCurrentChat();
+    if (updated) {
+      this.callbacks.setMessages([...updated.messages]);
+    }
+  }
+
   async processMessage(
     activeProvider: ProviderType | null,
     settings: any
@@ -46,6 +73,7 @@ export class MessageProcessingService {
     console.log('process_message_start', { provider: activeProvider, chatId: currentChat.id, messageCount: currentChat.messages.length });
 
     try {
+      skillActivityAdapter.clear();
       this.callbacks.setIsRegenerating(true);
       
       const currentMessages = currentChat.messages;
@@ -148,15 +176,18 @@ export class MessageProcessingService {
       }
       
       if (!this.cancelGenerationRef.current) {
+        await this.persistSkillSteps(messageId);
         this.callbacks.setIsStreaming(false);
         this.callbacks.setStreamingMessageId(null);
         this.callbacks.setStreamingThinking('');
         this.callbacks.setStreamingStats(null);
         this.callbacks.setIsRegenerating(false);
+        skillActivityAdapter.clear();
       }
       
     } catch (error) {
       if (!this.cancelGenerationRef.current) {
+        skillActivityAdapter.clear();
         this.callbacks.setIsStreaming(false);
         this.callbacks.setStreamingMessageId(null);
         this.callbacks.setStreamingThinking('');
@@ -444,7 +475,7 @@ export class MessageProcessingService {
           );
 
           if (response.toolCalls && response.toolCalls.length > 0) {
-            this.callbacks.setStreamingMessage('Using tools...');
+            this.callbacks.setStreamingMessage('');
             console.log('msgproc_gemini_tool_calls', {
               count: response.toolCalls.length,
               rawParts: response.rawParts ? response.rawParts.length : 0,
@@ -515,7 +546,7 @@ export class MessageProcessingService {
           );
 
           if (response.toolCalls && response.toolCalls.length > 0) {
-            this.callbacks.setStreamingMessage('Using tools...');
+            this.callbacks.setStreamingMessage('');
             console.log('msgproc_openai_tool_calls', { count: response.toolCalls.length });
 
             loopMessages.push({
@@ -570,7 +601,7 @@ export class MessageProcessingService {
           );
 
           if (response.toolCalls && response.toolCalls.length > 0) {
-            this.callbacks.setStreamingMessage('Using tools...');
+            this.callbacks.setStreamingMessage('');
             console.log('msgproc_claude_tool_calls', {
               count: response.toolCalls.length,
               rawBlocks: response.rawContent ? response.rawContent.length : 0,

@@ -1,8 +1,20 @@
 import { skillExecutor } from '../SkillExecutor';
 import { skillManager } from '../SkillManager';
+import { skillActivityAdapter } from '../adapters/SkillActivityAdapter';
 import { toolRegistry, type ToolSchema } from './ToolRegistry';
 
 const SKILL_TOOL_NAMES = ['list_skills', 'load_skill', 'run_skill', 'run_js', 'run_intent'] as const;
+
+const trimDetail = (value: unknown, max = 180): string | undefined => {
+  if (value == null) {
+    return undefined;
+  }
+  const text = typeof value === 'string' ? value : JSON.stringify(value);
+  if (!text) {
+    return undefined;
+  }
+  return text.length > max ? `${text.slice(0, max)}...` : text;
+};
 
 const LOAD_SKILL_TOOL: ToolSchema = {
   type: 'function',
@@ -90,32 +102,68 @@ export const registerSkillTools = async () => {
   }
 
   toolRegistry.register('load_skill', LOAD_SKILL_TOOL, async ({ skillName }) => {
-    const match = await resolveSkill(String(skillName || ''));
-    if (!match) {
-      throw new Error('skill_not_found');
+    const name = String(skillName || '').trim();
+    const stepId = skillActivityAdapter.start(`Loading skill "${name}"`, `Skill: ${name}`);
+    try {
+      const match = await resolveSkill(name);
+      if (!match) {
+        throw new Error('skill_not_found');
+      }
+      skillActivityAdapter.done(stepId, `Loaded skill "${match.name}"`);
+      return match.instructions;
+    } catch (error) {
+      skillActivityAdapter.done(stepId, `Failed to load skill "${name || 'unknown'}"`);
+      throw error;
     }
-    return match.instructions;
   });
 
   toolRegistry.register('run_js', RUN_JS_TOOL, async ({ skillName, scriptName, data }) => {
-    const match = await resolveSkill(String(skillName || ''));
-    if (!match) {
-      throw new Error('skill_not_found');
+    const name = String(skillName || '').trim();
+    const script = String(scriptName || 'main');
+    const stepId = skillActivityAdapter.start(
+      `Calling skill "${name}"`,
+      trimDetail({ script, data }),
+    );
+    try {
+      const match = await resolveSkill(name);
+      if (!match) {
+        skillActivityAdapter.done(stepId, `Skill not found: ${name}`);
+        throw new Error('skill_not_found');
+      }
+      const result = await skillExecutor.runJs(match, {
+        scriptName: String(scriptName || match.metadata?.scriptName || 'main'),
+        data: data || '',
+      });
+      const failed = !!result.error;
+      skillActivityAdapter.done(
+        stepId,
+        failed ? `Skill "${match.name}" failed` : `Called skill "${match.name}"`,
+      );
+      return JSON.stringify(result);
+    } catch (error) {
+      skillActivityAdapter.done(stepId, `Failed to run skill "${name}"`);
+      throw error;
     }
-    const result = await skillExecutor.runJs(match, {
-      scriptName: String(scriptName || match.metadata?.scriptName || 'main'),
-      data: data || '',
-    });
-    return JSON.stringify(result);
   });
 
   toolRegistry.register('run_intent', RUN_INTENT_TOOL, async ({ intent, parameters }) => {
-    const result = await skillExecutor.runIntent(
-      String(intent || ''),
-      parameters && typeof parameters === 'object' && !Array.isArray(parameters)
-        ? parameters as Record<string, any>
-        : {},
+    const intentName = String(intent || '').trim();
+    const stepId = skillActivityAdapter.start(
+      `Calling intent "${intentName}"`,
+      trimDetail(parameters),
     );
-    return JSON.stringify(result);
+    try {
+      const result = await skillExecutor.runIntent(
+        intentName,
+        parameters && typeof parameters === 'object' && !Array.isArray(parameters)
+          ? parameters as Record<string, any>
+          : {},
+      );
+      skillActivityAdapter.done(stepId, `Called intent "${intentName}"`);
+      return JSON.stringify(result);
+    } catch (error) {
+      skillActivityAdapter.done(stepId, `Failed intent "${intentName}"`);
+      throw error;
+    }
   });
 };
