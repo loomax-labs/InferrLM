@@ -450,7 +450,9 @@
     "disclaimersTitle": "重要限制",
     "disclaimersBody": "• AI 写的内容可能有错\n• 回复基于训练时的资料，不一定反映现在的事\n• 不要把 AI 内容当成医疗、法律或财务建议\n• 重要信息一定要找可靠来源核对",
     "safetyTitle": "安全和内容规则",
-    "safetyBody": "• 模型在设计上会拒绝有害请求\n• 过滤不一定能拦住每一条有害回复\n• 你怎么使用 AI，由你自己负责"
+    "safetyBody": "• 模型可能会拒绝有害请求，也可能不会\n• 不要默认开了安全过滤\n• 你怎么使用 AI，由你自己负责",
+    "legalTitle": "完整条款",
+    "legalBody": "• 回复按现状提供。使用它们的风险由你承担。\n• 责任限制、你对自己使用行为的责任、停止使用，以及争议怎么处理，写在完整条款里：https://inferrlm.app/terms-conditions"
   },
   "licenses": {
     "title": "许可证",

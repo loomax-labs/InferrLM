@@ -89,7 +89,20 @@ const AITermsDialog: React.FC<AITermsDialogProps> = ({
               </Text>
             </View>
 
-      
+            <View style={styles.section}>
+              <Text style={[
+                styles.sectionTitle,
+                { color: currentTheme === 'dark' ? '#FFFFFF' : '#000000' }
+              ]}>
+                {t('terms.legalTitle')}
+              </Text>
+              <Text style={[
+                styles.sectionText,
+                { color: currentTheme === 'dark' ? '#CCCCCC' : '#666666' }
+              ]}>
+                {t('terms.legalBody')}
+              </Text>
+            </View>
           </ScrollView>
         </Dialog.Content>
     </Dialog>

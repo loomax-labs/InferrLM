@@ -451,7 +451,9 @@
     "disclaimersTitle": "Important limits",
     "disclaimersBody": "• AI-written content may contain errors\n• Replies are based on training data and may not reflect current events\n• Do not rely on AI content for medical, legal, or financial advice\n• Always check important information with a trusted source",
     "safetyTitle": "Safety and content policy",
-    "safetyBody": "• Models are built to refuse harmful requests\n• Filters may not catch every harmful reply\n• You are responsible for how you use AI features"
+    "safetyBody": "• A model may or may not refuse a harmful request\n• Do not assume a safety filter is on\n• You are responsible for how you use AI features",
+    "legalTitle": "Full terms",
+    "legalBody": "• Replies are provided as is. You assume the risk of using them.\n• Limits on liability, responsibility for your use, ending access, and how disputes are handled are in the full terms at https://inferrlm.app/terms-conditions"
   },
   "licenses": {
     "title": "Open source licenses",

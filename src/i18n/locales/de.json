@@ -441,7 +441,7 @@
     "uploadToChat": "In den Chat laden"
   },
   "terms": {
-    "title": "Hinweise zu AI-Inhalten",
+    "title": "Bedingungen für AI-Inhalte",
     "generatedTitle": "Von AI erzeugte Inhalte",
     "generatedBody": "Diese App nutzt AI, um Antworten zu schreiben. Inhalte, die als von AI erzeugt markiert sind, kommen von Modellen und sollten geprüft werden.\n\nVon AI geschriebene Inhalte können Fehler enthalten. Prüfe wichtige Informationen immer.",
     "intro": "Von AI geschriebene Inhalte können Fehler enthalten. Prüfe wichtige Informationen immer.",
@@ -450,7 +450,9 @@
     "disclaimersTitle": "Wichtige Grenzen",
     "disclaimersBody": "• Von AI geschriebene Inhalte können Fehler enthalten\n• Antworten beruhen auf den Daten, mit denen das Modell gelernt hat, und bilden aktuelle Ereignisse vielleicht nicht ab\n• Verlass dich bei medizinischen, rechtlichen oder finanziellen Fragen nicht auf AI-Inhalte\n• Prüfe wichtige Informationen immer bei einer vertrauenswürdigen Quelle",
     "safetyTitle": "Sicherheit und Inhaltsregeln",
-    "safetyBody": "• Modelle sind so gebaut, dass sie schädliche Anfragen ablehnen\n• Filter erwischen nicht jede schädliche Antwort\n• Du bist dafür verantwortlich, wie du die AI-Funktionen nutzt"
+    "safetyBody": "• Ein Modell kann eine schädliche Anfrage ablehnen oder auch nicht\n• Geh nicht davon aus, dass ein Sicherheitsfilter an ist\n• Du bist dafür verantwortlich, wie du die AI-Funktionen nutzt",
+    "legalTitle": "Vollständige Bedingungen",
+    "legalBody": "• Antworten werden so bereitgestellt, wie sie sind. Du trägst das Risiko, sie zu nutzen.\n• Grenzen der Haftung, deine Verantwortung für deine Nutzung, das Beenden des Zugangs und die Behandlung von Streitigkeiten stehen in den vollständigen Bedingungen: https://inferrlm.app/terms-conditions"
   },
   "licenses": {
     "title": "Lizenzen",

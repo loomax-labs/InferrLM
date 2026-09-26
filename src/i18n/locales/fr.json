@@ -446,11 +446,13 @@
     "generatedBody": "Cette application utilise l'IA pour rédiger des réponses. Le contenu marqué comme généré par l'IA vient de modèles et doit être vérifié.\n\nLe contenu rédigé par l'IA peut contenir des erreurs. Vérifie toujours les informations importantes.",
     "intro": "Le contenu rédigé par l'IA peut contenir des erreurs. Vérifie toujours les informations importantes.",
     "generatedLead": "Contenu généré par l'IA",
-    "generatedDetail": "Cette application utilise l'IA pour rédiger des réponses. Tout contenu marqué comme généré par l'IA vient de modèles et doit être vérifié.",
+    "generatedDetail": "Cette application utilise l'IA pour rédiger des réponses. Tout contenu marqué comme généré par l'IA vient de modèles et devrait être vérifié pour son exactitude.",
     "disclaimersTitle": "Limites importantes",
     "disclaimersBody": "• Le contenu rédigé par l'IA peut contenir des erreurs\n• Les réponses s'appuient sur des données d'apprentissage et peuvent ne pas refléter l'actualité\n• Ne te fie pas au contenu IA pour un avis médical, juridique ou financier\n• Vérifie toujours les informations importantes auprès d'une source fiable",
     "safetyTitle": "Sécurité et politique de contenu",
-    "safetyBody": "• Les modèles sont conçus pour refuser les demandes nuisibles\n• Les filtres peuvent ne pas arrêter toutes les réponses nuisibles\n• Tu es responsable de la façon dont tu utilises les fonctions IA"
+    "safetyBody": "• Un modèle peut refuser une demande nuisible, ou ne pas la refuser\n• Ne suppose pas qu'un filtre de sécurité est activé\n• Tu es responsable de la façon dont tu utilises les fonctions IA",
+    "legalTitle": "Conditions complètes",
+    "legalBody": "• Les réponses sont fournies telles quelles. Tu assumes le risque de les utiliser.\n• Les limites de responsabilité, ta responsabilité pour ton usage, la fin de l'accès et le traitement des litiges sont dans les conditions complètes : https://inferrlm.app/terms-conditions"
   },
   "licenses": {
     "title": "Licences",

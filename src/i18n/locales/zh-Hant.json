@@ -441,7 +441,7 @@
     "uploadToChat": "上傳到聊天"
   },
   "terms": {
-    "title": "AI 內容說明",
+    "title": "AI 內容條款",
     "generatedTitle": "AI 產生的內容",
     "generatedBody": "這個軟體用 AI 寫回覆。標成 AI 產生的內容來自模型，請自己核對。\n\nAI 寫的內容可能有錯。重要資訊請一定要再確認。",
     "intro": "AI 寫的內容可能有錯。重要資訊請一定要再確認。",
@@ -450,7 +450,9 @@
     "disclaimersTitle": "重要限制",
     "disclaimersBody": "• AI 寫的內容可能有錯\n• 回覆來自訓練資料，不一定反映現在的事情\n• 不要把 AI 內容當成醫療、法律或財務建議\n• 重要資訊請向可靠來源再確認",
     "safetyTitle": "安全與內容規範",
-    "safetyBody": "• 模型會拒絕有害的要求\n• 過濾不一定擋得住每一則有害回覆\n• 你要為自己怎麼使用 AI 功能負責"
+    "safetyBody": "• 模型可能會拒絕有害要求，也可能不會\n• 不要以為一定有安全過濾\n• 你要為自己怎麼使用 AI 功能負責",
+    "legalTitle": "完整條款",
+    "legalBody": "• 回覆是照現況提供。使用的風險由你自己承擔。\n• 責任限制、你對自己使用行為的責任、停止使用，以及爭議怎麼處理，寫在完整條款：https://inferrlm.app/terms-conditions"
   },
   "licenses": {
     "title": "授權",

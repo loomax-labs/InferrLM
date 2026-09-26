@@ -32,6 +32,10 @@ const ContentTermsScreen = () => {
       title: t('terms.safetyTitle'),
       body: t('terms.safetyBody'),
     },
+    {
+      title: t('terms.legalTitle'),
+      body: t('terms.legalBody'),
+    },
   ];
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
