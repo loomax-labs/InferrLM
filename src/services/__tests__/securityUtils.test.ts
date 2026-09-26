@@ -25,11 +25,9 @@ describe('search html cleanup', () => {
 });
 
 describe('sanitizeSkillHtml', () => {
-  it('removes nested iframe markup', () => {
-    const html = '<p>ok</p><iframe<iframe src="https://evil.test"></iframe>';
-    const sanitized = sanitizeSkillHtml(html);
-    expect(sanitized).toContain('<p>ok</p>');
-    expect(sanitized.toLowerCase()).not.toContain('iframe');
+  it('removes nested and unclosed iframe markup', () => {
+    expect(sanitizeSkillHtml('<p>ok</p><iframe<iframe src="https://evil.test"></iframe>')).toBe('<p>ok</p>');
+    expect(sanitizeSkillHtml('<p>ok</p><iframe src="https://evil.test"').toLowerCase()).not.toContain('iframe');
   });
 });
 
