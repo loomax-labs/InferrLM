@@ -1,14 +1,5 @@
 const { withProjectBuildGradle, createRunOncePlugin } = require('@expo/config-plugins');
-
-function ensureJitPack(contents) {
-  if (contents.includes('jitpack.io')) {
-    return contents;
-  }
-  return contents.replace(
-    /allprojects\s*\{\s*repositories\s*\{/,
-    `allprojects {\n    repositories {\n        maven { url 'https://jitpack.io' }`,
-  );
-}
+const { ensureJitPack } = require('./jitpack');
 
 function withRootAccess(config) {
   return withProjectBuildGradle(config, mod => {
@@ -17,4 +8,6 @@ function withRootAccess(config) {
   });
 }
 
-module.exports = createRunOncePlugin(withRootAccess, 'root-access', '1.0.0');
+const plugin = createRunOncePlugin(withRootAccess, 'root-access', '1.0.0');
+module.exports = plugin;
+module.exports.ensureJitPack = ensureJitPack;
