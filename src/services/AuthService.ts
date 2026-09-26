@@ -4,6 +4,7 @@ import * as Crypto from 'expo-crypto';
 import { api, storeTokens, clearTokens } from './adapters/ApiClient';
 import { storeAuthState, getUserFromSecureStorage, type UserData } from './AuthStorage';
 import { logger } from '../utils/logger';
+import { pullCloudAssistantsAndMerge } from './AssistantCloudSync';
 
 type PendingDeletionInfo = {
   restoreToken?: string;
@@ -173,6 +174,7 @@ async function handleAuthSuccess(data: { accessToken: string; refreshToken: stri
   };
   await storeAuthState(user);
   notifyListeners(user);
+  void pullCloudAssistantsAndMerge();
   logger.info('auth_store_done', 'auth', {
     params: {
       userId: user.id,
