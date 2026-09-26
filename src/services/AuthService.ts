@@ -2,6 +2,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { api, storeTokens, clearTokens } from './adapters/ApiClient';
+import { resolveApiUrl } from './adapters/apiUrl';
 import { storeAuthState, getUserFromSecureStorage, type UserData } from './AuthStorage';
 import { logger } from '../utils/logger';
 import { pullCloudAssistantsAndMerge } from './AssistantCloudSync';
@@ -46,6 +47,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'restore_token_invalid': 'Restore session expired. Please sign in again to continue.',
   'restore_window_expired': 'This account can no longer be restored.',
   'not_pending_deletion': 'This account is no longer scheduled for deletion.',
+  'oauth_token_invalid': 'Sign-in could not be verified. Please try again.',
+  'auth_failed': 'Sign-in failed. Please try again.',
 };
 
 const mapError = (error: any, fallback: string): string => {
@@ -114,7 +117,7 @@ export const initializeAuth = async (): Promise<void> => {
     params: {
       hasWebClientId: !!process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_WEB_CLIENT_ID,
       hasIosClientId: !!process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_IOS_CLIENT_ID,
-      apiUrl: process.env.EXPO_PUBLIC_API_URL,
+      apiUrl: resolveApiUrl(),
     },
   });
 

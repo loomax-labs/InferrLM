@@ -1,22 +1,31 @@
 import * as SecureStore from 'expo-secure-store';
 import { logger } from '../../utils/logger';
 import { AUTH_SECURE_STORE_OPTIONS } from '../AuthStorage';
+import { resolveApiUrl } from './apiUrl';
 
 const ACCESS_KEY = 'inferra_access_token';
 const REFRESH_KEY = 'inferra_refresh_token';
 
-const RAW_API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-function normalizeApiUrl(value: string): string {
-  const trimmed = value.trim().replace(/\/+$/, '');
-  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
-}
+const API_URL = resolveApiUrl();
 
 function normalizePath(path: string): string {
   return path.startsWith('/') ? path : `/${path}`;
 }
 
-const API_URL = normalizeApiUrl(RAW_API_URL);
+const REPORT_ERROR_MESSAGES: Record<string, string> = {
+  rate_limited: 'Too many requests. Please try again later.',
+  validation_failed: 'Some report fields are invalid. Please check and try again.',
+};
+
+function apiErrorMessage(parsed: { error?: string; message?: string }, status: number): string {
+  if (typeof parsed.error === 'string' && REPORT_ERROR_MESSAGES[parsed.error]) {
+    return REPORT_ERROR_MESSAGES[parsed.error];
+  }
+  if (typeof parsed.error === 'string' && /^[a-z0-9_]+$/.test(parsed.error)) {
+    return 'request_failed';
+  }
+  return `request_failed_${status}`;
+}
 
 function isAuthTracePath(path: string): boolean {
   return path.startsWith('/auth') || path.startsWith('/me');
@@ -164,6 +173,12 @@ async function serialRefresh(): Promise<string | null> {
 export async function apiRequest<T = any>(path: string, opts: RequestOpts = {}): Promise<T> {
   const { method = 'GET', body, headers = {}, auth = true, formData = false } = opts;
 
+  if (!API_URL) {
+    const err: any = new Error('api_not_configured');
+    err.code = 'api_not_configured';
+    throw err;
+  }
+
   const normalizedPath = normalizePath(path);
   const url = `${API_URL}${normalizedPath}`;
   const reqHeaders: Record<string, string> = { ...headers };
@@ -251,8 +266,9 @@ export async function apiRequest<T = any>(path: string, opts: RequestOpts = {}):
         },
       });
     }
-    const err: any = new Error(parsed.message || `request_failed_${res.status}`);
+    const err: any = new Error(apiErrorMessage(parsed, res.status));
     err.status = res.status;
+    err.code = typeof parsed.error === 'string' ? parsed.error : undefined;
     err.body = parsed;
     throw err;
   }
