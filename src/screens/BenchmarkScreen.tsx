@@ -55,6 +55,7 @@ export default function BenchmarkScreen() {
         <LabsTasksSection
           onOpenPromptLab={() => router.push('/prompt-lab')}
           onOpenSkillManager={() => router.push('/skill-manager')}
+          onOpenAssistants={() => router.push('/assistants')}
           onOpenAudioScribe={() => router.push('/audio-scribe')}
           onOpenMobileActions={() => router.push('/mobile-actions')}
           onOpenBenchmark={() => router.push('/benchmark')}

@@ -8,6 +8,7 @@ import { theme } from '../../constants/theme';
 type LabsTasksSectionProps = {
   onOpenPromptLab: () => void;
   onOpenSkillManager: () => void;
+  onOpenAssistants: () => void;
   onOpenAudioScribe: () => void;
   onOpenMobileActions: () => void;
   onOpenBenchmark: () => void;
@@ -27,6 +28,7 @@ type LabItem = {
 const LabsTasksSection = ({
   onOpenPromptLab,
   onOpenSkillManager,
+  onOpenAssistants,
   onOpenAudioScribe,
   onOpenMobileActions,
   onOpenBenchmark,
@@ -53,6 +55,15 @@ const LabsTasksSection = ({
       lightAccent: '#1565C0',
       darkAccent: '#5A9FE3',
       onPress: onOpenSkillManager,
+    },
+    {
+      key: 'assistants',
+      label: 'Assistants',
+      description: 'Task profiles with prompt & skills',
+      icon: 'account-cog-outline',
+      lightAccent: '#4527A0',
+      darkAccent: '#9575CD',
+      onPress: onOpenAssistants,
     },
     {
       key: 'audio-scribe',

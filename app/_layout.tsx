@@ -19,7 +19,8 @@ import { DownloadProvider } from '../src/context/DownloadContext';
 import { modelDownloader } from '../src/services/ModelDownloader';
 import { engineService } from '../src/services/inference-engine-service';
 import { notificationService } from '../src/services/NotificationService';
-import { initializeAuth } from '../src/services/AuthService';
+import { initializeAuth, isAuthenticated } from '../src/services/AuthService';
+import { pullCloudAssistantsAndMerge } from '../src/services/AssistantCloudSync';
 import { initGeminiService } from '../src/services/GeminiInitializer';
 import { initOpenAIService } from '../src/services/OpenAIInitializer';
 import { initClaudeService } from '../src/services/ClaudeInitializer';
@@ -55,6 +56,9 @@ if (!TaskManager.isTaskDefined(BACKGROUND_DOWNLOAD_TASK)) {
 const initializeServices = async () => {
   try {
     await initializeAuth();
+    if (await isAuthenticated()) {
+      void pullCloudAssistantsAndMerge();
+    }
   } catch {}
   try {
     await engineService.load();
@@ -216,6 +220,7 @@ function InnerLayout({ appReady }: { appReady: boolean }) {
         <Stack.Screen name="benchmark" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="prompt-lab" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="skill-manager" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="assistants" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="advanced-capabilities" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="audio-scribe" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="mobile-actions" options={{ animation: 'slide_from_right' }} />
