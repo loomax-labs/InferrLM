@@ -3,6 +3,126 @@ import { ModelType, ModelFormat } from "../types/models";
 
 export const DOWNLOADABLE_MODELS: DownloadableModel[] = [
   {
+    "name": "Qwen3.8 9B",
+    "description": "Qwen 3.8 reasoning distilled into the 9B architecture, with 262K context for stronger on-device coding and multi-step tasks.",
+    "size": "5.78 GB",
+    "huggingFaceLink": "https://huggingface.co/empero-ai/Qwen3.8-9B-Distill-GGUF/resolve/main/Qwen3.8-9B-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "9 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["reasoning", "coding", "llama.cpp"]
+  },
+  {
+    "name": "Qwen3.8 4B",
+    "description": "Qwen 3.8 reasoning distilled into a 4B model with 262K context, sized for phones and laptops.",
+    "size": "2.78 GB",
+    "huggingFaceLink": "https://huggingface.co/empero-ai/Qwen3.8-4B-Distill-GGUF/resolve/main/Qwen3.8-4B-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "4 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["reasoning", "coding", "recommended", "llama.cpp"]
+  },
+  {
+    "name": "Qwen3.8 2B",
+    "description": "Smallest Qwen 3.8 distill, with 262K context for fast reasoning on low-memory phones.",
+    "size": "1.31 GB",
+    "huggingFaceLink": "https://huggingface.co/empero-ai/Qwen3.8-2B-Distill-GGUF/resolve/main/Qwen3.8-2B-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "2 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["reasoning", "coding", "fastest", "llama.cpp"]
+  },
+  {
+    "name": "LFM2.5 2.6B",
+    "description": "Liquid AI's agentic on-device model with 128K context for tool use, planning, and multi-step tasks on a phone.",
+    "size": "1.67 GB",
+    "huggingFaceLink": "https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF/resolve/main/LFM2.5-2.6B-Q4_K_M.gguf",
+    "licenseLink": "https://huggingface.co/LiquidAI/LFM2.5-2.6B/blob/main/LICENSE",
+    "modelFamily": "2.6 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["coding", "recommended", "llama.cpp"]
+  },
+  {
+    "name": "LFM2.5 1.2B Instruct",
+    "description": "Liquid AI's compact instruct model with 32K context, built for fast on-device chat and instruction following.",
+    "size": "0.73 GB",
+    "huggingFaceLink": "https://huggingface.co/unsloth/LFM2.5-1.2B-Instruct-GGUF/resolve/main/LFM2.5-1.2B-Instruct-Q4_K_M.gguf",
+    "licenseLink": "https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct/blob/main/LICENSE",
+    "modelFamily": "1.2 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["fastest", "llama.cpp"]
+  },
+  {
+    "name": "LFM2.5 350M",
+    "description": "Liquid AI's smallest LFM2.5 model with 32K context for chat on low-memory phones.",
+    "size": "0.23 GB",
+    "huggingFaceLink": "https://huggingface.co/LiquidAI/LFM2.5-350M-GGUF/resolve/main/LFM2.5-350M-Q4_K_M.gguf",
+    "licenseLink": "https://huggingface.co/LiquidAI/LFM2.5-350M/blob/main/LICENSE",
+    "modelFamily": "350 Million",
+    "quantization": "Q4_K_M",
+    "tags": ["fastest", "llama.cpp"]
+  },
+  {
+    "name": "LFM2.5 8B A1B",
+    "description": "Liquid AI's on-device mixture-of-experts model with 8B total parameters, about 1B active, and 128K context.",
+    "size": "5.16 GB",
+    "huggingFaceLink": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B-GGUF/resolve/main/LFM2.5-8B-A1B-Q4_K_M.gguf",
+    "licenseLink": "https://huggingface.co/LiquidAI/LFM2.5-8B-A1B/blob/main/LICENSE",
+    "modelFamily": "8 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["llama.cpp"]
+  },
+  {
+    "name": "LFM2.5 VL 1.6B",
+    "description": "Liquid AI's compact vision-language model with 32K context for on-device image understanding.",
+    "size": "0.73 GB",
+    "huggingFaceLink": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF/resolve/main/LFM2.5-VL-1.6B-Q4_K_M.gguf",
+    "licenseLink": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B/blob/main/LICENSE",
+    "modelFamily": "1.6 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "fastest", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-LFM2.5-VL-1.6b-Q8_0.gguf",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B-GGUF/resolve/main/mmproj-LFM2.5-VL-1.6b-Q8_0.gguf",
+        "description": "Multimodal projector for LFM2.5 VL 1.6B"
+      }
+    ]
+  },
+  {
+    "name": "LFM2.5 VL 3B",
+    "description": "Liquid AI's larger on-device vision-language model with 32K context for image understanding.",
+    "size": "1.67 GB",
+    "huggingFaceLink": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/main/LFM2.5-VL-3B-Q4_K_M.gguf",
+    "licenseLink": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B/blob/main/LICENSE",
+    "modelFamily": "3 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["vision", "recommended", "llama.cpp"],
+    "modelType": ModelType.VISION,
+    "capabilities": ["vision", "text"],
+    "supportsMultimodal": true,
+    "additionalFiles": [
+      {
+        "name": "mmproj-LFM2.5-VL-3B-Q8_0.gguf",
+        "url": "https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF/resolve/main/mmproj-LFM2.5-VL-3B-Q8_0.gguf",
+        "description": "Multimodal projector for LFM2.5 VL 3B"
+      }
+    ]
+  },
+  {
+    "name": "Granite 4.2 3B",
+    "description": "IBM's Granite 4.2 3B with switchable reasoning, tool calling, and 128K context for on-device agents.",
+    "size": "2.24 GB",
+    "huggingFaceLink": "https://huggingface.co/ibm-granite/granite-4.2-3b-GGUF/resolve/main/granite-4.2-3b-Q4_K_M.gguf",
+    "licenseLink": "https://www.apache.org/licenses/LICENSE-2.0",
+    "modelFamily": "3 Billion",
+    "quantization": "Q4_K_M",
+    "tags": ["reasoning", "coding", "recommended", "llama.cpp"]
+  },
+  {
     "name": "Gemma 4 E4B Instruct",
     "description": "Google's Gemma 4 E4B with vision capabilities and built-in reasoning. 256K context length.",
     "size": "4.98 GB",

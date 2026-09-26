@@ -101,9 +101,8 @@ describe('recommendModels coding intent', () => {
       profile({ intents: ['coding'] }),
       tight,
     ).map((r) => r.model.name);
-    expect(names.some((n) => /Coder/i.test(n))).toBe(true);
-    const firstCoder = names.find((n) => /Coder/i.test(n)) ?? '';
-    expect(firstCoder).toMatch(/3B|2\.5 Coder Instruct/i);
+    expect(names.some((n) => /Qwen3\.8|LFM2\.5 2\.6B|Granite 4\.2/i.test(n))).toBe(true);
+    expect(names.some((n) => /Qwen 2\.5|CodeLlama|Gemma 2 /i.test(n))).toBe(false);
   });
 });
 

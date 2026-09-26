@@ -671,20 +671,6 @@ export default function SettingsScreen() {
             </View>
             <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.capabilityRow, { borderTopWidth: 1, borderTopColor: 'rgba(150, 150, 150, 0.1)' }]}
-            onPress={() => router.push({ pathname: '/onboarding', params: { mode: 'lessons-only' } })}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.capabilityTitle, { color: themeColors.text }]}>
-                {t('settings.howToUse')}
-              </Text>
-              <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
-                {t('settings.howToUseBody')}
-              </Text>
-            </View>
-            <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
-          </TouchableOpacity>
         </SettingsSection>
 
         <SupportSection

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -8,9 +10,11 @@ import {
   View,
 } from 'react-native';
 import { Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { OpenSansFont } from '../../hooks/OpenSansFont';
 import { useT } from '../../i18n';
 
 type OnboardingShellProps = {
@@ -44,6 +48,28 @@ export function OnboardingShell({
   const continueText = continueLabel ?? t('onboarding.continue');
   const { theme: currentTheme } = useTheme();
   const colors = theme[currentTheme];
+  const { fonts } = OpenSansFont();
+  const opacity = useRef(new Animated.Value(0)).current;
+  const shift = useRef(new Animated.Value(14)).current;
+
+  useEffect(() => {
+    opacity.setValue(0);
+    shift.setValue(14);
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(shift, {
+        toValue: 0,
+        duration: 420,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [stepIndex, opacity, shift]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -51,44 +77,68 @@ export function OnboardingShell({
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.header, { borderBottomColor: colors.borderColor }]}>
+        <View style={styles.header}>
           <View style={styles.headerRow}>
             {onBack ? (
-              <TouchableOpacity onPress={onBack} style={styles.headerSide}>
-                <Text style={{ color: colors.primary }}>{t('onboarding.back')}</Text>
+              <TouchableOpacity
+                onPress={onBack}
+                style={[styles.iconBtn, { backgroundColor: colors.cardBackground }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <MaterialCommunityIcons name="chevron-left" size={22} color={colors.text} />
               </TouchableOpacity>
             ) : (
-              <View style={styles.headerSide} />
+              <View style={styles.iconBtn} />
             )}
-            <Text style={[styles.progress, { color: colors.textSecondary }]}>
-              {stepIndex + 1} / {stepCount}
-            </Text>
             {onSkip ? (
-              <TouchableOpacity onPress={onSkip} style={styles.headerSide}>
-                <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('onboarding.skip')}</Text>
+              <TouchableOpacity
+                onPress={onSkip}
+                style={[styles.skipPill, { backgroundColor: colors.cardBackground }]}
+              >
+                <Text style={[styles.skip, fonts.medium, { color: colors.textSecondary }]}>
+                  {t('onboarding.skip')}
+                </Text>
               </TouchableOpacity>
             ) : (
-              <View style={styles.headerSide} />
+              <View style={styles.iconBtn} />
             )}
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+          <View style={styles.track}>
+            {Array.from({ length: Math.max(stepCount, 1) }).map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.segment,
+                  {
+                    backgroundColor: index <= stepIndex ? colors.primary : colors.cardBackground,
+                  },
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={[styles.title, fonts.bold, { color: colors.text }]}>{title}</Text>
         </View>
 
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {children}
+          <Animated.View style={{ opacity, transform: [{ translateY: shift }] }}>
+            {children}
+          </Animated.View>
         </ScrollView>
 
-        <View style={[styles.footer, { borderTopColor: colors.borderColor, backgroundColor: colors.background }]}>
+        <View style={[styles.footer, { backgroundColor: colors.cardBackground }]}>
           {secondaryLabel && onSecondary ? (
             <TouchableOpacity
               onPress={onSecondary}
-              style={[styles.secondaryBtn, { backgroundColor: colors.cardBackground }]}
+              style={[styles.secondaryBtn, { backgroundColor: colors.background }]}
             >
-              <Text style={{ color: colors.primary, textAlign: 'center' }}>{secondaryLabel}</Text>
+              <Text style={[fonts.semibold, { color: colors.primary, textAlign: 'center' }]}>
+                {secondaryLabel}
+              </Text>
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
@@ -101,7 +151,7 @@ export function OnboardingShell({
               },
             ]}
           >
-            <Text style={{ color: colors.headerText, textAlign: 'center', fontWeight: '600' }}>
+            <Text style={[fonts.semibold, { color: colors.headerText, textAlign: 'center', fontSize: 16 }]}>
               {continueText}
             </Text>
           </TouchableOpacity>
@@ -117,31 +167,53 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
+    paddingBottom: 8,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  headerSide: { minWidth: 56 },
-  progress: { fontSize: 13 },
-  skip: { fontSize: 15, textAlign: 'right' },
-  title: { fontSize: 22, fontWeight: '700' },
-  scrollContent: { padding: 20, paddingBottom: 32 },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipPill: {
+    paddingHorizontal: 14,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skip: { fontSize: 14 },
+  track: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 18,
+  },
+  segment: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
+  title: { fontSize: 28, lineHeight: 34 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 28 },
   footer: {
-    padding: 16,
-    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 16,
     gap: 10,
   },
   primaryBtn: {
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 16,
   },
   secondaryBtn: {
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 16,
   },
 });

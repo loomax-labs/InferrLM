@@ -137,6 +137,12 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
                     <Text style={styles.modelTagText}>{t('models.reasoning')}</Text>
                   </View>
                 )}
+                {model.tags?.includes('coding') && (
+                  <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#1565C0', currentTheme) }]}>
+                    <MaterialCommunityIcons name="code-tags" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
+                    <Text style={styles.modelTagText}>{t('models.coding')}</Text>
+                  </View>
+                )}
                 {model.tags?.includes('litert') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#1a7340', currentTheme) }]}>
                     <Text style={styles.modelTagText}>{t('models.litert')}</Text>

@@ -3,16 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 import { ModelWarningDialog } from '../components/model/ModelWarningDialog';
 import { DownloadableModel } from '../components/model/DownloadableModelItem';
 import { onboardingStore } from '../onboarding/OnboardingStore';
 import {
-  lessonIdsFor,
-  lessonsFor,
   whatHappensNextLesson,
-  type LessonId,
   type OnboardingProfile as LessonProfile,
 } from '../onboarding/lessons';
 import {
@@ -24,9 +21,9 @@ import {
 import { startCuratedDownloads } from '../onboarding/startCuratedDownloads';
 import type { ExpertiseLevel, OnboardingIntentId } from '../onboarding/types';
 import { checkBeforeDownload } from '../utils/storageUtils';
+import { useT } from '../i18n';
 import { OnboardingShell } from './onboarding/OnboardingShell';
 import { ProfileStep, type ProfilePhase } from './onboarding/ProfileStep';
-import { LessonStepView } from './onboarding/LessonStep';
 import { ModelStep } from './onboarding/ModelStep';
 import { ConfirmStep } from './onboarding/ConfirmStep';
 import { NextStepView } from './onboarding/NextStep';
@@ -39,7 +36,6 @@ export type OnboardingStepId =
   | 'welcome'
   | 'expertise'
   | 'intents'
-  | `lesson:${LessonId}`
   | 'models'
   | 'tune'
   | 'confirm'
@@ -47,8 +43,6 @@ export type OnboardingStepId =
 
 export const ONBOARDING_TUNE_STEP_ID: OnboardingStepId = 'tune';
 export const ONBOARDING_TUNE_INSERT_AFTER: OnboardingStepId = 'models';
-
-export type OnboardingFlowMode = 'full' | 'lessons-only';
 
 export type TuneStepIntegration = {
   stepId: typeof ONBOARDING_TUNE_STEP_ID;
@@ -73,22 +67,8 @@ function toLessonProfile(
   return { expertise, intents };
 }
 
-function buildStepIds(
-  mode: OnboardingFlowMode,
-  expertise: ExpertiseLevel,
-  intents: OnboardingIntentId[],
-  includeHowTo: boolean,
-): OnboardingStepId[] {
-  const lessonProfile = toLessonProfile(expertise, intents);
-  const lessonSteps = lessonsFor(lessonProfile, { includeHowTo }).map(
-    (step) => `lesson:${step.id}` as OnboardingStepId,
-  );
-
-  if (mode === 'lessons-only') {
-    return lessonSteps;
-  }
-
-  const steps: OnboardingStepId[] = ['welcome', 'expertise', 'intents', ...lessonSteps, 'models'];
+function buildStepIds(expertise: ExpertiseLevel): OnboardingStepId[] {
+  const steps: OnboardingStepId[] = ['welcome', 'expertise', 'intents', 'models'];
   if (ONBOARDING_INCLUDE_TUNE_STEP && expertise === 'experienced') {
     steps.push('tune');
   }
@@ -98,27 +78,12 @@ function buildStepIds(
 
 function stepTitle(stepId: OnboardingStepId): string {
   if (stepId === 'welcome') return 'Welcome';
-  if (stepId === 'expertise') return 'Your experience';
-  if (stepId === 'intents') return 'What you will use it for';
+  if (stepId === 'expertise') return 'Experience with local models';
+  if (stepId === 'intents') return 'What you intend to use it for';
   if (stepId === 'models') return 'Suggested models';
   if (stepId === 'tune') return 'Generation settings';
   if (stepId === 'confirm') return 'Confirm download';
   if (stepId === 'next') return 'What happens next';
-  if (stepId.startsWith('lesson:')) {
-    const id = stepId.replace('lesson:', '') as LessonId;
-    const titles: Partial<Record<LessonId, string>> = {
-      glossary: 'Quick terms',
-      'app-map': 'Where things live',
-      'howto-download': 'Download a model',
-      'howto-turn-on': 'Turn the model on',
-      'howto-send': 'Send a message',
-      'howto-attach': 'Add photos or files',
-      'howto-combined': 'How to use InferrLM',
-      'what-happens-next': 'What happens next',
-    };
-    if (titles[id]) return titles[id]!;
-    if (id.startsWith('feature-')) return 'Feature tip';
-  }
   return 'Setup';
 }
 
@@ -130,15 +95,13 @@ function profilePhase(stepId: OnboardingStepId): ProfilePhase | null {
 }
 
 export default function OnboardingScreen() {
+  const t = useT();
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string }>();
-  const mode: OnboardingFlowMode = params.mode === 'lessons-only' ? 'lessons-only' : 'full';
 
   const [loading, setLoading] = useState(true);
   const [stepIndex, setStepIndex] = useState(0);
   const [expertise, setExpertise] = useState<ExpertiseLevel>('new');
   const [intents, setIntents] = useState<OnboardingIntentId[]>(['chat']);
-  const [includeHowTo, setIncludeHowTo] = useState(false);
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedModel[]>([]);
   const [downloadStarted, setDownloadStarted] = useState(false);
@@ -147,10 +110,7 @@ export default function OnboardingScreen() {
   const [showWarning, setShowWarning] = useState(false);
   const [freeDiskBytes, setFreeDiskBytes] = useState(8 * 1024 ** 3);
 
-  const stepIds = useMemo(
-    () => buildStepIds(mode, expertise, intents, includeHowTo),
-    [mode, expertise, intents, includeHowTo],
-  );
+  const stepIds = useMemo(() => buildStepIds(expertise), [expertise]);
 
   const currentStepId = stepIds[stepIndex] ?? 'welcome';
 
@@ -182,23 +142,13 @@ export default function OnboardingScreen() {
       }
       if (profile.intents.length) {
         setIntents(profile.intents);
-      } else if (mode === 'lessons-only') {
-        setIntents(['chat']);
       }
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [mode]);
-
-  useEffect(() => {
-    if (!includeHowTo) return;
-    const howtoIndex = stepIds.indexOf('lesson:howto-combined');
-    if (howtoIndex >= 0) {
-      setStepIndex(howtoIndex);
-    }
-  }, [includeHowTo, stepIds]);
+  }, []);
 
   useEffect(() => {
     if (currentStepId !== 'models') return;
@@ -232,18 +182,17 @@ export default function OnboardingScreen() {
   }, [currentStepId, refreshStorageCheck]);
 
   const finishToTabs = useCallback(async () => {
-    const lessonProfile = toLessonProfile(expertise, intents);
     await onboardingStore.markComplete({
       completed: true,
       skipped: false,
       expertise,
       intents,
       selectedModelNames: selectedNames,
-      lessonIds: lessonIdsFor(lessonProfile, { includeHowTo }),
+      lessonIds: [],
       completedAt: new Date().toISOString(),
     });
     router.replace('/(tabs)');
-  }, [expertise, intents, includeHowTo, router, selectedNames]);
+  }, [expertise, intents, router, selectedNames]);
 
   const handleSkip = useCallback(async () => {
     await onboardingStore.markSkipped();
@@ -313,14 +262,6 @@ export default function OnboardingScreen() {
       return;
     }
     if (currentStepId === 'next') {
-      if (mode === 'lessons-only') {
-        if (router.canGoBack()) {
-          router.back();
-        } else {
-          router.replace('/(tabs)');
-        }
-        return;
-      }
       await finishToTabs();
       return;
     }
@@ -336,22 +277,11 @@ export default function OnboardingScreen() {
   })();
 
   const lessonProfile = toLessonProfile(expertise, intents);
-  const currentLesson =
-    currentStepId.startsWith('lesson:')
-      ? lessonsFor(lessonProfile, { includeHowTo }).find(
-          (s) => s.id === (currentStepId.replace('lesson:', '') as LessonId),
-        )
-      : undefined;
 
   const nextBody =
     currentStepId === 'next'
       ? whatHappensNextLesson(lessonProfile, downloadStarted).body
       : '';
-
-  const showExperiencedHowTo =
-    currentStepId === 'lesson:app-map' &&
-    expertise === 'experienced' &&
-    !includeHowTo;
 
   const licenseLink = selectedModels[0]?.licenseLink;
 
@@ -374,11 +304,17 @@ export default function OnboardingScreen() {
   return (
     <>
       <OnboardingShell
-        title={stepTitle(currentStepId)}
+        title={
+          currentStepId === 'expertise'
+            ? t('onboarding.expertiseTitle')
+            : currentStepId === 'intents'
+              ? t('onboarding.intentsTitle')
+              : stepTitle(currentStepId)
+        }
         stepIndex={stepIndex}
         stepCount={stepIds.length}
         onBack={stepIndex > 0 ? handleBack : undefined}
-        onSkip={mode === 'full' ? handleSkip : undefined}
+        onSkip={handleSkip}
         onContinue={handleContinue}
         continueDisabled={continueDisabled}
         continueLabel={
@@ -387,18 +323,8 @@ export default function OnboardingScreen() {
               ? 'Start download'
               : 'Continue'
             : currentStepId === 'next'
-              ? mode === 'lessons-only'
-                ? 'Done'
-                : 'Open Chat'
+              ? 'Open Chat'
               : 'Continue'
-        }
-        secondaryLabel={showExperiencedHowTo ? 'Show me how' : undefined}
-        onSecondary={
-          showExperiencedHowTo
-            ? () => {
-                setIncludeHowTo(true);
-              }
-            : undefined
         }
       >
         {profilePhase(currentStepId) ? (
@@ -410,7 +336,6 @@ export default function OnboardingScreen() {
             onToggleIntent={toggleIntent}
           />
         ) : null}
-        {currentLesson ? <LessonStepView step={currentLesson} /> : null}
         {currentStepId === 'models' ? (
           <ModelStep
             expertise={expertise}

@@ -2,6 +2,7 @@
  * Onboarding lesson copy and ordering. Bodies are keyed by expertise level.
  */
 
+import { localApiWording } from '../services/regionPolicy';
 import type {
   ExpertiseLevel,
   OnboardingIntentId,
@@ -453,7 +454,7 @@ function mergeComfortableExtras(
 }
 
 export function lessonBody(id: LessonId, expertise: OnboardingExpertise): string {
-  return LESSONS[id].bodies[expertise];
+  return localApiWording(LESSONS[id].bodies[expertise]);
 }
 
 export function intentLabel(intent: OnboardingIntent, expertise: OnboardingExpertise): string {

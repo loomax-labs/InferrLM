@@ -31,11 +31,28 @@ export interface RecommendedModel {
 const MIN_FREE_SPACE_BYTES = 100 * 1024 * 1024;
 const ADDITIONAL_FILE_ESTIMATE_BYTES = 600 * 1024 * 1024;
 
+const CURRENT_MODEL_NAMES = new Set([
+  'Qwen3.8 9B',
+  'Qwen3.8 4B',
+  'Qwen3.8 2B',
+  'LFM2.5 2.6B',
+  'LFM2.5 1.2B Instruct',
+  'LFM2.5 350M',
+  'LFM2.5 8B A1B',
+  'LFM2.5 VL 1.6B',
+  'LFM2.5 VL 3B',
+  'Granite 4.2 3B',
+  'Gemma 4 E4B Instruct',
+  'Gemma 4 E2B Instruct',
+  'Gemma 4 E4B Instruct (LiteRT)',
+  'Gemma 4 E2B Instruct (LiteRT)',
+]);
+
 const FALLBACK_MODEL_NAMES = [
+  'Qwen3.8 2B',
+  'LFM2.5 1.2B Instruct',
   'Gemma 4 E2B Instruct',
   'Gemma 4 E2B Instruct (LiteRT)',
-  'Qwen3.5 0.8B Instruct',
-  'Qwen3.5 2B Instruct',
 ] as const;
 
 const MAX_RECOMMENDATIONS = 5;
@@ -109,7 +126,7 @@ function hasAudioCapability(model: DownloadableModel): boolean {
 }
 
 function isCodingModel(model: DownloadableModel): boolean {
-  return /coder/i.test(model.name);
+  return model.tags?.includes('coding') === true || /coder/i.test(model.name);
 }
 
 function isReasoningModel(model: DownloadableModel): boolean {
@@ -235,22 +252,16 @@ function intentRankScore(
   }
   if (intentsNeedCoding(intents) && isCodingModel(model)) {
     score += 26;
-    if (/Qwen3\.5 Coder 3B/i.test(model.name)) {
+    if (/Qwen3\.8 4B|LFM2\.5 2\.6B|Granite 4\.2 3B/i.test(model.name)) {
       score += 8;
-    }
-    if (/Qwen3\.5 Coder 7B/i.test(model.name)) {
-      score += 2;
-    }
-    if (/Qwen 2\.5 Coder Instruct/i.test(model.name) && !/7B/.test(model.name)) {
-      score += 4;
     }
   }
   if (intentsNeedReasoning(intents) && isReasoningModel(model)) {
     score += 24;
-    if (/VibeThinker|Phi-4 Mini Reasoning/i.test(model.name)) {
+    if (/Qwen3\.8 4B|Qwen3\.8 2B|Granite 4\.2 3B/i.test(model.name)) {
       score += 6;
     }
-    if (/Ministral 3 8B|Qwen3\.5 9B/i.test(model.name)) {
+    if (/Qwen3\.8 9B/i.test(model.name)) {
       score += 3;
     }
   }
@@ -314,6 +325,9 @@ function filterCatalog(
   device: RecommendDeviceContext,
 ): DownloadableModel[] {
   return DOWNLOADABLE_MODELS.filter((model) => {
+    if (!CURRENT_MODEL_NAMES.has(model.name)) {
+      return false;
+    }
     if (device.platform === 'ios' && isLiteRTModel(model)) {
       return false;
     }

@@ -1,8 +1,10 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { OpenSansFont } from '../../hooks/OpenSansFont';
 import type { ExpertiseLevel } from '../../onboarding/types';
 import type { RecommendedModel, RecommendationReason } from '../../onboarding/recommendModels';
 import { parseModelSizeBytes } from '../../onboarding/recommendModels';
@@ -37,11 +39,19 @@ function reasonText(reason: RecommendationReason, expertise: ExpertiseLevel): st
   return map[reason];
 }
 
-function engineLabel(rec: RecommendedModel): string | null {
-  const tags = rec.model.tags ?? [];
-  if (tags.includes('litert')) return 'LiteRT';
-  if (tags.includes('llama.cpp')) return 'llama.cpp';
-  return null;
+const VISIBLE_TAGS = ['recommended', 'fastest', 'vision', 'reasoning', 'coding', 'litert', 'llama.cpp'] as const;
+
+function tagLabel(
+  tag: (typeof VISIBLE_TAGS)[number],
+  t: (key: string) => string,
+): string {
+  if (tag === 'recommended') return t('models.recommended');
+  if (tag === 'fastest') return t('models.fastest');
+  if (tag === 'vision') return t('models.vision');
+  if (tag === 'reasoning') return t('models.reasoning');
+  if (tag === 'coding') return t('models.coding');
+  if (tag === 'litert') return t('models.litert');
+  return t('models.llamaCpp');
 }
 
 export function ModelStep({
@@ -53,51 +63,78 @@ export function ModelStep({
   const t = useT();
   const { theme: currentTheme } = useTheme();
   const colors = theme[currentTheme];
-  const multiSelect = expertise === 'experienced';
+  const { fonts } = OpenSansFont();
+  const selectedFill = currentTheme === 'dark' ? colors.primary + '33' : colors.primary + '16';
 
   return (
     <View style={styles.gap}>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+      <Text style={[styles.subtitle, fonts.regular, { color: colors.textSecondary }]}>
         {expertise === 'new'
           ? 'One file is enough to start. We picked one for you.'
           : 'Choose the models you want to download now.'}
       </Text>
       {recommendations.map((rec) => {
         const selected = selectedNames.includes(rec.model.name);
-        const sizeGb = (parseModelSizeBytes(rec.model.size) / 1024 ** 3).toFixed(2);
-        const engine = engineLabel(rec);
+        const sizeGb = (parseModelSizeBytes(rec.model.size) / 1024 ** 3).toFixed(1);
         const hasHelper = Boolean(rec.model.additionalFiles?.length);
+        const tags = (rec.model.tags ?? []).filter((tag) => {
+          if (!VISIBLE_TAGS.includes(tag as (typeof VISIBLE_TAGS)[number])) return false;
+          if (expertise === 'new' && (tag === 'litert' || tag === 'llama.cpp')) return false;
+          return true;
+        });
 
         return (
           <TouchableOpacity
             key={rec.model.name}
             onPress={() => onToggle(rec.model.name)}
+            activeOpacity={0.85}
             style={[
               styles.card,
-              {
-                backgroundColor: selected ? colors.cardBackground : colors.background,
-                borderColor: selected ? colors.primary : colors.borderColor,
-              },
+              { backgroundColor: selected ? selectedFill : colors.cardBackground },
             ]}
           >
-            <Text style={[styles.name, { color: colors.text }]}>{rec.model.name}</Text>
-            <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
-              {sizeGb} GB · {reasonText(rec.reason, expertise)}
-            </Text>
-            {expertise !== 'new' && engine ? (
-              <Text style={{ color: colors.textSecondary, marginTop: 4 }}>{engine}</Text>
-            ) : null}
-            {expertise === 'experienced' ? (
-              <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
-                {rec.model.quantization}
-                {hasHelper ? ' · includes extra files' : ''}
-              </Text>
-            ) : null}
-            {expertise === 'new' && hasHelper ? (
-              <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
-                {t('onboarding.photoHelper')}
-              </Text>
-            ) : null}
+            <View style={styles.top}>
+              <View style={[styles.mark, { backgroundColor: selected ? colors.primary : colors.background }]}>
+                <MaterialCommunityIcons
+                  name={selected ? 'check' : 'cube-outline'}
+                  size={20}
+                  color={selected ? colors.headerText : colors.primary}
+                />
+              </View>
+              <View style={styles.copy}>
+                <Text style={[styles.name, fonts.semibold, { color: colors.text }]}>{rec.model.name}</Text>
+                <Text style={[styles.reason, fonts.regular, { color: colors.textSecondary }]}>
+                  {reasonText(rec.reason, expertise)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.meta}>
+              <View style={[styles.pill, { backgroundColor: colors.background }]}>
+                <Text style={[styles.pillText, fonts.medium, { color: colors.text }]}>{sizeGb} GB</Text>
+              </View>
+              {tags.map((tag) => (
+                <View key={tag} style={[styles.pill, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.pillText, fonts.medium, { color: colors.text }]}>
+                    {tagLabel(tag as (typeof VISIBLE_TAGS)[number], t)}
+                  </Text>
+                </View>
+              ))}
+              {expertise === 'experienced' ? (
+                <View style={[styles.pill, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.pillText, fonts.medium, { color: colors.text }]}>
+                    {rec.model.quantization}
+                    {hasHelper ? ' + extra files' : ''}
+                  </Text>
+                </View>
+              ) : null}
+              {expertise === 'new' && hasHelper ? (
+                <View style={[styles.pill, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.pillText, fonts.medium, { color: colors.text }]}>
+                    {t('onboarding.photoHelper')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -109,9 +146,26 @@ const styles = StyleSheet.create({
   gap: { gap: 12 },
   subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 4 },
   card: {
+    borderRadius: 18,
     padding: 14,
-    borderRadius: 8,
-    borderWidth: 2,
+    gap: 12,
   },
-  name: { fontSize: 16, fontWeight: '600' },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  mark: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  copy: { flex: 1 },
+  name: { fontSize: 16, lineHeight: 22 },
+  reason: { fontSize: 13, lineHeight: 18, marginTop: 2 },
+  meta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  pillText: { fontSize: 12 },
 });

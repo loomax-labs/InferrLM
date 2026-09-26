@@ -467,7 +467,7 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
         ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: 'rgba(150,150,150,0.15)' }]}>
+      <View style={[styles.footer, { backgroundColor: themeColors.cardBackground }]}>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip} disabled={isSaving}>
           <Text style={[styles.skipText, { color: themeColors.secondaryText }]}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
@@ -553,9 +553,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     gap: 12,
   },
   skipButton: {
@@ -568,8 +567,8 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     flex: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   continueText: {
