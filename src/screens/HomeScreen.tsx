@@ -57,7 +57,6 @@ import { homeScreenStyles as styles } from './homeScreenStyles';
 import ChatAssistantBar from '../components/chat/ChatAssistantBar';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { isLiquidGlassAvailable } from '../services/adapters/GlassEffectAdapter';
-import { NativeSafeAreaView } from '../services/adapters/NativeLayoutAdapter';
 
 let hasInitializedChat = false;
 
@@ -511,7 +510,7 @@ export default function HomeScreen() {
     }
   }, [isLoading, isRegenerating, isStreaming, activeProvider]);
 
-  const handleApiError = (error: unknown, provider: 'Gemini' | 'OpenAI' | 'Claude') => {
+  const handleApiError = (error: unknown, provider: string) => {
     
     if (error instanceof Error) {
       if (error.message.startsWith('QUOTA_EXCEEDED:')) {
@@ -898,9 +897,9 @@ export default function HomeScreen() {
               onForkChat={handleForkChat}
               bottomInset={listInset}
             />
-            <NativeSafeAreaView
+            <SafeAreaView
               style={styles.chatInputOverlay}
-              edges={{ bottom: true }}
+              edges={['bottom']}
               pointerEvents="box-none"
               onLayout={(event) => {
                 const nextH = Math.ceil(event.nativeEvent.layout.height);
@@ -925,7 +924,7 @@ export default function HomeScreen() {
                 onCancelEdit={handleCancelEdit}
                 chatId={chat.id}
               />
-            </NativeSafeAreaView>
+            </SafeAreaView>
           </View>
         ) : (
           <>
