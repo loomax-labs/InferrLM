@@ -16,7 +16,10 @@
     "preset": "jest-expo",
     "setupFiles": [
       "./jest.setup.js"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^uuid$": "<rootDir>/node_modules/uuid/dist/cjs/index.js"
+    }
   },
   "dependencies": {
     "@expo/plist": "^0.7.0",
@@ -155,7 +158,7 @@
     "markdown-it": "^14.0.0",
     "prismjs": "^1.30.0",
     "langsmith": ">=0.6.0",
-    "uuid": "~9.0.1",
+    "uuid": "11.1.1",
     "js-yaml": "5.2.2",
     "react-native-windows": "npm:react-native@0.79.6",
     "tar": "^7.5.22",
@@ -170,12 +173,14 @@
     "shell-quote": "1.9.0",
     "@ai-sdk/provider-utils": "4.0.33",
     "baseline-browser-mapping": "^2.11.26",
-    "image-size": "1.2.1",
+    "image-size": "file:./modules/image-size",
+    "decode-uri-component": "file:./modules/decode-uri-component",
     "tmp": "^0.2.4"
   },
   "overrides": {
     "markdown-it": "^14.0.0",
-    "image-size": "1.2.1",
+    "image-size": "file:./modules/image-size",
+    "decode-uri-component": "file:./modules/decode-uri-component",
     "undici": "^6.28.0",
     "form-data": "^4.0.6",
     "@eslint/plugin-kit": "^0.3.4",
@@ -184,7 +189,7 @@
     "tmp": "^0.2.4",
     "react-native-windows": "npm:react-native@0.79.6",
     "langsmith": ">=0.6.0",
-    "uuid": "~9.0.1",
+    "uuid": "11.1.1",
     "js-yaml": "5.2.2",
     "tar": "^7.5.22",
     "browserslist": "4.28.7",
