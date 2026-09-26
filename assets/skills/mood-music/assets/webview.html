@@ -298,9 +298,20 @@ limitations under the License.
     <audio id="audio-element"></audio>
 
     <script>
+      function isSafeMediaUrl(value) {
+        if (!value || typeof value !== "string") return false;
+        try {
+          const parsed = new URL(value);
+          return parsed.protocol === "https:" || parsed.protocol === "http:";
+        } catch (e) {
+          return false;
+        }
+      }
+
+      const cfg = window.__MOOD__ || {};
       const params = new URLSearchParams(window.location.search);
-      const audioUrl = params.get("url");
-      const genre = params.get("genre") || "Ambient";
+      const audioUrl = cfg.url || params.get("url");
+      const genre = cfg.genre || params.get("genre") || "Ambient";
 
       const player = document.getElementById("player");
       const title = document.getElementById("track-title");
@@ -313,13 +324,14 @@ limitations under the License.
       const currentTimeEl = document.getElementById("current-time");
       const totalTimeEl = document.getElementById("total-time");
 
-      title.textContent = `Vibe: ${genre}`;
+      title.textContent = cfg.title || `Vibe: ${genre}`;
       statusText.textContent = audioUrl ? "Ready to play" : "Demo Track (No URL provided)";
 
-      if (audioUrl) {
+      if (isSafeMediaUrl(audioUrl)) {
         audio.src = audioUrl;
+      } else if (audioUrl) {
+        statusText.textContent = "Playback Error (CORS or Invalid URL)";
       } else {
-        // Fallback for demo if no URL is provided
         audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
         title.textContent = `Vibe: Demo (Fallback)`;
         statusText.textContent = "Playing Demo Stream";

@@ -23,17 +23,21 @@ export const MAX_AUTH_ATTEMPTS = 5;
 export const AUTH_LOCKOUT_DURATION = 15 * 60 * 1000;
 export const PASSWORD_MIN_LENGTH = 8;
 
+const DANGEROUS_INPUT_PATTERNS = ['javascript:', 'data:', 'vbscript:', String.raw`\bon[a-z]+\s*=`];
+
 export const sanitizeInput = (input: string): string => {
   if (!input || typeof input !== 'string') return '';
 
-  return input
-    .replace(/[<>]/g, '')
-    .replace(/javascript:/gi, '')
-    .replace(/data:/gi, '')
-    .replace(/vbscript:/gi, '')
-    .replace(/\bon\w*\s*=/gi, '')
-    .trim()
-    .slice(0, 1000);
+  let result = input.replace(/[<>]/g, '');
+  let previous = '';
+  while (result !== previous) {
+    previous = result;
+    for (const source of DANGEROUS_INPUT_PATTERNS) {
+      result = result.replace(new RegExp(source, 'gi'), '');
+    }
+  }
+
+  return result.trim().slice(0, 1000);
 };
 
 export const validateEmail = (email: string): { valid: boolean; sanitized?: string; error?: string } => {

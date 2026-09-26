@@ -21,6 +21,22 @@ type PendingTask = {
   timer: ReturnType<typeof setTimeout>;
 };
 
+export const sanitizeSkillHtml = (html: string): string => {
+  let previous = '';
+  let current = html;
+  while (current !== previous) {
+    previous = current;
+    current = current
+      .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '')
+      .replace(/<iframe\b[^>]*\/?>/gi, '')
+      .replace(/<embed\b[\s\S]*?<\/embed>/gi, '')
+      .replace(/<embed\b[^>]*\/?>/gi, '')
+      .replace(/<object\b[\s\S]*?<\/object>/gi, '')
+      .replace(/<object\b[^>]*\/?>/gi, '');
+  }
+  return current;
+};
+
 export const buildSkillBridge = (taskId: string, input: SkillRunInput): string => {
   const data = JSON.stringify(input.data ?? '');
   const secret = JSON.stringify(input.secret ?? '');
@@ -99,10 +115,7 @@ export class WebViewManager {
   }
 
   private sanitizeHtml(html: string): string {
-    return html
-      .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-      .replace(/<embed[\s\S]*?>/gi, '')
-      .replace(/<object[\s\S]*?<\/object>/gi, '');
+    return sanitizeSkillHtml(html);
   }
 
   private buildInlineHtml(taskId: string, html: string, bridge: string): string {

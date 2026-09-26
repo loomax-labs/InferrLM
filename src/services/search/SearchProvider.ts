@@ -30,14 +30,24 @@ const cleanText = (value: unknown): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const decodeHtml = (value: string): string =>
+export const decodeHtmlEntities = (value: string): string =>
   value
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ');
+    .replace(/&#0*39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+
+export const stripHtmlTags = (value: string): string => {
+  let previous = '';
+  let current = value;
+  while (current !== previous) {
+    previous = current;
+    current = current.replace(/<[^>]*>/g, '');
+  }
+  return current.replace(/[<>]/g, '');
+};
 
 const dedupeResults = (hits: SearchResult[]): SearchResult[] => {
   const seen = new Set<string>();
@@ -140,9 +150,9 @@ export class DuckDuckGoSearchProvider implements SearchProvider {
       /class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?class="result__snippet"[^>]*>([\s\S]*?)<\/(?:a|td|div)/gi;
     let match: RegExpExecArray | null;
     while ((match = resultRe.exec(html)) && hits.length < maxResults) {
-      const url = cleanText(decodeHtml(match[1] || ''));
-      const title = cleanText(decodeHtml(match[2] || '').replace(/<[^>]+>/g, ''));
-      const snippet = cleanText(decodeHtml(match[3] || '').replace(/<[^>]+>/g, ''));
+      const url = cleanText(decodeHtmlEntities(match[1] || ''));
+      const title = cleanText(stripHtmlTags(decodeHtmlEntities(match[2] || '')));
+      const snippet = cleanText(stripHtmlTags(decodeHtmlEntities(match[3] || '')));
       if (!title && !snippet) continue;
       hits.push({ title: title || snippet.slice(0, 80), snippet, url });
     }
