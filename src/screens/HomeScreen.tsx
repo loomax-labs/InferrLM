@@ -53,6 +53,7 @@ import { skillManager } from '../services/SkillManager';
 import { skillActivityAdapter } from '../services/adapters/SkillActivityAdapter';
 import type { SkillActivityStep } from '../types/skillActivity';
 import { homeScreenStyles as styles } from './homeScreenStyles';
+import ChatAssistantBar from '../components/chat/ChatAssistantBar';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { isLiquidGlassAvailable } from '../services/adapters/GlassEffectAdapter';
 import { NativeSafeAreaView } from '../services/adapters/NativeLayoutAdapter';
@@ -602,8 +603,6 @@ export default function HomeScreen() {
         ? await ChatLifecycleService.getEffectiveSettings(providerOverride)
         : await getEffectiveSettings();
 
-      await skillManager.syncTools();
-
       let basePrompt = settings.systemPrompt;
       const isOnlineModel = !!provider
         && ['gemini', 'chatgpt', 'claude'].includes(OnlineModelService.getBaseProvider(provider));
@@ -614,10 +613,15 @@ export default function HomeScreen() {
         }
       }
 
-      settings = {
-        ...settings,
-        systemPrompt: await skillManager.buildSystemPrompt(basePrompt),
-      };
+      if (!currentChat.assistantId) {
+        await skillManager.syncTools();
+        settings = {
+          ...settings,
+          systemPrompt: await skillManager.buildSystemPrompt(basePrompt),
+        };
+      } else {
+        settings = { ...settings, systemPrompt: basePrompt };
+      }
 
       await messageProcessingService.processMessage(
         provider,
@@ -843,6 +847,18 @@ export default function HomeScreen() {
           </View>
         } 
       />
+      {chat ? (
+        <ChatAssistantBar
+          chatId={chat.id}
+          assistantId={chat.assistantId}
+          onAssistantChange={() => {
+            const updated = chatManager.getCurrentChat();
+            if (updated) {
+              setChat({ ...updated });
+            }
+          }}
+        />
+      ) : null}
       <View style={[styles.modelSelectorContainer, { borderBottomColor: themeColors.borderColor }]}>
          <ModelSelectorComponent
             modelSelectorRef={modelSelectorRef}

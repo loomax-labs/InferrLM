@@ -12,12 +12,18 @@ import { ThinkTagParser } from '../utils/thinkTagParser';
 import { skillActivityAdapter } from './adapters/SkillActivityAdapter';
 import { skillToolLoopService } from './SkillToolLoopService';
 import { skillManager } from './SkillManager';
-import { isAgentSkillsPrompt, extractUserBasePrompt, isCapabilityQuestion } from '../constants/agentSkillsPrompt';
+import { isAgentSkillsPrompt, isCapabilityQuestion } from '../constants/agentSkillsPrompt';
 import { toolRegistry } from './tools/ToolRegistry';
 import { registerWebSearch } from './tools/WebSearchTool';
 import { agentRuntime } from './agent/AgentRuntime';
 import { buildRequestToolCatalog } from './agent/ToolCatalog';
 import { normalizeAttachMessages } from './AttachNormalize';
+import {
+  buildSystemPromptForTurn,
+  configureSkillScopeForTurn,
+  planTurnPrompt,
+  resolveAssistantForChat,
+} from './chatTurnContext';
 
 export interface MessageProcessingCallbacks {
   setMessages: (messages: ChatMessage[]) => void;
@@ -79,6 +85,7 @@ export class MessageProcessingService {
     console.log('process_message_start', { provider: activeProvider, chatId: currentChat.id, messageCount: currentChat.messages.length });
 
     let activeMessageId: string | null = null;
+    let releaseSkillScope: (() => void) | null = null;
 
     try {
       skillActivityAdapter.clear();
@@ -89,19 +96,21 @@ export class MessageProcessingService {
       const isAppleFoundation = activeProvider === 'apple-foundation';
 
       registerWebSearch();
+
+      const assistant = await resolveAssistantForChat(currentChat);
+      const promptPlan = planTurnPrompt(settings.systemPrompt, assistant);
+      releaseSkillScope = await configureSkillScopeForTurn(promptPlan);
       await skillManager.syncTools();
 
-      // Keep skill/tool catalogs out of default chat prompts; expose only for explicit capability questions.
-      // LiteRT reloads on systemPrompt changes, so keep that prompt stable and inject capability text into the user turn.
-      const rawBase = extractUserBasePrompt(settings.systemPrompt);
       const lastUserForPrompt = this.getLastUserText(
         currentMessages.filter(msg => msg.role !== 'system').map(msg => ({ role: msg.role, content: msg.content })),
       );
       const wantsCaps = isCapabilityQuestion(lastUserForPrompt);
       const isLocalLitert = (!activeProvider || activeProvider === 'local') && engineService.get() === 'litert';
-      const systemPrompt = wantsCaps && !isLocalLitert
-        ? await skillManager.buildSystemPrompt(rawBase)
-        : (rawBase.trim() || await skillManager.buildConversationalSystemPrompt());
+      const systemPrompt = await buildSystemPromptForTurn(promptPlan, {
+        isLocalLitert,
+        lastUserText: lastUserForPrompt,
+      });
       settings = { ...settings, systemPrompt };
 
       const nonSystem = currentMessages.filter(msg => msg.role !== 'system');
@@ -111,7 +120,7 @@ export class MessageProcessingService {
       processedMessages = normalizeAttachMessages(processedMessages);
       console.log('attach_msgs_normalized');
       if (wantsCaps && isLocalLitert) {
-        const capsPrompt = await skillManager.buildSystemPrompt(rawBase);
+        const capsPrompt = await skillManager.buildSystemPrompt(promptPlan.rawBase);
         if (capsPrompt.trim()) {
           console.log('local_caps_inject');
           const lastUserIndex = processedMessages.map(entry => entry.role).lastIndexOf('user');
@@ -234,6 +243,8 @@ export class MessageProcessingService {
         this.callbacks.setIsRegenerating(false);
       }
       throw error;
+    } finally {
+      releaseSkillScope?.();
     }
   }
 

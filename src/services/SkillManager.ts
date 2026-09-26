@@ -161,6 +161,28 @@ const BUILTIN_SKILL_ASSETS: BuiltinSkillAsset[] = [
 ];
 
 class SkillManager {
+  private scopedSkillIds: string[] | null = null;
+
+  beginSkillScope(skillIds: string[]): () => void {
+    this.scopedSkillIds = [...skillIds];
+    return () => {
+      this.scopedSkillIds = null;
+    };
+  }
+
+  getActiveSkillScope(): string[] | null {
+    return this.scopedSkillIds ? [...this.scopedSkillIds] : null;
+  }
+
+  private async getScopedSkills(): Promise<Skill[]> {
+    if (!this.scopedSkillIds || this.scopedSkillIds.length === 0) {
+      return [];
+    }
+    const allowed = new Set(this.scopedSkillIds);
+    const skills = await this.getAll();
+    return skills.filter(skill => allowed.has(skill.id));
+  }
+
   private builtinsCache: Skill[] | null = null;
 
   private async getCustomSkills(): Promise<Skill[]> {
@@ -310,6 +332,9 @@ class SkillManager {
   }
 
   async getEnabled(): Promise<Skill[]> {
+    if (this.scopedSkillIds) {
+      return this.getScopedSkills();
+    }
     const skills = await this.getAll();
     return skills.filter(skill => skill.enabled);
   }
@@ -485,11 +510,12 @@ class SkillManager {
   }
 
   async buildSystemPrompt(basePrompt?: string): Promise<string> {
-    if (!(await this.isModeEnabled())) {
+    const scoped = this.scopedSkillIds != null;
+    if (!scoped && !(await this.isModeEnabled())) {
       return basePrompt?.trim() || '';
     }
 
-    const enabled = await this.getEnabled();
+    const enabled = scoped ? await this.getScopedSkills() : await this.getEnabled();
     if (enabled.length === 0) {
       return basePrompt?.trim() || '';
     }
@@ -514,6 +540,15 @@ class SkillManager {
   }
 
   async syncTools(): Promise<void> {
+    if (this.scopedSkillIds) {
+      const scoped = await this.getScopedSkills();
+      if (scoped.length === 0) {
+        unregisterSkillTools();
+        return;
+      }
+      await registerSkillTools();
+      return;
+    }
     if (!(await this.isModeEnabled())) {
       unregisterSkillTools();
       return;

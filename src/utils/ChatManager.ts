@@ -36,6 +36,7 @@ export type Chat = {
   forkedFromChatId?: string;
   forkPointIndex?: number;
   pinned?: boolean;
+  assistantId?: string;
 };
 
 class ChatManager {
@@ -250,6 +251,7 @@ class ChatManager {
         modelPath: chat.modelPath,
         forkedFromChatId: originId,
         forkPointIndex: fromMsgIndex,
+        assistantId: chat.assistantId,
       };
 
       this.cache.unshift(fork);
@@ -276,7 +278,30 @@ class ChatManager {
     return this.currentChatId;
   }
 
-  async createNewChat(initialMessages: ChatMessage[] = []): Promise<Chat> {
+  async setChatAssistantId(
+    chatId: string,
+    assistantId: string | null | undefined,
+  ): Promise<boolean> {
+    try {
+      await this.ensureInitialized();
+      const chat = this.getChatById(chatId);
+      if (!chat) {
+        return false;
+      }
+      chat.assistantId = assistantId || undefined;
+      chat.timestamp = Date.now();
+      await this.saveChat(chat);
+      this.notifyListeners();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async createNewChat(
+    initialMessages: ChatMessage[] = [],
+    options?: { assistantId?: string },
+  ): Promise<Chat> {
     try {
       engineService.stop();
       await engineService.resetChatSession();
@@ -309,6 +334,7 @@ class ChatManager {
         messages: initialMessages,
         timestamp: now,
         createdAt: now,
+        assistantId: options?.assistantId,
       };
 
       this.cache.unshift(newChat);
@@ -527,6 +553,7 @@ class ChatManager {
         parentChatId: rootId,
         branchFromMsgId: messageId,
         branchPointIndex: msgIndex,
+        assistantId: chat.assistantId,
       };
 
       this.cache.unshift(branch);
