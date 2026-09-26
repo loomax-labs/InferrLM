@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { AppSwitch } from '../services/adapters/SwitchAdapter';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import { useT } from '../i18n';
 import Slider from '@react-native-community/slider';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -46,6 +47,7 @@ type CameraOverlayProps = {
 };
 
 export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag = true, onToggleRag, ragEnabled = true, ragToggleDisabled = false }: CameraOverlayProps) {
+  const t = useT();
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [mediaLibraryPermission, requestMediaLibraryPermission] = MediaLibrary.usePermissions();
@@ -183,23 +185,23 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
               style={styles.permissionIcon}
             />
             <Text style={[styles.permissionTitle, { color: themeColors.text }]}>
-              Camera Permission Required
+              {t('camera.permissionTitle')}
             </Text>
             <Text style={[styles.permissionText, { color: themeColors.secondaryText }]}>
-              Grant camera access to take photos
+              {t('camera.permissionBody')}
             </Text>
             <View style={styles.permissionButtons}>
               <TouchableOpacity
                 style={[styles.permissionButton, styles.cancelButton]}
                 onPress={onClose}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.permissionButton, styles.grantButton]}
                 onPress={requestPermission}
               >
-                <Text style={styles.grantButtonText}>Grant</Text>
+                <Text style={styles.grantButtonText}>{t('common.grant')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -222,7 +224,7 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
           <TouchableOpacity style={styles.headerButton} onPress={onClose}>
             <MaterialCommunityIcons name="close" size={24} color="#fff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Camera</Text>
+          <Text style={styles.headerTitle}>{t('camera.title')}</Text>
           <TouchableOpacity style={styles.headerButton} onPress={toggleCameraFacing}>
             <MaterialCommunityIcons name="camera-flip" size={24} color="#fff" />
           </TouchableOpacity>
@@ -271,8 +273,8 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
                       ]}
                     >
                       <View style={styles.ragTextContainer}>
-                        <Text style={[styles.ragTitle, { color: themeColors.text }]}>Use RAG</Text>
-                        <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>Store this file for smarter answers in this chat.</Text>
+                        <Text style={[styles.ragTitle, { color: themeColors.text }]}>{t('rag.use')}</Text>
+                        <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>{t('rag.storeForChat')}</Text>
                       </View>
                       <AppSwitch
                         value={useRag}
@@ -292,8 +294,8 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
                     >
                       <MaterialCommunityIcons name="information-outline" size={20} color={isDark ? '#888888' : '#666666'} />
                       <View style={[styles.ragTextContainer, { paddingLeft: 8 }]}>
-                        <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>RAG not available</Text>
-                        <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>Local RAG is not available for remote models.</Text>
+                        <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailable')}</Text>
+                        <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailableRemote')}</Text>
                       </View>
                     </View>
                   )
@@ -336,7 +338,7 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
 
                 <View style={styles.compWrap}>
                   <View style={styles.compHead}>
-                    <Text style={[styles.compLabel, { color: themeColors.text }]}>Image Size + Quality</Text>
+                    <Text style={[styles.compLabel, { color: themeColors.text }]}>{t('camera.imageSize')}</Text>
                     <Text style={[styles.compValue, { color: themeColors.secondaryText }]}>{Math.round(imgCompress * 100)}%</Text>
                   </View>
                   <Slider
@@ -366,7 +368,7 @@ export default function CameraOverlay({ visible, onClose, onPhotoTaken, useRag =
                     style={[styles.promptButton, styles.cancelPromptButton]}
                     onPress={handleCancelPhoto}
                   >
-                    <Text style={styles.cancelPromptButtonText}>Cancel</Text>
+                    <Text style={styles.cancelPromptButtonText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.promptButton, styles.sendPromptButton]}

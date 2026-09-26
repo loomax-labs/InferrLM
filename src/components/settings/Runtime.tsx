@@ -11,6 +11,7 @@ import InferenceIcon from '../icons/InferenceIcon';
 import LlamaCppIcon from '../icons/LlamaCppIcon';
 import MlxIcon from '../icons/MlxIcon';
 import LiteRtIcon from '../icons/LiteRtIcon';
+import { useT } from '../../i18n';
 
 interface RuntimeProps {
   enabled: Record<EngineId, boolean>;
@@ -21,6 +22,7 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
   enabled,
   onToggle,
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -30,14 +32,14 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
     {
       id: 'llama' as const,
       name: 'Llama.cpp',
-      description: 'Widest GGUF model support with llama.cpp',
+      description: t('runtime.llamaDesc'),
       icon: 'chip',
       enabled: true,
     },
     {
       id: 'mlx' as const,
       name: 'MLX',
-      description: "Machine Learning Framework developed by Apple",
+      description: t('runtime.mlxDesc'),
       icon: 'apple',
       enabled: true,
       requiresMLX: true,
@@ -45,11 +47,11 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
     {
       id: 'litert' as const,
       name: 'LiteRT-LM',
-      description: 'LiteRT-LM runtime for .litertlm and .task models',
+      description: t('runtime.litertDesc'),
       icon: 'lightning-bolt-outline',
       enabled: true,
     },
-  ], []);
+  ], [t]);
 
   const renderEngineItem = (engine: (typeof engines)[number]) => {
     const isDisabled = !engine.enabled || (engine.requiresMLX && !supportsMLX);
@@ -98,7 +100,7 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
             {engine.description}
           </Text>
           {engine.requiresMLX && !supportsMLX && (
-            <Text style={[styles.requirementText, { color: currentTheme === 'dark' ? '#FF9494' : '#d32f2f' }]}>Requires iOS 26+</Text>
+            <Text style={[styles.requirementText, { color: currentTheme === 'dark' ? '#FF9494' : '#d32f2f' }]}>{t('runtime.requiresIos')}</Text>
           )}
         </View>
         <AppSwitch
@@ -127,9 +129,9 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
             <InferenceIcon size={22} color={iconColor} />
           </View>
           <View style={styles.settingTextContainer}>
-            <Text style={[styles.settingText, { color: themeColors.text }]}>Inference</Text>
+            <Text style={[styles.settingText, { color: themeColors.text }]}>{t('runtime.title')}</Text>
             <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-              Enable or disable local runtimes
+              {t('runtime.description')}
             </Text>
           </View>
         </View>
@@ -145,7 +147,7 @@ const RuntimeSection: React.FC<RuntimeProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: themeColors.background }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Enable or disable runtimes</Text>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>{t('runtime.modalTitle')}</Text>
               <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
                 <MaterialCommunityIcons name="close" size={24} color={themeColors.text} />
               </TouchableOpacity>

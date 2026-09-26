@@ -166,7 +166,7 @@ export default function RegisterScreen() {
 
     if (!termsAccepted) {
       logger.warn('ui_register_terms', 'auth');
-      setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
+      setTermsError(t('auth.mustAccept'));
       return;
     }
 
@@ -218,7 +218,7 @@ export default function RegisterScreen() {
     try {
       if (!termsAccepted) {
         logger.warn('ui_google_terms', 'auth');
-        setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
+        setTermsError(t('auth.mustAccept'));
         return;
       }
 
@@ -263,7 +263,7 @@ export default function RegisterScreen() {
     try {
       if (!termsAccepted) {
         logger.warn('ui_apple_terms', 'auth');
-        setTermsError('You must accept the Terms & Conditions and Privacy Policy to continue');
+        setTermsError(t('auth.mustAccept'));
         return;
       }
       if (isLoading) {
@@ -341,16 +341,16 @@ export default function RegisterScreen() {
                 fadeDuration={0}
               />
               <Text style={styles.logoText} variant="headlineMedium">
-                Join InferrLM
+                {t('auth.joinTitle')}
               </Text>
               <Text style={styles.subtitle} variant="bodyMedium">
-                Create your account to get started
+                {t('auth.joinSubtitle')}
               </Text>
             </View>
 
             <View style={styles.formContainer}>
               <TextInput
-                label="Full Name"
+                label={t('auth.fullName')}
                 value={name}
                 onChangeText={setName}
                 mode="outlined"
@@ -360,7 +360,7 @@ export default function RegisterScreen() {
               />
 
               <TextInput
-                label="Email"
+                label={t('auth.email')}
                 value={email}
                 onChangeText={handleEmailChange}
                 mode="outlined"
@@ -373,7 +373,7 @@ export default function RegisterScreen() {
               />
 
               <TextInput
-                label="Password"
+                label={t('auth.password')}
                 value={password}
                 onChangeText={setPassword}
                 mode="outlined"
@@ -389,7 +389,7 @@ export default function RegisterScreen() {
               />
 
               <TextInput
-                label="Confirm Password"
+                label={t('auth.confirmPassword')}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 mode="outlined"
@@ -434,7 +434,7 @@ export default function RegisterScreen() {
                         style={styles.linkText}
                         onPress={handleOpenTerms}
                       >
-                        Terms & Conditions
+                        {t('auth.terms')}
                       </Text>
                       {' '}and{' '}
                       <Text
@@ -442,7 +442,7 @@ export default function RegisterScreen() {
                         style={styles.linkText}
                         onPress={handleOpenPrivacy}
                       >
-                        Privacy Policy
+                        {t('auth.privacy')}
                       </Text>
                     </Text>
                   </View>
@@ -465,11 +465,11 @@ export default function RegisterScreen() {
                 buttonColor="#8A2BE2"
                 textColor={currentTheme === 'dark' ? '#FFFFFF' : undefined}
               >
-                Create Account
+                {t('auth.createAccount')}
               </Button>
               
               <View style={styles.socialContainer}>
-                <Text variant="bodySmall" style={styles.dividerText}>Or sign up with</Text>
+                <Text variant="bodySmall" style={styles.dividerText}>{t('auth.orSignUpWith')}</Text>
                 
                 <Button
                   key={`google-button-${isLoading}`}
@@ -503,7 +503,7 @@ export default function RegisterScreen() {
               
               <View style={styles.loginContainer}>
                 <Text variant="bodyMedium">
-                  Already have an account?
+                  {t('auth.haveAccount')}
                 </Text>
                 <Button 
                   key="sign-in-button"
@@ -512,7 +512,7 @@ export default function RegisterScreen() {
                   style={styles.loginButton}
                   textColor={currentTheme === 'dark' ? '#FFFFFF' : undefined}
                 >
-                  Sign In
+                  {t('auth.signIn')}
                 </Button>
               </View>
             </View>

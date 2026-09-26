@@ -317,16 +317,16 @@ export default function LoginScreen() {
                 fadeDuration={0}
               />
               <Text style={styles.logoText} variant="headlineMedium">
-                Welcome Back
+                {t('auth.welcomeBack')}
               </Text>
               <Text style={styles.subtitle} variant="bodyMedium">
-                Sign in to your account
+                {t('auth.signInSubtitle')}
               </Text>
             </View>
 
             <View style={styles.formContainer}>
               <TextInput
-                label="Email"
+                label={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}
                 mode="outlined"
@@ -337,7 +337,7 @@ export default function LoginScreen() {
               />
 
               <TextInput
-                label="Password"
+                label={t('auth.password')}
                 value={password}
                 onChangeText={setPassword}
                 mode="outlined"
@@ -368,11 +368,11 @@ export default function LoginScreen() {
                 buttonColor="#8A2BE2"
                 textColor={currentTheme === 'dark' ? '#FFFFFF' : undefined}
               >
-                Sign In
+                {t('auth.signIn')}
               </Button>
               
               <View style={styles.socialContainer}>
-                <Text variant="bodySmall" style={styles.dividerText}>Or sign in with</Text>
+                <Text variant="bodySmall" style={styles.dividerText}>{t('auth.orSignInWith')}</Text>
                 
                 <Button
                   mode="outlined"
@@ -399,14 +399,14 @@ export default function LoginScreen() {
               
               <View style={styles.registerContainer}>
                 <Text variant="bodyMedium">
-                  Don't have an account?
+                  {t('auth.noAccount')}
                 </Text>
                 <Button 
                   mode="text" 
                   onPress={navigateToRegister}
                   style={styles.registerButton}
                 >
-                  Sign Up
+                  {t('auth.signUp')}
                 </Button>
               </View>
             </View>

@@ -618,8 +618,8 @@ export default function SettingsScreen() {
 
             return {
               key: engine,
-              label: meta.entryLabel,
-              description: meta.entryDescription,
+              label: t(engine === 'llama' ? 'settings.engineLlamaLabel' : engine === 'mlx' ? 'settings.engineMlxLabel' : 'settings.engineLitertLabel'),
+              description: t(engine === 'llama' ? 'settings.engineLlamaBody' : engine === 'mlx' ? 'settings.engineMlxBody' : 'settings.engineLitertBody'),
               badgeLabel: meta.badgeLabel,
               iconName: meta.iconName,
               iconKey: meta.iconKey,
@@ -636,24 +636,24 @@ export default function SettingsScreen() {
           onClearAllModels={clearAllModels}
         />
 
-        <SettingsSection title="Capabilities">
+        <SettingsSection title={t('settings.capabilities')}>
           <TouchableOpacity
             style={styles.capabilityRow}
             onPress={() => router.push('/advanced-capabilities')}
           >
             <View style={{ flex: 1 }}>
               <Text style={[styles.capabilityTitle, { color: themeColors.text }]}>
-                Advanced capabilities
+                {t('settings.advancedCapabilities')}
               </Text>
               <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
-                Optional AppFunctions and root elevation tools
+                {t('settings.advancedCapabilitiesBody')}
               </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
           </TouchableOpacity>
         </SettingsSection>
 
-        <SettingsSection title="Setup">
+        <SettingsSection title={t('settings.setup')}>
           <TouchableOpacity
             style={styles.capabilityRow}
             onPress={async () => {
@@ -663,10 +663,10 @@ export default function SettingsScreen() {
           >
             <View style={{ flex: 1 }}>
               <Text style={[styles.capabilityTitle, { color: themeColors.text }]}>
-                Run setup again
+                {t('settings.runSetupAgain')}
               </Text>
               <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
-                Walk through onboarding from the start. Your downloaded models stay on device.
+                {t('settings.runSetupAgainBody')}
               </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
@@ -677,10 +677,10 @@ export default function SettingsScreen() {
           >
             <View style={{ flex: 1 }}>
               <Text style={[styles.capabilityTitle, { color: themeColors.text }]}>
-                How to use InferrLM
+                {t('settings.howToUse')}
               </Text>
               <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
-                Replay the guided lessons for chat, models, and tools
+                {t('settings.howToUseBody')}
               </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
@@ -704,7 +704,7 @@ export default function SettingsScreen() {
           }}
           value={modelSettings.systemPrompt}
           defaultValue={DEFAULT_SETTINGS.systemPrompt}
-          description="Define how the AI assistant should behave. This prompt sets the personality, capabilities, and limitations of the assistant."
+          description={t('settings.systemPromptDescription')}
         />
 
       </ScrollView>
@@ -712,8 +712,8 @@ export default function SettingsScreen() {
       <Dialog
         visible={showAppleFoundationDialog}
         onDismiss={() => setShowAppleFoundationDialog(false)}
-        title="Apple Intelligence"
-        description="Apple Intelligence not enabled on this device."
+        title={t('settings.appleIntelligence')}
+        description={t('settings.appleIntelligenceOff')}
         buttonText="OK"
         onClose={() => setShowAppleFoundationDialog(false)}
       />

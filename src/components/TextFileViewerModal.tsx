@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { fs as FileSystem } from '../services/fs';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { theme } from '../constants/theme';
 
 type TextFileViewerModalProps = {
@@ -41,6 +42,7 @@ export default function TextFileViewerModal({
   ragEnabled = true,
   ragToggleDisabled = false,
 }: TextFileViewerModalProps) {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const isDark = currentTheme === 'dark';
@@ -202,8 +204,8 @@ export default function TextFileViewerModal({
                   {ragEnabled ? (
                     <View style={styles.ragRow}>
                       <View style={styles.ragTextContainer}>
-                        <Text style={[styles.ragTitle, { color: isDark ? '#ffffff' : '#333333' }]}>Use RAG</Text>
-                        <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>Store this file for smarter answers in this chat.</Text>
+                        <Text style={[styles.ragTitle, { color: isDark ? '#ffffff' : '#333333' }]}>{t('rag.use')}</Text>
+                        <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>{t('rag.storeForChat')}</Text>
                       </View>
                       <AppSwitch
                         value={useRag}
@@ -215,8 +217,8 @@ export default function TextFileViewerModal({
                     <View style={styles.ragRow}>
                       <MaterialCommunityIcons name="information-outline" size={20} color={isDark ? '#888888' : '#666666'} />
                       <View style={[styles.ragTextContainer, { paddingLeft: 8 }]}>
-                        <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>RAG not available</Text>
-                        <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>RAG is not available for this model.</Text>
+                        <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailable')}</Text>
+                        <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailableModel')}</Text>
                       </View>
                     </View>
                   )}

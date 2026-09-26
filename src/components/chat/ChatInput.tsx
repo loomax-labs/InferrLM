@@ -24,6 +24,7 @@ import { fs as FileSystem } from '../../services/fs';
 import { useTheme } from '../../context/ThemeContext';
 import { useModel } from '../../context/ModelContext';
 import { theme } from '../../constants/theme';
+import { useT } from '../../i18n';
 import { getThemeAwareColor } from '../../utils/ColorUtils';
 import FileViewerModal from '../FileViewerModal';
 import CameraOverlay from '../CameraOverlay';
@@ -114,6 +115,7 @@ export default function ChatInput({
   onCancelEdit,
   chatId,
 }: ChatInputProps) {
+  const t = useT();
   const [text, setText] = useState('');
   const [inputHeight, setInputHeight] = useState(52);
   const [fileModalVisible, setFileModalVisible] = useState(false);
@@ -1199,7 +1201,7 @@ export default function ChatInput({
           ]}
         >
           <ActivityIndicator size="small" color={getThemeAwareColor('#4a0660', currentTheme)} />
-          <Text style={[styles.ragBannerText, { color: isDark ? '#ffffff' : getThemeAwareColor('#4a0660', currentTheme) }]}>Storing document for retrieval {ragProgress ? `(${ragProgress.completed}/${ragProgress.total || '?'})` : ''}</Text>
+          <Text style={[styles.ragBannerText, { color: isDark ? '#ffffff' : getThemeAwareColor('#4a0660', currentTheme) }]}>{t('chat.storingDocument', { progress: ragProgress ? `(${ragProgress.completed}/${ragProgress.total || '?'})` : '' })}</Text>
           <TouchableOpacity
             onPress={() => {
               ragCancelRef.current.cancelled = true;
@@ -1418,7 +1420,7 @@ export default function ChatInput({
                 <TextInput
                   ref={inputRef}
                   style={inputStyle}
-                  placeholder={isEditing ? "Edit your message..." : "Type a message..."}
+                  placeholder={isEditing ? t('composer.edit') : t('composer.type')}
                   placeholderTextColor={placeholderColor || defaultPlaceholderColor}
                   value={text}
                   onChangeText={setText}
@@ -1435,7 +1437,7 @@ export default function ChatInput({
                 <TextInput
                   ref={inputRef}
                   style={inputStyle}
-                  placeholder={isEditing ? "Edit your message..." : "Type a message..."}
+                  placeholder={isEditing ? t('composer.edit') : t('composer.type')}
                   placeholderTextColor={placeholderColor || defaultPlaceholderColor}
                   value={text}
                   onChangeText={setText}

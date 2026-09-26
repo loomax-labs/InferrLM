@@ -10,6 +10,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from 'react-native-paper';
 import Dialog from './Dialog';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { useModel } from '../context/ModelContext';
 import { theme } from '../constants/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
@@ -51,6 +52,7 @@ export default function ImageProcessingSelector({
   const [storedModels, setStoredModels] = useState<StoredModel[]>([]);
   const [isLoadingProjector, setIsLoadingProjector] = useState(false);
   
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const { selectedModelPath, loadModel, isMultimodalEnabled } = useModel();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
@@ -295,8 +297,8 @@ export default function ImageProcessingSelector({
           ]}
         >
           <View style={styles.ragTextContainer}>
-            <Text style={[styles.ragTitle, { color: themeColors.text }]}>Use RAG</Text>
-            <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>Store extracted text for this chat.</Text>
+            <Text style={[styles.ragTitle, { color: themeColors.text }]}>{t('rag.use')}</Text>
+            <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>{t('rag.storeExtracted')}</Text>
           </View>
           <AppSwitch
             value={useRag}
@@ -318,8 +320,8 @@ export default function ImageProcessingSelector({
         >
           <MaterialCommunityIcons name="information-outline" size={20} color={isDark ? '#888888' : '#666666'} />
           <View style={[styles.ragTextContainer, { paddingLeft: 8 }]}>
-            <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>RAG not available</Text>
-            <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>RAG is not available for this model.</Text>
+            <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailable')}</Text>
+            <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailableModel')}</Text>
           </View>
         </View>
       )}
@@ -337,8 +339,8 @@ export default function ImageProcessingSelector({
         >
           <MaterialCommunityIcons name="information-outline" size={20} color={isDark ? '#666666' : '#999999'} />
           <View style={[styles.ragTextContainer, { paddingLeft: 8 }]}>
-            <Text style={[styles.ragTitle, { color: isDark ? '#666666' : '#999999' }]}>RAG disabled</Text>
-            <Text style={[styles.ragDescription, { color: isDark ? '#555555' : '#aaaaaa' }]}>RAG is not used with Vision Analysis mode.</Text>
+            <Text style={[styles.ragTitle, { color: isDark ? '#666666' : '#999999' }]}>{t('rag.disabled')}</Text>
+            <Text style={[styles.ragDescription, { color: isDark ? '#555555' : '#aaaaaa' }]}>{t('rag.disabledVision')}</Text>
           </View>
         </View>
       )}

@@ -6,6 +6,7 @@ import { theme } from '../../constants/theme';
 import type { ExpertiseLevel } from '../../onboarding/types';
 import type { RecommendedModel, RecommendationReason } from '../../onboarding/recommendModels';
 import { parseModelSizeBytes } from '../../onboarding/recommendModels';
+import { useT } from '../../i18n';
 
 type ModelStepProps = {
   expertise: ExpertiseLevel;
@@ -49,6 +50,7 @@ export function ModelStep({
   selectedNames,
   onToggle,
 }: ModelStepProps) {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const colors = theme[currentTheme];
   const multiSelect = expertise === 'experienced';
@@ -93,7 +95,7 @@ export function ModelStep({
             ) : null}
             {expertise === 'new' && hasHelper ? (
               <Text style={{ color: colors.textSecondary, marginTop: 4 }}>
-                Includes a photo helper
+                {t('onboarding.photoHelper')}
               </Text>
             ) : null}
           </TouchableOpacity>

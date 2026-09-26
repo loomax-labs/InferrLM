@@ -11,6 +11,7 @@ import { Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { useT } from '../../i18n';
 
 type OnboardingShellProps = {
   title: string;
@@ -33,12 +34,14 @@ export function OnboardingShell({
   onBack,
   onSkip,
   onContinue,
-  continueLabel = 'Continue',
+  continueLabel,
   continueDisabled = false,
   secondaryLabel,
   onSecondary,
   children,
 }: OnboardingShellProps) {
+  const t = useT();
+  const continueText = continueLabel ?? t('onboarding.continue');
   const { theme: currentTheme } = useTheme();
   const colors = theme[currentTheme];
 
@@ -52,7 +55,7 @@ export function OnboardingShell({
           <View style={styles.headerRow}>
             {onBack ? (
               <TouchableOpacity onPress={onBack} style={styles.headerSide}>
-                <Text style={{ color: colors.primary }}>Back</Text>
+                <Text style={{ color: colors.primary }}>{t('onboarding.back')}</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.headerSide} />
@@ -62,7 +65,7 @@ export function OnboardingShell({
             </Text>
             {onSkip ? (
               <TouchableOpacity onPress={onSkip} style={styles.headerSide}>
-                <Text style={[styles.skip, { color: colors.textSecondary }]}>Skip</Text>
+                <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('onboarding.skip')}</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.headerSide} />
@@ -99,7 +102,7 @@ export function OnboardingShell({
             ]}
           >
             <Text style={{ color: colors.headerText, textAlign: 'center', fontWeight: '600' }}>
-              {continueLabel}
+              {continueText}
             </Text>
           </TouchableOpacity>
         </View>

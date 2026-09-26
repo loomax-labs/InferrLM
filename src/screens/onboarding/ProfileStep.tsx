@@ -6,13 +6,14 @@ import { theme } from '../../constants/theme';
 import type { ExpertiseLevel, OnboardingIntentId } from '../../onboarding/types';
 import { intentLabelsForExpertise } from '../../onboarding/lessons';
 import type { OnboardingExpertise } from '../../onboarding/lessons';
+import { useT } from '../../i18n';
 
 export type ProfilePhase = 'welcome' | 'expertise' | 'intents';
 
-const EXPERTISE_OPTIONS: { value: ExpertiseLevel; label: string }[] = [
-  { value: 'new', label: 'New to this' },
-  { value: 'comfortable', label: 'I have used chat apps' },
-  { value: 'experienced', label: 'I tune models and settings' },
+const EXPERTISE_OPTIONS: { value: ExpertiseLevel; labelKey: 'onboarding.new' | 'onboarding.comfortable' | 'onboarding.experienced' }[] = [
+  { value: 'new', labelKey: 'onboarding.new' },
+  { value: 'comfortable', labelKey: 'onboarding.comfortable' },
+  { value: 'experienced', labelKey: 'onboarding.experienced' },
 ];
 
 type ProfileStepProps = {
@@ -30,6 +31,7 @@ export function ProfileStep({
   onSelectExpertise,
   onToggleIntent,
 }: ProfileStepProps) {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const colors = theme[currentTheme];
 
@@ -37,11 +39,10 @@ export function ProfileStep({
     return (
       <View>
         <Text style={[styles.body, { color: colors.text }]}>
-          InferrLM runs AI on your phone. We will ask what you need, show how the app works, and
-          suggest a model file you can download.
+          {t('onboarding.welcomeBody')}
         </Text>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>
-          You can skip any step and finish setup later.
+          {t('onboarding.welcomeHint')}
         </Text>
       </View>
     );
@@ -51,7 +52,7 @@ export function ProfileStep({
     return (
       <View style={styles.gap}>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          This sets how we explain the rest of setup.
+          {t('onboarding.expertiseHint')}
         </Text>
         {EXPERTISE_OPTIONS.map((option) => {
           const selected = expertise === option.value;
@@ -68,7 +69,7 @@ export function ProfileStep({
               ]}
             >
               <Text style={{ color: selected ? colors.headerText : colors.text, fontSize: 16 }}>
-                {option.label}
+                {t(option.labelKey)}
               </Text>
             </TouchableOpacity>
           );
@@ -83,7 +84,7 @@ export function ProfileStep({
   return (
     <View style={styles.gap}>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-        Pick at least one. You can change this later in settings.
+        {t('onboarding.intentsHint')}
       </Text>
       {options.map(({ intent, label }) => {
         const selected = intents.includes(intent as OnboardingIntentId);

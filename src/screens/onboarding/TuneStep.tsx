@@ -31,6 +31,7 @@ import {
 import { checkGpuSupport, type GpuSupport } from '../../utils/gpuCapabilities';
 import { getThemeAwareColor } from '../../utils/ColorUtils';
 import { llamaManager } from '../../utils/LlamaManager';
+import { useT } from '../../i18n';
 import { ModelFormat } from '../../types/models';
 
 const INIT_STORAGE_KEY = 'model_selector_init_v1';
@@ -112,6 +113,7 @@ export function modelUsesLlamaCpp(model: DownloadableModel): boolean {
 }
 
 export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneStepProps) {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const iconColor = currentTheme === 'dark' ? '#FFFFFF' : themeColors.primary;
@@ -341,7 +343,7 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
 
       onContinue();
     } catch {
-      setError('Failed to save settings');
+      setError(t('onboarding.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -354,12 +356,12 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.title, { color: themeColors.text }]}>Tune inference</Text>
+        <Text style={[styles.title, { color: themeColors.text }]}>{t('onboarding.tuneTitle')}</Text>
         <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>
-          Optional defaults for sampling and llama.cpp hardware. You can change these later in Settings.
+          {t('onboarding.tuneSubtitle')}
         </Text>
 
-        <SettingsSection title="Assistant">
+        <SettingsSection title={t('onboarding.assistant')}>
           <TouchableOpacity
             style={[styles.settingItem, styles.settingItemBorder]}
             onPress={() => setShowSystemPromptDialog(true)}
@@ -369,9 +371,9 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
                 <MaterialCommunityIcons name="message-text-outline" size={22} color={iconColor} />
               </View>
               <View style={styles.settingTextContainer}>
-                <Text style={[styles.settingText, { color: themeColors.text }]}>System Prompt</Text>
+                <Text style={[styles.settingText, { color: themeColors.text }]}>{t('onboarding.systemPrompt')}</Text>
                 <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                  Set how the assistant should behave in chat
+                  {t('onboarding.systemPromptHint')}
                 </Text>
               </View>
             </View>
@@ -400,14 +402,14 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
             <View style={[styles.initWarningRow, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,176,0,0.1)' : 'rgba(255,152,0,0.08)', borderColor: currentTheme === 'dark' ? 'rgba(255,176,0,0.25)' : 'rgba(255,152,0,0.3)' }]}>
               <MaterialCommunityIcons name="information-outline" size={14} color={currentTheme === 'dark' ? '#FFB300' : '#E65100'} />
               <Text style={[styles.initWarningText, { color: currentTheme === 'dark' ? '#FFB300' : '#E65100' }]}>
-                Context and GPU layers apply on the next llama.cpp model load.
+                {t('onboarding.memoryNote')}
               </Text>
             </View>
 
             <View style={styles.initSliderItem}>
               <View style={styles.initSliderHeader}>
                 <View style={styles.initSliderLabelGroup}>
-                  <Text style={{ fontWeight: '600', color: themeColors.text }}>Context window</Text>
+                  <Text style={{ fontWeight: '600', color: themeColors.text }}>{t('onboarding.memory')}</Text>
                   <Text style={[styles.initSliderDesc, { color: themeColors.secondaryText }]}>
                     Max tokens the model remembers (n_ctx)
                   </Text>
@@ -431,13 +433,13 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
               style={[styles.settingItem, styles.settingItemBorder]}
               onPress={() =>
                 handleOpenDialog({
-                  label: 'GPU layers',
+                  label: t('onboarding.gpuLayers'),
                   value: gpuSettings.layers,
                   defaultValue: DEFAULT_GPU_LAYERS,
                   minimumValue: GPU_LAYER_MIN,
                   maximumValue: GPU_LAYER_MAX,
                   step: 1,
-                  description: 'Number of transformer layers to offload to the GPU when acceleration is enabled.',
+                  description: t('onboarding.gpuLayersHint'),
                   onSave: (value) => {
                     setGpuSettings(prev => ({ ...prev, layers: value }));
                     setInitOverrides(prev => ({ ...prev, n_gpu_layers: value }));
@@ -451,7 +453,7 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
                 </View>
                 <View style={styles.settingTextContainer}>
                   <View style={styles.labelRow}>
-                    <Text style={[styles.settingText, { color: themeColors.text }]}>GPU layers</Text>
+                    <Text style={[styles.settingText, { color: themeColors.text }]}>{t('onboarding.gpuLayers')}</Text>
                     <Text style={[styles.valueText, { color: themeColors.text }]}>{gpuSettings.layers}</Text>
                   </View>
                   <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
@@ -467,14 +469,14 @@ export default function TuneStep({ selectedModels, onContinue, onSkip }: TuneSte
 
       <View style={[styles.footer, { borderTopColor: 'rgba(150,150,150,0.15)' }]}>
         <TouchableOpacity style={styles.skipButton} onPress={onSkip} disabled={isSaving}>
-          <Text style={[styles.skipText, { color: themeColors.secondaryText }]}>Skip</Text>
+          <Text style={[styles.skipText, { color: themeColors.secondaryText }]}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.continueButton, { backgroundColor: themeColors.primary, opacity: isSaving ? 0.7 : 1 }]}
           onPress={handleContinue}
           disabled={isSaving}
         >
-          <Text style={styles.continueText}>Continue</Text>
+          <Text style={styles.continueText}>{t('onboarding.continue')}</Text>
         </TouchableOpacity>
       </View>
 

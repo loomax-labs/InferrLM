@@ -15,6 +15,7 @@ import { AppSwitch } from '../services/adapters/SwitchAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button, Text } from 'react-native-paper';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { theme } from '../constants/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import ImageProcessingSelector from './ImageProcessingSelector';
@@ -56,6 +57,7 @@ export default function ImageViewerModal({
   const [processingMode, setProcessingMode] = useState<ImageProcessingMode>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState('');
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const isDark = currentTheme === 'dark';
@@ -178,8 +180,8 @@ export default function ImageViewerModal({
               ]}
             >
               <View style={styles.ragTextContainer}>
-                <Text style={[styles.ragTitle, { color: themeColors.text }]}>Use RAG</Text>
-                <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>Store this file for smarter answers in this chat.</Text>
+                <Text style={[styles.ragTitle, { color: themeColors.text }]}>{t('rag.use')}</Text>
+                <Text style={[styles.ragDescription, { color: isDark ? '#bbbbbb' : '#666666' }]}>{t('rag.storeForChat')}</Text>
               </View>
               <AppSwitch
                 value={useRag}
@@ -199,8 +201,8 @@ export default function ImageViewerModal({
             >
               <MaterialCommunityIcons name="information-outline" size={20} color={isDark ? '#888888' : '#666666'} />
               <View style={[styles.ragTextContainer, { paddingLeft: 8 }]}>
-                <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>RAG not available</Text>
-                <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>Local RAG is not available for remote models.</Text>
+                <Text style={[styles.ragTitle, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailable')}</Text>
+                <Text style={[styles.ragDescription, { color: isDark ? '#888888' : '#666666' }]}>{t('rag.unavailableRemote')}</Text>
               </View>
             </View>
           )}
