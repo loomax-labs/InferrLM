@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { downloadNotificationService } from './DownloadNotifier';
+import { t } from '../i18n';
+import { pushDownloadNotificationCopy } from '../i18n/notificationCopy';
 
 interface StoredNotification {
   id: string;
@@ -31,6 +33,7 @@ class NotificationService {
       }
 
       this.isInitialized = true;
+      await pushDownloadNotificationCopy();
     } catch (error) {
       
       this.isInitialized = true;
@@ -96,8 +99,8 @@ class NotificationService {
     this.lastNotifiedProgress[downloadId] = 0;
     
     await this.storeNotification(
-      'Download Started',
-      `${modelName} download has started`,
+      t('notifications.startedTitle'),
+      t('notifications.startedBody', { name: modelName }),
       'download_started',
       downloadId
     );
@@ -139,8 +142,12 @@ class NotificationService {
       const formattedTotal = this.formatBytes(totalBytes);
       
       await this.storeNotification(
-        `Downloading ${modelName}`,
-        `${progress}% complete (${formattedDownloaded} of ${formattedTotal})`,
+        t('notifications.progressTitle', { name: modelName }),
+        t('notifications.progressBody', {
+          progress,
+          downloaded: formattedDownloaded,
+          total: formattedTotal,
+        }),
         'download_progress',
         downloadId
       );
@@ -163,8 +170,8 @@ class NotificationService {
     delete this.lastNotifiedProgress[downloadId];
     
     await this.storeNotification(
-      'Download Complete',
-      `${modelName} has been downloaded successfully`,
+      t('notifications.completeTitle'),
+      t('notifications.completeBody', { name: modelName }),
       'download_completed',
       downloadId
     );
@@ -186,8 +193,8 @@ class NotificationService {
     delete this.lastNotifiedProgress[downloadId];
     
     await this.storeNotification(
-      'Download Failed',
-      `${modelName} download has failed`,
+      t('notifications.failedTitle'),
+      t('notifications.failedBody', { name: modelName }),
       'download_failed',
       downloadId
     );
@@ -198,8 +205,8 @@ class NotificationService {
     
     
     await this.storeNotification(
-      'Download Paused',
-      `${modelName} download has been paused`,
+      t('notifications.pausedTitle'),
+      t('notifications.pausedBody', { name: modelName }),
       'download_paused',
       downloadId
     );
@@ -210,8 +217,8 @@ class NotificationService {
     
     
     await this.storeNotification(
-      'Pause Not Available',
-      `Pausing ${modelName} download is not supported`,
+      t('notifications.pauseUnavailableTitle'),
+      t('notifications.pauseUnavailableBody', { name: modelName }),
       'download_pause_unavailable',
       downloadId
     );
@@ -222,8 +229,8 @@ class NotificationService {
     
     
     await this.storeNotification(
-      'Download Resumed',
-      `${modelName} download has been resumed`,
+      t('notifications.resumedTitle'),
+      t('notifications.resumedBody', { name: modelName }),
       'download_resumed',
       downloadId
     );
@@ -234,8 +241,8 @@ class NotificationService {
     
     
     await this.storeNotification(
-      'Resume Not Available',
-      `Resuming ${modelName} download is not supported`,
+      t('notifications.resumeUnavailableTitle'),
+      t('notifications.resumeUnavailableBody', { name: modelName }),
       'download_resume_unavailable',
       downloadId
     );
@@ -255,8 +262,8 @@ class NotificationService {
     delete this.lastNotifiedProgress[downloadId];
     
     await this.storeNotification(
-      'Download Cancelled',
-      `${modelName} download has been cancelled`,
+      t('notifications.cancelledTitle'),
+      t('notifications.cancelledBody', { name: modelName }),
       'download_cancelled',
       downloadId
     );

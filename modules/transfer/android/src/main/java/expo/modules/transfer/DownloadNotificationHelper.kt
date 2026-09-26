@@ -14,29 +14,58 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 object DownloadNotificationHelper {
   private const val CHANNEL_ID = "inferra.model.downloads"
-  private const val CHANNEL_NAME = "Model Downloads"
-  private const val CHANNEL_DESCRIPTION = "Download progress for Inferra models"
+  private var channelName = "Model downloads"
+  private var channelDescription = "Download progress for InferrLM models"
+  private var completeText = "Download complete"
+  private var failedText = "Download failed"
+  private var pausedText = "Paused"
+  private var pausedDetailText = "Paused • {{progress}}% • {{downloaded}} / {{total}}"
+  private var progressTextTemplate = "{{progress}}% • {{downloaded}} / {{total}}"
+  private var progressShortTemplate = "{{progress}}%"
   private val channelCreated = AtomicBoolean(false)
+  private var copyVersion = 0
+  private var appliedCopyVersion = -1
+
+  fun setCopy(copy: Map<String, String>) {
+    fun pick(key: String, current: String): String {
+      val value = copy[key]
+      return if (!value.isNullOrBlank()) value else current
+    }
+    channelName = pick("channelName", channelName)
+    channelDescription = pick("channelDescription", channelDescription)
+    completeText = pick("complete", completeText)
+    failedText = pick("failed", failedText)
+    pausedText = pick("paused", pausedText)
+    pausedDetailText = pick("pausedDetail", pausedDetailText)
+    progressTextTemplate = pick("progress", progressTextTemplate)
+    progressShortTemplate = pick("progressShort", progressShortTemplate)
+    copyVersion += 1
+  }
+
+  private fun fill(template: String, values: Map<String, String>): String {
+    var result = template
+    for ((key, value) in values) {
+      result = result.replace("{{$key}}", value)
+    }
+    return result
+  }
 
   private fun ensureChannel(context: Context) {
-    if (channelCreated.get()) return
+    if (channelCreated.get() && appliedCopyVersion == copyVersion) return
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-      val existingChannel = notificationManager.getNotificationChannel(CHANNEL_ID)
-
-      if (existingChannel == null) {
-        val channel = NotificationChannel(
-          CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW
-        ).apply {
-          description = CHANNEL_DESCRIPTION
-          setShowBadge(false)
-        }
-        notificationManager.createNotificationChannel(channel)
+      val channel = NotificationChannel(
+        CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_LOW
+      ).apply {
+        description = channelDescription
+        setShowBadge(false)
       }
+      notificationManager.createNotificationChannel(channel)
     }
 
+    appliedCopyVersion = copyVersion
     channelCreated.set(true)
   }
 
@@ -113,13 +142,17 @@ object DownloadNotificationHelper {
       .setOngoing(clampedProgress < 100)
 
     if (clampedProgress >= 100) {
-      builder.setContentText("Download complete")
+      builder.setContentText(completeText)
       builder.setProgress(0, 0, false)
     } else {
       val progressText = if (totalBytes > 0) {
-        "${clampedProgress}% • ${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}"
+        fill(progressTextTemplate, mapOf(
+          "progress" to clampedProgress.toString(),
+          "downloaded" to formatBytes(bytesDownloaded),
+          "total" to formatBytes(totalBytes),
+        ))
       } else {
-        "${clampedProgress}%"
+        fill(progressShortTemplate, mapOf("progress" to clampedProgress.toString()))
       }
       builder.setContentText(progressText)
 
@@ -158,7 +191,7 @@ object DownloadNotificationHelper {
     reason: String? = null,
   ) {
     val builder = createBaseBuilder(context, transferId, modelName)
-      .setContentText(reason ?: "Download failed")
+      .setContentText(failedText)
       .setProgress(0, 0, false)
       .setOngoing(false)
 
@@ -178,9 +211,13 @@ object DownloadNotificationHelper {
       0
     }
     val text = if (totalBytes > 0) {
-      "Paused • $progress% • ${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}"
+      fill(pausedDetailText, mapOf(
+        "progress" to progress.toString(),
+        "downloaded" to formatBytes(bytesDownloaded),
+        "total" to formatBytes(totalBytes),
+      ))
     } else {
-      "Paused"
+      pausedText
     }
     val builder = createBaseBuilder(context, transferId, modelName)
       .setContentText(text)

@@ -9,6 +9,11 @@ class DownloadNotificationModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("DownloadNotification")
 
+    AsyncFunction("setCopy") { copy: Map<String, String> ->
+      DownloadNotificationHelper.setCopy(copy)
+      true
+    }
+
     AsyncFunction("requestPermissions") {
       true
     }

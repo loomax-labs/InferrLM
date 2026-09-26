@@ -1,5 +1,6 @@
 import { Platform, PermissionsAndroid } from 'react-native';
 import { requireNativeModule } from 'expo-modules-core';
+import { t } from '../i18n';
 
 interface DownloadNotificationModuleInterface {
   requestPermissions?(): Promise<boolean>;
@@ -54,11 +55,11 @@ class DownloadNotifier {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
           {
-            title: "Notification Permission",
-            message: "App needs notification permission to show download progress",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK"
+            title: t('notifications.permissionTitle'),
+            message: t('notifications.permissionMessage'),
+            buttonNeutral: t('notifications.askLater'),
+            buttonNegative: t('common.cancel'),
+            buttonPositive: t('common.ok'),
           }
         );
         
