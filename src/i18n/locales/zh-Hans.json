@@ -110,7 +110,17 @@
     "cacheClearFailed": "缓存清不掉",
     "modelsCleared": "模型已全部清空",
     "modelsClearFailed": "模型清不掉",
-    "modelLoad": "模型加载不了"
+    "modelLoad": "模型加载不了",
+    "quotaTitle": "{{provider}} 额度用完了",
+    "quotaBody": "你的 {{provider}} 额度用完了。过一会儿再试，或把套餐升级。",
+    "authTitle": "{{provider}} 登录失败",
+    "authBody": "你的 {{provider}} API 密钥看起来不对。去设置里检查一下。",
+    "serverTitle": "{{provider}} 现在用不了",
+    "serverBody": "{{provider}} 这会儿出了点问题。过一会儿再试。",
+    "invalidRequestBody": "发给 {{provider}} 的请求没被接受。换一条消息再试。",
+    "permissionBody": "你没有权限用这个 {{provider}} 模型。",
+    "modelNotFoundBody": "找不到这个 {{provider}} 模型。它可能已经不能用了。",
+    "providerErrorTitle": "{{provider}} 回复不了"
   },
   "chat": {
     "loading": "聊天加载中...",
