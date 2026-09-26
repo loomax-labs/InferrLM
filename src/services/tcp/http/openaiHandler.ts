@@ -3,6 +3,7 @@ import { modelDownloader } from '../../ModelDownloader';
 import { logger } from '../../../utils/logger';
 import { parseJsonBody } from './jsonParser';
 import { parseMessagesFromPayload } from './messageParser';
+import { resolveAssistantForChat } from './assistantHttp';
 import { buildCustomSettings } from './settingsBuilder';
 import { sendSSEStart, writeSSEEvent, endSSEStream } from './responseUtils';
 import { appleFoundationService } from '../../AppleFoundationService';
@@ -231,6 +232,17 @@ export async function handleOpenAIChatCompletions(
     return;
   }
 
+  const withAssistant = await resolveAssistantForChat(payload, parsed.messages);
+  if ('error' in withAssistant) {
+    sendJSONResponse(socket, withAssistant.error.status, {
+      error: { message: withAssistant.error.code, type: 'invalid_request_error' },
+    });
+    logger.logWebRequest(method, path, withAssistant.error.status);
+    return;
+  }
+
+  const chatMessages = withAssistant.messages;
+
   const modelId = typeof payload.model === 'string' ? payload.model : undefined;
   const stream = payload.stream === true;
   const settings = buildSettings(payload);
@@ -240,7 +252,7 @@ export async function handleOpenAIChatCompletions(
   logger.logInference({
     model: oaiLogModel,
     endpoint: path,
-    messages: parsed.messages,
+    messages: chatMessages,
     params: extractParams(settings),
     stream,
   });
@@ -255,12 +267,12 @@ export async function handleOpenAIChatCompletions(
     }
 
     if (stream) {
-      await streamAppleSSE(socket, method, path, id, parsed.messages, settings);
+      await streamAppleSSE(socket, method, path, id, chatMessages, settings);
       return;
     }
 
     try {
-      const mapped = mapAppleMessages(parsed.messages);
+      const mapped = mapAppleMessages(chatMessages);
       const options = { temperature: settings?.temperature, maxTokens: settings?.maxTokens, topP: settings?.topP, topK: settings?.topK };
       const text = await appleFoundationService.generateResponse(mapped, options);
       sendJSONResponse(socket, 200, buildCompletion(id, 'apple-foundation', text));
@@ -287,12 +299,12 @@ export async function handleOpenAIChatCompletions(
     }
 
     if (stream) {
-      await streamRemoteSSE(modelId, socket, method, path, id, parsed.messages, settings);
+      await streamRemoteSSE(modelId, socket, method, path, id, chatMessages, settings);
       return;
     }
 
     try {
-      const mapped = mapRemoteMessages(parsed.messages);
+      const mapped = mapRemoteMessages(chatMessages);
       const options: OnlineModelRequestOptions = { temperature: settings?.temperature, maxTokens: settings?.maxTokens, topP: settings?.topP, stream: false, streamTokens: false };
       const sendFn = modelId === 'gemini'
         ? onlineModelService.sendMessageToGemini.bind(onlineModelService)
@@ -330,7 +342,7 @@ export async function handleOpenAIChatCompletions(
 
     const localSSEStreamId = `stream-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const localSSEBegun = Date.now();
-    logger.startStream(localSSEStreamId, target.model.name, path, parsed.messages);
+    logger.startStream(localSSEStreamId, target.model.name, path, chatMessages);
 
     let disconnected = false;
     const onClose = () => { disconnected = true; engineService.stop(); };
@@ -338,7 +350,7 @@ export async function handleOpenAIChatCompletions(
 
     try {
       await engineService.mgr().gen(
-        parsed.messages as any,
+        chatMessages as any,
         {
           onToken: (token: string) => {
             if (disconnected) return false;
@@ -372,11 +384,11 @@ export async function handleOpenAIChatCompletions(
   }
 
   try {
-    const text = await engineService.mgr().gen(parsed.messages as any, { settings });
+    const text = await engineService.mgr().gen(chatMessages as any, { settings });
     logger.logInference({
       model: target.model.name,
       endpoint: path,
-      messages: parsed.messages,
+      messages: chatMessages,
       params: extractParams(settings),
       stream: false,
       response: typeof text === 'string' ? text : String(text),

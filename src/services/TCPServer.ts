@@ -15,6 +15,7 @@ import { createFileApiHandler } from './tcp/http/fileApiHandler';
 import { createRagApiHandler } from './tcp/http/ragApiHandler';
 import { createModelApiHandler } from './tcp/http/modelApiHandler';
 import { createSettingsApiHandler } from './tcp/http/settingsApiHandler';
+import { createAssistantsApiHandler } from './tcp/http/assistantsApiHandler';
 import { createServerStatusHandler } from './tcp/http/serverStatusHandler';
 import { createAppleFoundationHandler } from './tcp/http/appleFoundationHandler';
 import { createRemoteModelHandler } from './tcp/http/remoteModelHandler';
@@ -61,6 +62,7 @@ export class TCPServer {
   private readonly serverStatusHandler: StatusHandler;
   private readonly appleFoundationHandler: ApiHandler;
   private readonly remoteModelHandler: ApiHandler;
+  private readonly assistantsApiHandler: ApiHandler;
   private readonly streamChatResponse: (
     socket: any,
     method: string,
@@ -78,6 +80,7 @@ export class TCPServer {
     this.settingsApiHandler = createSettingsApiHandler({ respond });
     this.appleFoundationHandler = createAppleFoundationHandler({ respond });
     this.remoteModelHandler = createRemoteModelHandler({ respond });
+    this.assistantsApiHandler = createAssistantsApiHandler({ respond });
     this.modelApiHandler = createModelApiHandler({
       respond,
       ensureModelLoaded: this.ensureModelLoaded.bind(this),
@@ -610,6 +613,8 @@ export class TCPServer {
         return await this.modelApiHandler(method, segments.slice(2), body, socket, path);
       case 'settings':
         return await this.settingsApiHandler(method, segments.slice(2), body, socket, path);
+      case 'assistants':
+        return await this.assistantsApiHandler(method, segments.slice(2), body, socket, path);
       default:
         return false;
     }

@@ -7,6 +7,7 @@ import type { StoredModel } from '../../ModelDownloaderTypes';
 import type { ModelSettings } from '../../ModelSettingsService';
 import { parseJsonBody } from './jsonParser';
 import { parseMessagesFromPayload, parseMessagesOrPromptFromPayload } from './messageParser';
+import { resolveAssistantForChat } from './assistantHttp';
 import { buildCustomSettings } from './settingsBuilder';
 import { appleFoundationService } from '../../AppleFoundationService';
 import type { AppleFoundationMessage } from '../../AppleFoundationService';
@@ -393,6 +394,15 @@ export async function handleChatRequest(
     return;
   }
 
+  const withAssistant = await resolveAssistantForChat(payload, parsed.messages);
+  if ('error' in withAssistant) {
+    sendJSONResponse(socket, withAssistant.error.status, { error: withAssistant.error.code });
+    logger.logWebRequest(method, path, withAssistant.error.status);
+    return;
+  }
+
+  const chatMessages = withAssistant.messages;
+
   const modelIdentifier = typeof payload.model === 'string' ? payload.model : undefined;
   const stream = payload.stream === true;
   const settings = buildCustomSettings(payload.options);
@@ -402,18 +412,18 @@ export async function handleChatRequest(
   logger.logInference({
     model: logModel,
     endpoint: path,
-    messages: parsed.messages,
+    messages: chatMessages,
     params: extractParams(settings),
     stream,
   });
 
   if (modelIdentifier === 'apple-foundation') {
-    await handleAppleModelRequest(socket, method, path, parsed.messages, stream, settings, sendJSONResponse);
+    await handleAppleModelRequest(socket, method, path, chatMessages, stream, settings, sendJSONResponse);
     return;
   }
 
   if (isRemoteProvider(modelIdentifier)) {
-    await handleRemoteModelRequest(modelIdentifier, socket, method, path, parsed.messages, stream, settings, sendJSONResponse);
+    await handleRemoteModelRequest(modelIdentifier, socket, method, path, chatMessages, stream, settings, sendJSONResponse);
     return;
   }
 
@@ -431,19 +441,19 @@ export async function handleChatRequest(
   }
 
   if (stream) {
-    await streamChatResponse(socket, method, path, target.model, parsed.messages, settings);
+    await streamChatResponse(socket, method, path, target.model, chatMessages, settings);
     return;
   }
 
   const started = Date.now();
 
   try {
-    const responseText = await engineService.mgr().gen(parsed.messages as any, { settings });
+    const responseText = await engineService.mgr().gen(chatMessages as any, { settings });
     const duration = Date.now() - started;
     logger.logInference({
       model: target.model.name,
       endpoint: path,
-      messages: parsed.messages,
+      messages: chatMessages,
       params: extractParams(settings),
       stream: false,
       response: typeof responseText === 'string' ? responseText : String(responseText),
