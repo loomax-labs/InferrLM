@@ -16,6 +16,7 @@ import Dialog from '../components/Dialog';
 import * as ImagePicker from 'expo-image-picker';
 import { fs as FileSystem } from '../services/fs';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -34,6 +35,7 @@ const REPORT_CATEGORIES = [
 export default function ReportScreen() {
   const router = useRouter();
   const { messageContent, provider } = useLocalSearchParams<{ messageContent: string; provider: string }>();
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   
@@ -202,7 +204,7 @@ export default function ReportScreen() {
             />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: themeColors.text }]}>
-            Report Content
+            {t('report.title')}
           </Text>
           <View style={styles.placeholder} />
         </View>
@@ -210,7 +212,7 @@ export default function ReportScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Select a Category <Text style={styles.required}>*</Text>
+              {t('report.category')} <Text style={styles.required}>*</Text>
             </Text>
             <View style={styles.categoriesContainer}>
               {REPORT_CATEGORIES.map(renderCategoryButton)}
@@ -219,7 +221,7 @@ export default function ReportScreen() {
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Provide More Details <Text style={styles.required}>*</Text>
+              {t('report.details')} <Text style={styles.required}>*</Text>
             </Text>
             <TextInput
               style={[
@@ -245,7 +247,7 @@ export default function ReportScreen() {
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Your Email <Text style={styles.required}>*</Text>
+              {t('report.email')} <Text style={styles.required}>*</Text>
             </Text>
             <TextInput
               style={[
@@ -267,7 +269,7 @@ export default function ReportScreen() {
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              AI Model Name <Text style={styles.required}>*</Text>
+              {t('report.modelName')} <Text style={styles.required}>*</Text>
             </Text>
             <TextInput
               style={[
@@ -288,7 +290,7 @@ export default function ReportScreen() {
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Attach Screenshot (Optional)
+              {t('report.screenshot')}
             </Text>
             <Text style={[styles.sectionSubtext, { color: themeColors.secondaryText }]}>
               Add up to {MAX_ATTACHMENTS} files, max 40MB each
@@ -305,7 +307,7 @@ export default function ReportScreen() {
                 color={themeColors.text} 
               />
               <Text style={[styles.mediaButtonText, { color: themeColors.text }]}>
-                Add Media
+                {t('report.addMedia')}
               </Text>
             </TouchableOpacity>
 
@@ -342,7 +344,7 @@ export default function ReportScreen() {
 
           <View style={styles.section}>
             <Text style={[styles.infoText, { color: themeColors.secondaryText }]}>
-              Screenshots help us understand your issue better.
+              {t('report.screenshotHint')}
             </Text>
           </View>
 

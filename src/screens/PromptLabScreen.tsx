@@ -21,6 +21,7 @@ import PromptOptionSelector from '../components/PromptOptionSelector';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { useModel } from '../context/ModelContext';
 import { engineLabels } from '../managers/inference-manager';
 import { modelDownloader } from '../services/ModelDownloader';
@@ -105,6 +106,7 @@ function ParamStepper({
 }
 
 export default function PromptLabScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const { selectedModelPath } = useModel();
@@ -345,9 +347,9 @@ export default function PromptLabScreen() {
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
           <View style={styles.inputHeader}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text, marginBottom: 0 }, fonts.semibold]}>Your text</Text>
+            <Text style={[styles.sectionTitle, { color: themeColors.text, marginBottom: 0 }, fonts.semibold]}>{t('prompt.yourText')}</Text>
             <TouchableOpacity onPress={() => setShowExamples(true)} disabled={isRunning} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={[styles.linkText, { color: themeColors.primary }, fonts.semibold]}>Examples</Text>
+              <Text style={[styles.linkText, { color: themeColors.primary }, fonts.semibold]}>{t('prompt.examples')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -363,7 +365,7 @@ export default function PromptLabScreen() {
 
           {showCompiled && (
             <View style={[styles.compiledBox, { backgroundColor: themeColors.primary + '14' }]}>
-              <Text style={[styles.compiledLabel, { color: themeColors.primary }, fonts.semibold]}>SENT TO MODEL</Text>
+              <Text style={[styles.compiledLabel, { color: themeColors.primary }, fonts.semibold]}>{t('prompt.sentToModel')}</Text>
               <Text style={[styles.compiledPrefix, { color: themeColors.primary }]}>{promptPrefix}</Text>
               <Text style={[styles.compiledBody, { color: themeColors.text }]}>{content}</Text>
             </View>
@@ -377,15 +379,15 @@ export default function PromptLabScreen() {
             disabled={!content.trim()}
           >
             <MaterialCommunityIcons name="content-copy" size={18} color={content.trim() ? themeColors.text : themeColors.secondaryText} />
-            <Text style={[styles.toolBtnText, { color: content.trim() ? themeColors.text : themeColors.secondaryText }]}>Copy prompt</Text>
+            <Text style={[styles.toolBtnText, { color: content.trim() ? themeColors.text : themeColors.secondaryText }]}>{t('prompt.copyPrompt')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: themeColors.borderColor }]} onPress={handleClearOutput}>
             <MaterialCommunityIcons name="eraser-variant" size={18} color={themeColors.text} />
-            <Text style={[styles.toolBtnText, { color: themeColors.text }]}>Clear output</Text>
+            <Text style={[styles.toolBtnText, { color: themeColors.text }]}>{t('prompt.clearOutput')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: themeColors.borderColor }]} onPress={handleResetLab}>
             <MaterialCommunityIcons name="restore" size={18} color={themeColors.text} />
-            <Text style={[styles.toolBtnText, { color: themeColors.text }]}>Reset</Text>
+            <Text style={[styles.toolBtnText, { color: themeColors.text }]}>{t('prompt.reset')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -410,14 +412,14 @@ export default function PromptLabScreen() {
         >
           <MaterialCommunityIcons name="tune" size={18} color={themeColors.secondaryText} />
           <Text style={[styles.paramsToggleText, { color: themeColors.secondaryText }, fonts.semibold]}>
-            Parameters & system prompt
+            {t('prompt.parameters')}
           </Text>
           <MaterialCommunityIcons name={showParams ? 'chevron-up' : 'chevron-down'} size={20} color={themeColors.secondaryText} />
         </TouchableOpacity>
 
         {showParams && (
           <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}>
-            <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>SYSTEM PROMPT</Text>
+            <Text style={[styles.cardLabel, { color: themeColors.secondaryText }, fonts.semibold]}>{t('prompt.systemPrompt')}</Text>
             <TextInput
               multiline
               value={systemPrompt}
@@ -426,7 +428,7 @@ export default function PromptLabScreen() {
               placeholderTextColor={themeColors.secondaryText + '80'}
               style={[styles.systemInput, { color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
             />
-            <Text style={[styles.cardLabel, { color: themeColors.secondaryText, marginTop: 14 }, fonts.semibold]}>PARAMETERS</Text>
+            <Text style={[styles.cardLabel, { color: themeColors.secondaryText, marginTop: 14 }, fonts.semibold]}>{t('prompt.parametersLabel')}</Text>
             <View style={styles.paramGrid}>
               <ParamStepper
                 label="Temperature"
@@ -457,7 +459,7 @@ export default function PromptLabScreen() {
                 themeColors={themeColors}
               />
             </View>
-            <Text style={[styles.hint, { color: themeColors.secondaryText }]}>Top K applies to local engines only.</Text>
+            <Text style={[styles.hint, { color: themeColors.secondaryText }]}>{t('prompt.topKNote')}</Text>
           </View>
         )}
 
@@ -467,14 +469,14 @@ export default function PromptLabScreen() {
               style={[styles.tabPill, tab === 'output' && { backgroundColor: themeColors.primary }]}
               onPress={() => setTab('output')}
             >
-              <Text style={[styles.tabPillText, fonts.semibold, { color: tab === 'output' ? '#FFF' : themeColors.secondaryText }]}>Output</Text>
+              <Text style={[styles.tabPillText, fonts.semibold, { color: tab === 'output' ? '#FFF' : themeColors.secondaryText }]}>{t('prompt.output')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tabPill, tab === 'history' && { backgroundColor: themeColors.primary }]}
               onPress={() => setTab('history')}
             >
               <Text style={[styles.tabPillText, fonts.semibold, { color: tab === 'history' ? '#FFF' : themeColors.secondaryText }]}>
-                History {history.length > 0 ? `(${history.length})` : ''}
+                {history.length > 0 ? t('prompt.historyCount', { count: history.length }) : t('prompt.history')}
               </Text>
             </TouchableOpacity>
             {output.length > 0 && (
@@ -489,7 +491,7 @@ export default function PromptLabScreen() {
               {isRunning && !output ? (
                 <View style={styles.runningPlaceholder}>
                   <ActivityIndicator color={themeColors.primary} />
-                  <Text style={[styles.runningText, { color: themeColors.secondaryText }, fonts.regular]}>Generating…</Text>
+                  <Text style={[styles.runningText, { color: themeColors.secondaryText }, fonts.regular]}>{t('prompt.generating')}</Text>
                 </View>
               ) : (
                 <Text style={[styles.outputText, { color: output ? themeColors.text : themeColors.secondaryText }]}>
@@ -500,15 +502,15 @@ export default function PromptLabScreen() {
                 <View style={styles.statsRow}>
                   <View style={[styles.statPill, { backgroundColor: themeColors.cardBackground }]}>
                     <Text style={[styles.statVal, { color: themeColors.text }, fonts.semibold]}>{stats.durationMs} ms</Text>
-                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>duration</Text>
+                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>{t('prompt.duration')}</Text>
                   </View>
                   <View style={[styles.statPill, { backgroundColor: themeColors.cardBackground }]}>
                     <Text style={[styles.statVal, { color: themeColors.text }, fonts.semibold]}>{stats.firstTokenMs} ms</Text>
-                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>TTFT</Text>
+                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>{t('prompt.ttft')}</Text>
                   </View>
                   <View style={[styles.statPill, { backgroundColor: themeColors.cardBackground }]}>
                     <Text style={[styles.statVal, { color: themeColors.text }, fonts.semibold]}>{stats.tokens}</Text>
-                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>tokens</Text>
+                    <Text style={[styles.statKey, { color: themeColors.secondaryText }]}>{t('prompt.tokens')}</Text>
                   </View>
                 </View>
               )}
@@ -518,7 +520,7 @@ export default function PromptLabScreen() {
           {tab === 'history' && (
             <>
               {history.length === 0 ? (
-                <Text style={[styles.outputText, { color: themeColors.secondaryText }]}>No runs yet.</Text>
+                <Text style={[styles.outputText, { color: themeColors.secondaryText }]}>{t('prompt.noRuns')}</Text>
               ) : (
                 history.map(entry => (
                   <TouchableOpacity

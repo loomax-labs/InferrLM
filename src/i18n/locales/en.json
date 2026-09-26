@@ -152,6 +152,7 @@
     "topKNote": "Top K applies to models on this phone only.",
     "output": "Output",
     "history": "History",
+    "historyCount": "History ({{count}})",
     "generating": "Writing...",
     "duration": "Time",
     "ttft": "Time to first word",
@@ -453,7 +454,7 @@
     "safetyBody": "• Models are built to refuse harmful requests\n• Filters may not catch every harmful reply\n• You are responsible for how you use AI features"
   },
   "licenses": {
-    "title": "Licenses",
+    "title": "Open source licenses",
     "openLicense": "License",
     "openRepository": "Repository",
     "paper": "Material Design for React Native",

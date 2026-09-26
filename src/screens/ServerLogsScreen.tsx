@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import Dialog from '../components/Dialog';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
@@ -21,6 +22,7 @@ interface LogEntry {
 }
 
 export default function ServerLogsScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const router = useRouter();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
@@ -234,7 +236,7 @@ export default function ServerLogsScreen() {
             {meta.endpoint && (
               <Text selectable style={s.mono}>
                 <Text style={s.dim}>{'  |-- '}</Text>
-                <Text style={s.label}>endpoint </Text>
+                <Text style={s.label}>{t('logs.endpoint')} </Text>
                 <Text style={s.text}>{meta.endpoint}</Text>
               </Text>
             )}
@@ -242,7 +244,7 @@ export default function ServerLogsScreen() {
             {meta.status != null && (
               <Text selectable style={s.mono}>
                 <Text style={s.dim}>{'  |-- '}</Text>
-                <Text style={s.label}>status </Text>
+                <Text style={s.label}>{t('logs.status')} </Text>
                 <Text style={[s.text, { color: meta.status < 400 ? '#52D274' : '#FF5C5C' }]}>{meta.status}</Text>
               </Text>
             )}
@@ -251,7 +253,7 @@ export default function ServerLogsScreen() {
               <View>
                 <Text selectable style={s.mono}>
                   <Text style={s.dim}>{'  |-- '}</Text>
-                  <Text style={s.label}>params</Text>
+                  <Text style={s.label}>{t('logs.params')}</Text>
                 </Text>
                 {renderParams(meta.params)}
               </View>
@@ -271,7 +273,7 @@ export default function ServerLogsScreen() {
               <View>
                 <Text selectable style={s.mono}>
                   <Text style={s.dim}>{'  `-- '}</Text>
-                  <Text style={s.label}>response </Text>
+                  <Text style={s.label}>{t('logs.response')} </Text>
                 </Text>
                 <TextInput
                   editable={false}
@@ -387,7 +389,7 @@ export default function ServerLogsScreen() {
           <Text style={s.footerLink}>[refresh]</Text>
         </TouchableOpacity>
         <View style={s.autoRow}>
-          <Text style={s.dim}>auto-scroll</Text>
+          <Text style={s.dim}>{t('logs.autoScroll')}</Text>
           <AppSwitch
             value={autoScroll}
             onValueChange={setAutoScroll}

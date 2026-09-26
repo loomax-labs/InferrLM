@@ -19,6 +19,7 @@ import Dialog from '../components/Dialog';
 import { AppSwitch } from '../services/adapters/SwitchAdapter';
 import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { skillManager } from '../services/SkillManager';
 import type { Skill } from '../types/skill';
 
@@ -106,16 +107,16 @@ function SkillRow({
         {!inMulti ? (
           <View style={styles.actionRow}>
             <TouchableOpacity onPress={onView}>
-              <Text style={[styles.actionText, { color: themeColors.primary }]}>View</Text>
+              <Text style={[styles.actionText, { color: themeColors.primary }]}>{t('skills.view')}</Text>
             </TouchableOpacity>
             {needsSecret ? (
               <TouchableOpacity onPress={onSecret}>
-                <Text style={[styles.actionText, { color: themeColors.primary }]}>Secret</Text>
+                <Text style={[styles.actionText, { color: themeColors.primary }]}>{t('skills.secret')}</Text>
               </TouchableOpacity>
             ) : null}
             {isCustom ? (
               <TouchableOpacity onPress={onDelete}>
-                <Text style={[styles.actionText, { color: '#C62828' }]}>Delete</Text>
+                <Text style={[styles.actionText, { color: '#C62828' }]}>{t('skills.delete')}</Text>
               </TouchableOpacity>
             ) : null}
           </View>
@@ -126,6 +127,7 @@ function SkillRow({
 }
 
 export default function SkillManagerScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
 
@@ -367,7 +369,7 @@ export default function SkillManagerScreen() {
           {inMulti ? (
             <View style={styles.multiBar}>
               <TouchableOpacity onPress={exitMulti}>
-                <Text style={[styles.linkText, { color: themeColors.primary }]}>Cancel</Text>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>{t('skills.cancel')}</Text>
               </TouchableOpacity>
               <Text style={[styles.multiLabel, { color: themeColors.text }]}>
                 {`${pickedIds.length} selected`}
@@ -425,13 +427,13 @@ export default function SkillManagerScreen() {
             </Text>
             <View style={styles.topActions}>
               <TouchableOpacity onPress={() => handleAll(true)} disabled={busyId === 'all'}>
-                <Text style={[styles.linkText, { color: themeColors.primary }]}>All on</Text>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>{t('skills.allOn')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => handleAll(false)} disabled={busyId === 'all'}>
-                <Text style={[styles.linkText, { color: themeColors.primary }]}>All off</Text>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>{t('skills.allOff')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowAdd(true)}>
-                <Text style={[styles.linkText, { color: themeColors.primary }]}>Import</Text>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>{t('skills.import')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -463,7 +465,7 @@ export default function SkillManagerScreen() {
                 onView={() => setViewSkill(skill)}
                 onSecret={() => setSecretSkill(skill)}
                 onDelete={() => openDelete([skill.id])}
-                onHome={url => Linking.openURL(url).catch(() => Alert.alert('Open failed', 'Could not open homepage.'))}
+                onHome={url => Linking.openURL(url).catch(() => Alert.alert(t('skills.openFailedTitle'), t('skills.openFailedBody')))}
               />
             ))}
           </ScrollView>
@@ -485,19 +487,19 @@ export default function SkillManagerScreen() {
             setShowUrl(true);
           }}
         >
-          <Text style={[styles.addTitle, { color: themeColors.text }]}>From URL</Text>
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>{t('skills.fromUrl')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
           onPress={handleImportZip}
         >
-          <Text style={[styles.addTitle, { color: themeColors.text }]}>From zip</Text>
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>{t('skills.fromZip')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
           onPress={handleImportFile}
         >
-          <Text style={[styles.addTitle, { color: themeColors.text }]}>From file</Text>
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>{t('skills.fromFile')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.addRow, { backgroundColor: themeColors.cardBackground }]}
@@ -508,7 +510,7 @@ export default function SkillManagerScreen() {
             });
           }}
         >
-          <Text style={[styles.addTitle, { color: themeColors.text }]}>Community list</Text>
+          <Text style={[styles.addTitle, { color: themeColors.text }]}>{t('skills.community')}</Text>
         </TouchableOpacity>
       </Dialog>
 
@@ -589,9 +591,9 @@ export default function SkillManagerScreen() {
               {viewSkill?.description}
             </Text>
             <View style={styles.viewHead}>
-              <Text style={[styles.viewLabel, { color: themeColors.text }]}>Instructions</Text>
+              <Text style={[styles.viewLabel, { color: themeColors.text }]}>{t('skills.instructions')}</Text>
               <TouchableOpacity onPress={handleCopyView}>
-                <Text style={[styles.linkText, { color: themeColors.primary }]}>Copy</Text>
+                <Text style={[styles.linkText, { color: themeColors.primary }]}>{t('skills.copy')}</Text>
               </TouchableOpacity>
             </View>
             <TextInput
@@ -608,7 +610,7 @@ export default function SkillManagerScreen() {
         </Dialog.Content>
         <Dialog.Actions>
           <TouchableOpacity onPress={() => setViewSkill(null)}>
-            <Text style={[styles.linkText, { color: themeColors.primary }]}>Close</Text>
+            <Text style={[styles.linkText, { color: themeColors.primary }]}>{t('skills.close')}</Text>
           </TouchableOpacity>
         </Dialog.Actions>
       </Dialog>

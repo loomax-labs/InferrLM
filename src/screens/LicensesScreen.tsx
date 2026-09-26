@@ -6,6 +6,7 @@ import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import AppHeader from '../components/AppHeader';
+import { useT } from '../i18n';
 
 interface License {
   name: string;
@@ -165,7 +166,32 @@ const licenses: License[] = [
   }
 ];
 
+const LICENSE_BLURBS: Record<string, string> = {
+  'react-native-paper': 'licenses.paper',
+  'llama.rn': 'licenses.llama',
+  'react-native-nitro-mlx': 'licenses.mlx',
+  'react-native-nitro-markdown': 'licenses.markdown',
+  'react-native-nitro-modules': 'licenses.nitro',
+  'react-native-rag': 'licenses.rag',
+  '@react-native-ai/apple': 'licenses.apple',
+  '@react-native-ml-kit/text-recognition': 'licenses.mlkit',
+  'react-native-code-highlighter': 'licenses.highlighter',
+  'react-native-pdf-renderer': 'licenses.pdf',
+  'react-native-qrcode-styled': 'licenses.qr',
+  'react-native-tcp-socket': 'licenses.tcp',
+  'react-native-get-random-values': 'licenses.random',
+  '@react-native-menu/menu': 'licenses.menu',
+  'react-native-svg': 'licenses.svg',
+  'react-native-webview': 'licenses.webview',
+  '@op-engineering/op-sqlite': 'licenses.sqlite',
+  '@react-native-google-signin/google-signin': 'licenses.google',
+  'react-native-in-app-review': 'licenses.review',
+  '@react-native-community/slider': 'licenses.slider',
+  'eventemitter3': 'licenses.events',
+};
+
 const LicensesScreen = () => {
+  const t = useT();
   const router = useRouter();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -195,7 +221,7 @@ const LicensesScreen = () => {
       </View>
       
       <Text style={[styles.licenseDescription, { color: themeColors.secondaryText }]}>
-        {license.description}
+        {LICENSE_BLURBS[license.name] ? t(LICENSE_BLURBS[license.name]) : license.description}
       </Text>
       
       <View style={styles.licenseLinks}>
@@ -212,7 +238,7 @@ const LicensesScreen = () => {
               onPress={() => openUrl(license.licenseUrl!)}
             >
               <MaterialCommunityIcons name="file-document-outline" size={16} color={themeColors.text} />
-              <Text style={[styles.linkButtonText, { color: themeColors.text }]}>License</Text>
+              <Text style={[styles.linkButtonText, { color: themeColors.text }]}>{t('licenses.openLicense')}</Text>
             </TouchableOpacity>
           )}
           
@@ -222,7 +248,7 @@ const LicensesScreen = () => {
               onPress={() => openUrl(license.repositoryUrl!)}
             >
               <MaterialCommunityIcons name="github" size={16} color={themeColors.text} />
-              <Text style={[styles.linkButtonText, { color: themeColors.text }]}>Repository</Text>
+              <Text style={[styles.linkButtonText, { color: themeColors.text }]}>{t('licenses.openRepository')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -234,7 +260,7 @@ const LicensesScreen = () => {
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       <GradientBg />
       <AppHeader 
-        title="Open Source Licenses" 
+        title={t('licenses.title')} 
         leftComponent={
           <TouchableOpacity
             style={styles.backButton}

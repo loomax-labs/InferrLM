@@ -9,6 +9,7 @@ import Dialog from '../components/Dialog';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import AppHeader from '../components/AppHeader';
 import SettingsSection from '../components/settings/SettingsSection';
 import { localServer } from '../services/LocalServer';
@@ -41,6 +42,7 @@ const parsePortFromURL = (value?: string) => {
 };
 
 export default function LocalServerScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const router = useRouter();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
@@ -343,7 +345,7 @@ export default function LocalServerScreen() {
               </View>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}>
-                  InferrLM Local Server
+                  {t('server.title')}
                 </Text>
                 <View style={styles.statusRow}>
                   <View style={[styles.statusIndicator, { backgroundColor: getStatusColor() }]} />
@@ -373,10 +375,10 @@ export default function LocalServerScreen() {
                   </View>
                   <View style={styles.settingTextContainer}>
                     <Text style={[styles.settingText, { color: themeColors.text }]}>
-                      Copy Server URL
+                      {t('server.copyUrl')}
                     </Text>
                     <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
-                      Share with other devices on local network
+                      {t('server.shareHint')}
                     </Text>
                     {serverStatus.signalingURL ? (
                       <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]} numberOfLines={1}>
@@ -392,7 +394,7 @@ export default function LocalServerScreen() {
               <TouchableOpacity style={styles.settingItem} onPress={() => {
                 Share.share({
                   message: serverStatus.signalingURL || '',
-                  title: 'InferrLM Local Server'
+                  title: t('server.title')
                 });
               }}>
                 <View style={styles.settingLeft}>
@@ -401,10 +403,10 @@ export default function LocalServerScreen() {
                   </View>
                   <View style={styles.settingTextContainer}>
                     <Text style={[styles.settingText, { color: themeColors.text }]}>
-                      Share Server Link
+                      {t('server.shareLink')}
                     </Text>
                     <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
-                      Open from any browser on the network
+                      {t('server.openBrowserHint')}
                     </Text>
                   </View>
                 </View>
@@ -424,7 +426,7 @@ export default function LocalServerScreen() {
                 </View>
                 <View style={styles.settingTextContainer}>
                   <Text style={[styles.settingText, { color: themeColors.text }]}>
-                    Connected Peers
+                    {t('server.peers')}
                   </Text>
                   <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
                     {serverStatus.peerCount}
@@ -441,7 +443,7 @@ export default function LocalServerScreen() {
                 </View>
                 <View style={styles.settingTextContainer}>
                   <Text style={[styles.settingText, { color: themeColors.text }]}>
-                    Uptime
+                    {t('server.uptime')}
                   </Text>
                   <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
                     {formatUptime()}
@@ -463,10 +465,10 @@ export default function LocalServerScreen() {
               </View>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}>
-                  Server Logs
+                  {t('server.logs')}
                 </Text>
                 <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                  View real-time server logs and activity
+                  {t('server.logsHint')}
                 </Text>
               </View>
             </View>
@@ -486,10 +488,10 @@ export default function LocalServerScreen() {
                 />
               </View>
               <Text style={[styles.qrTitle, { color: themeColors.text }]}>
-                Open in Browser
+                {t('server.openBrowser')}
               </Text>
               <Text style={[styles.qrDescription, { color: themeColors.secondaryText }]}>
-                Scan to open the local server in your browser
+                {t('server.scanHint')}
               </Text>
             </View>
           </SettingsSection>
@@ -503,10 +505,10 @@ export default function LocalServerScreen() {
               </View>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}> 
-                  Keep Screen Awake
+                  {t('server.keepAwake')}
                 </Text>
                 <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}> 
-                  Prevent sleep while the server is active
+                  {t('server.keepAwakeHint')}
                 </Text>
               </View>
             </View>
@@ -524,10 +526,10 @@ export default function LocalServerScreen() {
               </View>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}>
-                  Auto Start
+                  {t('server.autoStart')}
                 </Text>
                 <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                  Start server automatically when app opens
+                  {t('server.autoStartHint')}
                 </Text>
               </View>
             </View>
@@ -549,10 +551,10 @@ export default function LocalServerScreen() {
               </View>
               <View style={styles.settingTextContainer}>
                 <Text style={[styles.settingText, { color: themeColors.text }]}>
-                  API Setup Guide
+                  {t('server.apiGuide')}
                 </Text>
                 <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                  Learn how to connect apps using the OpenAI API
+                  {t('server.apiGuideHint')}
                 </Text>
               </View>
             </View>

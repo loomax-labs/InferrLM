@@ -24,6 +24,7 @@ import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
+import { useT } from '../i18n';
 import { useModel } from '../context/ModelContext';
 import { modelDownloader } from '../services/ModelDownloader';
 import { engineService } from '../services/runtime-service';
@@ -56,6 +57,7 @@ const getAudioName = (uri: string, fallback: string) => {
 };
 
 export default function AudioScribeScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const { selectedModelPath } = useModel();
@@ -231,7 +233,7 @@ export default function AudioScribeScreen() {
       <AppHeader title="Audio Scribe" showBackButton showLogo={false} rightButtons={[]} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Mode</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>{t('scribe.mode')}</Text>
           <View style={styles.segmentRow}>
             {(['transcribe', 'translate'] as const).map(value => {
               const active = mode === value;
@@ -262,7 +264,7 @@ export default function AudioScribeScreen() {
               disabled={isRunning || isRecordingBusy || recorderState.isRecording}
             >
               <MaterialCommunityIcons name="file-music-outline" size={20} color={themeColors.text} />
-              <Text style={[styles.uploadText, { color: themeColors.text }]}>Choose audio file</Text>
+              <Text style={[styles.uploadText, { color: themeColors.text }]}>{t('scribe.chooseFile')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -305,7 +307,7 @@ export default function AudioScribeScreen() {
               </View>
               {selectedAudio ? (
                 <TouchableOpacity onPress={() => setSelectedAudio(null)}>
-                  <Text style={[styles.clearText, { color: themeColors.primary }]}>Clear</Text>
+                  <Text style={[styles.clearText, { color: themeColors.primary }]}>{t('scribe.clear')}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -324,16 +326,16 @@ export default function AudioScribeScreen() {
             <Text style={styles.primaryButtonText}>{isRunning ? 'Processing...' : 'Run Audio Scribe'}</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Record or upload audio, then run the active local model against the selected clip.</Text>
+          <Text style={[styles.caption, { color: themeColors.secondaryText }]}>{t('scribe.hint')}</Text>
           <Text style={[styles.caption, { color: themeColors.secondaryText }]}>Active engine: {engine || 'No model loaded'}{audioSupported ? '' : ' · Audio input is not supported for this engine on this platform.'}</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: themeColors.borderColor }]}> 
           <View style={styles.outputHeader}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Output</Text>
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>{t('scribe.output')}</Text>
             <TouchableOpacity style={[styles.secondaryButton, { borderColor: themeColors.secondaryText + '30' }]} onPress={handleCopy}>
               <MaterialCommunityIcons name="content-copy" size={16} color={themeColors.text} />
-              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>Copy</Text>
+              <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>{t('scribe.copy')}</Text>
             </TouchableOpacity>
           </View>
           <Text style={[styles.outputText, { color: themeColors.text }]}>{output || 'Transcription or translation output will appear here.'}</Text>
