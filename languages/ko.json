@@ -1,0 +1,16 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "InferrLM에서 찍은 파일을 바로 올리고, 글자를 인식하려면 카메라 접근이 필요해요.",
+    "NSPhotoLibraryUsageDescription": "InferrLM이 분석과 글자 인식을 위해 이미지를 고를 수 있도록 사진 보관함 접근이 필요해요.",
+    "NSPhotoLibraryAddUsageDescription": "찍은 사진과 만든 이미지를 보관함에 저장하려면 InferrLM에 권한이 필요해요.",
+    "NSMicrophoneUsageDescription": "InferrLM은 이 휴대폰에서 받아쓰기와 번역을 하려고 마이크로 소리를 녹음해요.",
+    "NSContactsUsageDescription": "InferrLM은 연락처를 만들거나 고치도록 승인한 휴대폰 동작에서만 연락처에 접근해요.",
+    "NSCalendarsUsageDescription": "InferrLM은 일정을 만들도록 승인한 휴대폰 동작에서만 캘린더에 접근해요.",
+    "NSRemindersUsageDescription": "InferrLM은 미리 알림을 대상으로 하는 캘린더 형식의 동작을 승인한 경우에만 미리 알림에 접근해요.",
+    "NSUserNotificationsUsageDescription": "InferrLM은 미리 알림을 예약하도록 스킬이나 휴대폰 동작을 승인한 경우에만 알림을 사용해요.",
+    "NSLocalNetworkUsageDescription": "InferrLM은 같은 Wi-Fi의 다른 기기와 AI 채팅 화면을 공유하려고 로컬 네트워크에 접근해요. 컴퓨터, 태블릿, 다른 휴대폰의 브라우저에서 도우미를 열 수 있어요."
+  },
+  "android": {
+    "app_name": "InferrLM"
+  }
+}
