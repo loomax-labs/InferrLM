@@ -72,7 +72,7 @@ Apple Foundation Model을 쓰고, HuggingFace에서 MLX 모델을 받아 이 휴
 
 ### 로컬 서버
 - 내장 HTTP 서버가 REST API로 같은 네트워크의 기기가 모델에 접속하게 해요. 서버 탭에서 켤 수 있어요. 주소 하나로 채팅 화면을 컴퓨터, 태블릿, 다른 휴대폰과 나눌 수 있어요.
-- 전체 API 문서는 [여기](docs/REST_APIs.md)와 서버 첫 화면에 있어요.
+- 전체 API 문서는 [여기](docs/REST_APIs.ko.md)와 서버 첫 화면에 있어요.
 - 명령줄 도구는 [github.com/sbhjt-gr/InferrLM-CLI](https://github.com/sbhjt-gr/InferrLM-CLI)에 있고, 이 API로 앱을 만드는 예를 보여 줘요.
 
 ### 모델 관리
@@ -151,7 +151,7 @@ CLI를 쓰려면 휴대폰에서 InferrLM 서버를 켠 다음 도구를 설치�
 - RAG와 embedding(글을 숫자로 바꿔 찾기 쉽게 하는 것) API
 - 서버 설정과 상태
 
-자세한 내용은 [REST API 문서](docs/REST_APIs.md)를 보세요.
+자세한 내용은 [REST API 문서](docs/REST_APIs.ko.md)를 보세요.
 
 ## 라이선스
 
@@ -161,7 +161,7 @@ CLI를 쓰려면 휴대폰에서 InferrLM 서버를 켠 다음 도구를 설치�
 
 기여를 환영해요. [issues](https://github.com/sbhjt-gr/InferrLM/issues)에서 문제를 찾거나 새로 올리고 작업을 시작하세요.
 
-[기여 가이드](docs/CONTRIBUTING.md)에 기여 방법, 코드 기준, 자주 쓰는 방식이 있어요.
+[기여 가이드](docs/CONTRIBUTING.ko.md)에 기여 방법, 코드 기준, 자주 쓰는 방식이 있어요.
 
 ## 기술
 

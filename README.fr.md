@@ -72,7 +72,7 @@ Les démos montrent l'Apple Foundation Model, et le téléchargement de modèles
 
 ### Serveur local
 - Un serveur HTTP intégré expose des API REST pour que les appareils du même réseau accèdent à tes modèles. Tu le démarres dans l'onglet Serveur. Une URL partage l'interface de discussion InferrLM avec un ordinateur, une tablette ou un autre téléphone.
-- La documentation complète de l'API est [ici](docs/REST_APIs.md) et sur la page d'accueil du serveur.
+- La documentation complète de l'API est [ici](docs/REST_APIs.fr.md) et sur la page d'accueil du serveur.
 - Un outil en ligne de commande sur [github.com/sbhjt-gr/InferrLM-CLI](https://github.com/sbhjt-gr/InferrLM-CLI) montre comment construire des applications avec cette API.
 
 ### Gestion des modèles
@@ -151,7 +151,7 @@ Une fois le serveur lancé, ouvre son adresse dans un navigateur. La documentati
 - les API RAG et d'embeddings
 - la configuration et l'état du serveur
 
-Le détail est dans la [documentation REST API](docs/REST_APIs.md).
+Le détail est dans la [documentation REST API](docs/REST_APIs.fr.md).
 
 ## Licence
 
@@ -161,7 +161,7 @@ Ce projet est distribué sous la licence AGPL-3.0. Lis-la [ici](https://github.c
 
 Les contributions sont les bienvenues. Tu trouves des sujets dans l'onglet [issues](https://github.com/sbhjt-gr/InferrLM/issues), ou tu en ouvres de nouveaux et tu commences.
 
-Lis le [guide de contribution](docs/CONTRIBUTING.md) pour le déroulement, les règles de code et les usages.
+Lis le [guide de contribution](docs/CONTRIBUTING.fr.md) pour le déroulement, les règles de code et les usages.
 
 ## Technique
 

@@ -72,7 +72,7 @@ InferrLM 是一款手機軟體，能把大模型和小模型直接放到你的 A
 
 ### 本機伺服器
 - 內建 HTTP 伺服器，用 REST API（透過網路請求呼叫的介面）讓同一網路裡的裝置存取你的模型。在「伺服器」頁就能啟動。用一個網址，就能把 InferrLM 的聊天畫面分享給電腦、平板或其他裝置。
-- 完整 API 文件在 [這裡](docs/REST_APIs.md)，伺服器首頁也能看到。
+- 完整 API 文件在 [這裡](docs/REST_APIs.zh-TW.md)，伺服器首頁也能看到。
 - 命令列工具在 [github.com/sbhjt-gr/InferrLM-CLI](https://github.com/sbhjt-gr/InferrLM-CLI)，裡面示範了怎麼用這個 API 做自己的程式。
 
 ### 模型管理
@@ -151,7 +151,7 @@ CLI 用 React 和 Ink 做了一個基本的終端機畫面，支援一邊產生�
 - RAG 和 embedding（把文字變成一組數字，方便查找）介面
 - 伺服器設定和狀態
 
-詳細說明見 [REST API 文件](docs/REST_APIs.md)。
+詳細說明見 [REST API 文件](docs/REST_APIs.zh-TW.md)。
 
 ## 授權
 
@@ -161,7 +161,7 @@ CLI 用 React 和 Ink 做了一個基本的終端機畫面，支援一邊產生�
 
 歡迎參與！你可以在 [issues](https://github.com/sbhjt-gr/InferrLM/issues) 裡找問題，也可以開新問題然後開始做。
 
-閱讀 [貢獻指南](docs/CONTRIBUTING.md)，裡面有貢獻說明、程式碼要求和常見做法。
+閱讀 [貢獻指南](docs/CONTRIBUTING.zh-TW.md)，裡面有貢獻說明、程式碼要求和常見做法。
 
 ## 技術
 

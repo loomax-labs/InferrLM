@@ -72,7 +72,7 @@ Die Demos zeigen das Apple Foundation Model und das Herunterladen von MLX-Modell
 
 ### Lokaler Server
 - Ein eingebauter HTTP-Server stellt REST-APIs bereit, damit Geräte im selben Netz auf deine Modelle zugreifen. Du startest ihn im Tab Server. Über eine URL teilst du die InferrLM-Chatoberfläche mit Computern, Tablets oder anderen Handys.
-- Die vollständige API-Dokumentation liegt [hier](docs/REST_APIs.md) und auf der Startseite des Servers.
+- Die vollständige API-Dokumentation liegt [hier](docs/REST_APIs.de.md) und auf der Startseite des Servers.
 - Ein Kommandozeilen-Werkzeug unter [github.com/sbhjt-gr/InferrLM-CLI](https://github.com/sbhjt-gr/InferrLM-CLI) zeigt, wie du eigene Programme mit der API baust.
 
 ### Modelle verwalten
@@ -151,7 +151,7 @@ Wenn der Server läuft, öffnest du die Server-URL in einem Browser. Die Dokumen
 - RAG- und Embedding-APIs
 - Serverkonfiguration und Status
 
-Die ausführliche Referenz steht in der [REST-API-Dokumentation](docs/REST_APIs.md).
+Die ausführliche Referenz steht in der [REST-API-Dokumentation](docs/REST_APIs.de.md).
 
 ## Lizenz
 
@@ -161,7 +161,7 @@ Dieses Projekt steht unter der AGPL-3.0-Lizenz. Lies sie [hier](https://github.c
 
 Beiträge sind willkommen. Du findest Aufgaben im Tab [Issues](https://github.com/sbhjt-gr/InferrLM/issues) oder legst neue an und fängst an.
 
-Lies den [Beitragsleitfaden](docs/CONTRIBUTING.md) für Ablauf, Code-Regeln und übliche Praxis.
+Lies den [Beitragsleitfaden](docs/CONTRIBUTING.de.md) für Ablauf, Code-Regeln und übliche Praxis.
 
 ## Technik
 

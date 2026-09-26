@@ -72,7 +72,7 @@ De demo's laten het Apple Foundation Model zien, en het downloaden van MLX-model
 
 ### Lokale server
 - Een ingebouwde HTTP-server biedt REST-API's, zodat apparaten op hetzelfde netwerk bij je modellen kunnen. Je start hem op het tabblad Server. Met een URL deel je de InferrLM-chat met computers, tablets of andere telefoons.
-- De volledige API-documentatie staat [hier](docs/REST_APIs.md) en op de startpagina van de server.
+- De volledige API-documentatie staat [hier](docs/REST_APIs.nl.md) en op de startpagina van de server.
 - Een opdrachtregelhulpmiddel op [github.com/sbhjt-gr/InferrLM-CLI](https://github.com/sbhjt-gr/InferrLM-CLI) laat zien hoe je zelf apps bouwt met deze API.
 
 ### Modellen beheren
@@ -151,7 +151,7 @@ Als de server draait, open je het serveradres in een browser. De documentatie be
 - RAG- en embedding-API's
 - serverinstellingen en status
 
-De uitgebreide referentie staat in de [REST API-documentatie](docs/REST_APIs.md).
+De uitgebreide referentie staat in de [REST API-documentatie](docs/REST_APIs.nl.md).
 
 ## Licentie
 
@@ -161,7 +161,7 @@ Dit project wordt verspreid onder de AGPL-3.0-licentie. Lees die [hier](https://
 
 Bijdragen zijn welkom. Je vindt onderwerpen op het tabblad [issues](https://github.com/sbhjt-gr/InferrLM/issues), of je opent nieuwe en begint.
 
-Lees de [bijdragegids](docs/CONTRIBUTING.md) voor de werkwijze, coderegels en gewone praktijk.
+Lees de [bijdragegids](docs/CONTRIBUTING.nl.md) voor de werkwijze, coderegels en gewone praktijk.
 
 ## Techniek
 
