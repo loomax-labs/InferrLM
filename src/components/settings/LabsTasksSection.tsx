@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { localApiWording } from '../../services/regionPolicy';
 
 type LabsTasksSectionProps = {
   onOpenPromptLab: () => void;
@@ -95,7 +96,7 @@ const LabsTasksSection = ({
     {
       key: 'server',
       label: 'Local Server',
-      description: 'Run an OpenAI-compatible API on device',
+      description: localApiWording('Run an OpenAI-compatible API on device'),
       icon: 'server-network',
       lightAccent: '#0277BD',
       darkAccent: '#4FC3F7',

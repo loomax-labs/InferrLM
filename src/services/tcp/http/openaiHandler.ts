@@ -11,6 +11,7 @@ import type { StoredModel } from '../../ModelDownloaderTypes';
 import type { ModelSettings } from '../../ModelSettingsService';
 import type { AppleFoundationMessage } from '../../AppleFoundationService';
 import { onlineModelService } from '../../OnlineModelService';
+import { isMainlandChina, isRemoteProviderOffered } from '../../regionPolicy';
 import type { ChatMessage as RemoteChatMessage, OnlineModelRequestOptions } from '../../OnlineModelService';
 import providerKeyStorage from '../../../utils/ProviderKeyStorage';
 
@@ -25,6 +26,31 @@ function genId(): string {
 function isRemoteProvider(value?: string): value is RemoteProvider {
   if (!value) return false;
   return REMOTE_PROVIDERS.includes(value as RemoteProvider);
+}
+
+function advertisedRemoteId(provider: RemoteProvider): string | null {
+  if (!isRemoteProviderOffered(provider)) {
+    return null;
+  }
+  if (isMainlandChina() && provider === 'chatgpt') {
+    return 'compatible-api';
+  }
+  return provider;
+}
+
+function resolveAdvertisedRemoteId(modelId?: string): RemoteProvider | null {
+  if (!modelId) {
+    return null;
+  }
+  if (isMainlandChina()) {
+    if (modelId === 'compatible-api') {
+      return 'chatgpt';
+    }
+    if (modelId === 'gemini' || modelId === 'claude' || modelId === 'chatgpt') {
+      return null;
+    }
+  }
+  return isRemoteProvider(modelId) ? modelId : null;
 }
 
 async function remoteModelsEnabled(): Promise<boolean> {
@@ -161,7 +187,8 @@ async function streamRemoteSSE(
   path: string,
   id: string,
   messages: { role: string; content: string }[],
-  settings?: ModelSettings
+  settings?: ModelSettings,
+  displayModel?: string,
 ) {
   try {
     sendSSEStart(socket, 200);
@@ -194,12 +221,12 @@ async function streamRemoteSSE(
     await sendFn(mapped, options, (token: string) => {
       logger.appendStreamToken(remoteSSEStreamId, token);
       try {
-        writeSSEEvent(socket, buildSSEChunk(id, provider, token, null));
+        writeSSEEvent(socket, buildSSEChunk(id, displayModel || provider, token, null));
       } catch { return false; }
       return true;
     });
 
-    writeSSEEvent(socket, buildSSEChunk(id, provider, '', 'stop'));
+    writeSSEEvent(socket, buildSSEChunk(id, displayModel || provider, '', 'stop'));
     endSSEStream(socket);
     logger.endStream(remoteSSEStreamId, Date.now() - remoteSSEBegun, 200);
     logger.logWebRequest(method, path, 200);
@@ -284,14 +311,15 @@ export async function handleOpenAIChatCompletions(
     return;
   }
 
-  if (isRemoteProvider(modelId)) {
+  const remoteProvider = resolveAdvertisedRemoteId(modelId);
+  if (remoteProvider) {
     const enabled = await remoteModelsEnabled();
     if (!enabled) {
       sendJSONResponse(socket, 409, { error: { message: 'remote_models_disabled', type: 'server_error' } });
       logger.logWebRequest(method, path, 409);
       return;
     }
-    const hasKey = await onlineModelService.hasApiKey(modelId);
+    const hasKey = await onlineModelService.hasApiKey(remoteProvider);
     if (!hasKey) {
       sendJSONResponse(socket, 422, { error: { message: 'api_key_missing', type: 'server_error' } });
       logger.logWebRequest(method, path, 422);
@@ -299,16 +327,16 @@ export async function handleOpenAIChatCompletions(
     }
 
     if (stream) {
-      await streamRemoteSSE(modelId, socket, method, path, id, chatMessages, settings);
+      await streamRemoteSSE(remoteProvider, socket, method, path, id, chatMessages, settings, modelId);
       return;
     }
 
     try {
       const mapped = mapRemoteMessages(chatMessages);
       const options: OnlineModelRequestOptions = { temperature: settings?.temperature, maxTokens: settings?.maxTokens, topP: settings?.topP, stream: false, streamTokens: false };
-      const sendFn = modelId === 'gemini'
+      const sendFn = remoteProvider === 'gemini'
         ? onlineModelService.sendMessageToGemini.bind(onlineModelService)
-        : modelId === 'chatgpt'
+        : remoteProvider === 'chatgpt'
           ? onlineModelService.sendMessageToOpenAI.bind(onlineModelService)
           : onlineModelService.sendMessageToClaude.bind(onlineModelService);
       const text = await sendFn(mapped, options);
@@ -432,9 +460,13 @@ export async function handleOpenAIModels(
       const enabled = await remoteModelsEnabled();
       if (enabled) {
         for (const provider of REMOTE_PROVIDERS) {
+          const publicId = advertisedRemoteId(provider);
+          if (!publicId) {
+            continue;
+          }
           const hasKey = await onlineModelService.hasApiKey(provider);
           if (hasKey) {
-            data.push({ id: provider, object: 'model', created: Math.floor(Date.now() / 1000), owned_by: 'remote' });
+            data.push({ id: publicId, object: 'model', created: Math.floor(Date.now() / 1000), owned_by: 'remote' });
           }
         }
       }

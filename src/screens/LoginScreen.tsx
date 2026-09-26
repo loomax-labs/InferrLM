@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { isMainlandChina } from '../services/regionPolicy';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -371,9 +372,10 @@ export default function LoginScreen() {
                 {t('auth.signIn')}
               </Button>
               
-              <View style={styles.socialContainer}>
+              {(!isMainlandChina() || isAppleSignInAvailable) && <View style={styles.socialContainer}>
                 <Text variant="bodySmall" style={styles.dividerText}>{t('auth.orSignInWith')}</Text>
                 
+                {!isMainlandChina() && (
                 <Button
                   mode="outlined"
                   icon="google"
@@ -384,6 +386,7 @@ export default function LoginScreen() {
                 >
                   Google
                 </Button>
+                )}
                 {isAppleSignInAvailable && (
                   <AppleAuthentication.AppleAuthenticationButton
                     buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
@@ -393,7 +396,7 @@ export default function LoginScreen() {
                     onPress={handleAppleSignIn}
                   />
                 )}
-              </View>
+              </View>}
               
               <Divider style={styles.divider} />
               

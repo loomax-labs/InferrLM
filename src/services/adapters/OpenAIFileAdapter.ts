@@ -1,4 +1,5 @@
 import { onlineModelService } from '../OnlineModelService';
+import { isRemoteProviderOffered, rejectBlockedEndpoint, userFacingApiName } from '../regionPolicy';
 import { fs as FileSystem } from '../fs';
 
 export type FilePurpose = 'assistants' | 'fine-tune' | 'batch' | 'vision';
@@ -75,11 +76,15 @@ const validateFile = async (fileUri: string, filename: string): Promise<void> =>
 
 class OpenAIFileAdapterClass {
   private async getAuth(provider: string): Promise<{ apiKey: string; baseUrl: string }> {
+    if (!isRemoteProviderOffered(provider)) {
+      throw new Error('This model is not available.');
+    }
     const apiKey = await onlineModelService.getApiKey(provider);
     if (!apiKey) {
-      throw new Error('OpenAI API key not found');
+      throw new Error(`${userFacingApiName()} key not found`);
     }
     const baseUrl = await onlineModelService.getBaseUrl(provider);
+    rejectBlockedEndpoint(baseUrl);
     return { apiKey, baseUrl };
   }
 

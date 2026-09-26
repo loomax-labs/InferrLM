@@ -2,6 +2,7 @@ import { ChatMessage } from '../utils/ChatManager';
 import { engineService } from './runtime-service';
 import { litertManager } from '../managers/litert-manager';
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
+import { errorProviderName } from './regionPolicy';
 import chatManager from '../utils/ChatManager';
 import { generateRandomId } from '../utils/homeScreenUtils';
 import { appleFoundationService } from './AppleFoundationService';
@@ -37,7 +38,7 @@ export interface MessageProcessingCallbacks {
   saveMessages: (messages: ChatMessage[]) => void;
   saveMessagesDebounced: { cancel: () => void };
   updateMessageContentDebounced: (messageId: string, content: string, thinking: string, stats: any) => void;
-  handleApiError: (error: unknown, provider: 'Gemini' | 'OpenAI' | 'Claude') => void;
+  handleApiError: (error: unknown, provider: string) => void;
 }
 
 export class MessageProcessingService {
@@ -1192,14 +1193,8 @@ export class MessageProcessingService {
     }
   }
 
-  private getProviderDisplayName(provider: string): 'Gemini' | 'OpenAI' | 'Claude' {
-    const base = OnlineModelService.getBaseProvider(provider);
-    switch (base) {
-      case 'gemini': return 'Gemini';
-      case 'chatgpt': return 'OpenAI';
-      case 'claude': return 'Claude';
-      default: return 'OpenAI';
-    }
+  private getProviderDisplayName(provider: string): string {
+    return errorProviderName(provider);
   }
 
   private async resolveResponderModelName(activeProvider: ProviderType | null): Promise<string | undefined> {

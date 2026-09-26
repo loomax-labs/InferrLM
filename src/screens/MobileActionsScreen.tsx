@@ -12,6 +12,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AppHeader from '../components/AppHeader';
+import { isMainlandChina } from '../services/regionPolicy';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
@@ -65,7 +66,12 @@ export default function MobileActionsScreen() {
 
   const handleRun = async () => {
     if (!provider) {
-      Alert.alert('Remote model required', 'Select Gemini, OpenAI, or Claude to run AI-driven mobile actions.');
+      Alert.alert(
+        'Remote model required',
+        isMainlandChina()
+          ? 'Select a compatible remote API to run AI-driven mobile actions.'
+          : 'Select Gemini, OpenAI, or Claude to run AI-driven mobile actions.',
+      );
       return;
     }
     if (!prompt.trim()) {

@@ -4,6 +4,7 @@ import { AppSwitch } from '../../services/adapters/SwitchAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { isMainlandChina } from '../../services/regionPolicy';
 import { EngineId } from '../../managers/inference-manager';
 import RuntimeSection from './Runtime';
 
@@ -87,7 +88,9 @@ const ModelSettingsCore = ({
                 Enable Remote Models
               </Text>
               <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                Access cloud-based AI models (Gemini, ChatGPT, Claude)
+                {isMainlandChina()
+                  ? 'Access a compatible remote API with your own key'
+                  : 'Access cloud-based AI models (Gemini, ChatGPT, Claude)'}
               </Text>
             </View>
           </View>

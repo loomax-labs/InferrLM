@@ -1,4 +1,5 @@
 import { onlineModelService } from '../OnlineModelService';
+import { isRemoteProviderOffered, rejectBlockedEndpoint } from '../regionPolicy';
 import { fs as FileSystem } from '../fs';
 
 export type GeminiFile = {
@@ -117,11 +118,15 @@ const validateFile = async (fileUri: string, filename: string): Promise<void> =>
 
 class GeminiFileAdapterClass {
   private async getAuth(provider: string): Promise<{ apiKey: string; baseUrl: string }> {
+    if (!isRemoteProviderOffered(provider)) {
+      throw new Error('This model is not available.');
+    }
     const apiKey = await onlineModelService.getApiKey(provider);
     if (!apiKey) {
       throw new Error('Gemini API key not found');
     }
     const baseUrl = await onlineModelService.getBaseUrl(provider);
+    rejectBlockedEndpoint(baseUrl);
     return { apiKey, baseUrl };
   }
 

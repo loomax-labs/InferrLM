@@ -2,6 +2,7 @@ import { fs as FileSystem } from './fs';
 import type { Tool, ToolCall } from './tools/ToolRegistry';
 import { openAIImageAdapter, type ImageGenOptions, type GeneratedImage } from './adapters/OpenAIImageAdapter';
 import { openAIFileAdapter } from './adapters/OpenAIFileAdapter';
+import { isMainlandChina, rejectBlockedEndpoint, userFacingApiName } from './regionPolicy';
 
 type ChatMessage = {
   id: string;
@@ -69,7 +70,7 @@ export class OpenAIService {
       
       return { data: base64String, mimeType };
     } catch (error) {
-      throw new Error('Failed to process image for OpenAI API');
+      throw new Error(`Failed to process image for ${userFacingApiName()}`);
     }
   }
 
@@ -270,13 +271,16 @@ export class OpenAIService {
       this.currentProvider = provider;
       const apiKey = await this.apiKeyProvider(provider);
       if (!apiKey) {
-        throw new Error('OpenAI API key not found. Please set it in Settings.');
+        throw new Error(`${userFacingApiName()} key not found. Please set it in Settings.`);
       }
 
       const temperature = options.temperature ?? 0.7;
       const maxTokens = options.maxTokens ?? 1024;
       const topP = options.topP ?? 0.9;
-      const model = options.model ?? 'gpt-4.1';
+      const model = options.model || (isMainlandChina() ? '' : 'gpt-4.1');
+      if (!model) {
+        throw new Error('Set a model name in Settings.');
+      }
 
       const formattedMessages = [];
       for (const msg of messages) {
@@ -285,6 +289,7 @@ export class OpenAIService {
       }
 
   const baseUrl = await this.baseUrlProvider(provider);
+  rejectBlockedEndpoint(baseUrl);
   const useResponses = this.needsResponsesApi(formattedMessages);
   const url = useResponses
     ? `${baseUrl}/responses`
@@ -330,12 +335,12 @@ export class OpenAIService {
         console.log('openai_api_error', response.status, errorText.substring(0, 500));
         
         if (response.status === 429 || errorText.includes("quota") || errorText.includes("rate limit") || errorText.includes("insufficient_quota")) {
-          throw new Error("QUOTA_EXCEEDED: Your OpenAI API quota has been exceeded. Please try again later or upgrade your API plan.");
+          throw new Error(`QUOTA_EXCEEDED: Your ${userFacingApiName()} quota has been exceeded. Please try again later or upgrade your API plan.`);
         }
         
         if (response.status === 400) {
           if (errorText.includes("invalid")) {
-            throw new Error("INVALID_REQUEST: The request to OpenAI API was invalid. Please check your input and try again.");
+            throw new Error(`INVALID_REQUEST: The request to ${userFacingApiName()} was invalid. Please check your input and try again.`);
           }
           if (errorText.includes("content_policy")) {
             throw new Error("CONTENT_FILTERED: Your request was filtered due to content policy violations.");
@@ -358,10 +363,10 @@ export class OpenAIService {
         }
         
         if (response.status === 500 || response.status === 503) {
-          throw new Error("SERVER_ERROR: OpenAI API is experiencing issues. Please try again later.");
+          throw new Error(`SERVER_ERROR: ${userFacingApiName()} is experiencing issues. Please try again later.`);
         }
         
-        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+        throw new Error(`${userFacingApiName()} error: ${response.status} - ${errorText}`);
       }
 
       const jsonResponse = await response.json();
@@ -499,7 +504,7 @@ export class OpenAIService {
         }
       }
       
-      throw new Error('Failed to extract content from OpenAI API response');
+      throw new Error(`Failed to extract content from ${userFacingApiName()} response`);
     } catch (error) {
       throw error;
     }

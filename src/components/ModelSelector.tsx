@@ -34,6 +34,7 @@ import { LLAMA_INIT_CONFIG } from '../config/llamaConfig';
 import { useStoredModels } from '../hooks/useStoredModels';
 import type { StoredModel, OnlineModel, AppleFoundationModel, MLXGroup, Model, ModelSelectorRef, ModelSelectorProps, SectionData } from './ModelSelector.types';
 import { ONLINE_MODELS } from './ModelSelector.constants';
+import { chinaPickerName, isMainlandChina, isRemoteProviderOffered } from '../services/regionPolicy';
 import { formatBytes, getDisplayName, getModelNameFromPath, getProjectorNameFromPath, isMLXModel, groupMLXModels, getActiveModelIcon, getConnectionBadgeConfig } from './ModelSelector.utils';
 import { styles } from './ModelSelector.styles';
 import { renderAppleFoundationItem, renderLocalModelItem, renderOnlineModelItem, renderSectionHeader, renderItem, type RenderContext } from './ModelSelector.renderers';
@@ -271,9 +272,12 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
         sectionsData.push({ title: 'Local Models', data: localModels });
       }
 
-      const namedOnline = ONLINE_MODELS.map(m => ({
+      const namedOnline = ONLINE_MODELS.filter(m => isRemoteProviderOffered(m.id)).map(m => ({
         ...m,
-        name: remoteNames[m.id] || m.name,
+        name: isMainlandChina() && m.id === 'chatgpt'
+          ? 'Compatible API'
+          : (remoteNames[m.id] || m.name),
+        provider: isMainlandChina() && m.id === 'chatgpt' ? 'Custom' : m.provider,
       }));
       sectionsData.push({ title: 'Remote Models', data: [...namedOnline, ...cloneModels] });
       return sectionsData;
@@ -315,14 +319,16 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
 
     const loadCloneModels = async () => {
       try {
-        const clones = (await onlineModelService.listClones()).filter(c => ['gemini', 'chatgpt', 'claude'].includes(c.baseProvider));
+        const clones = (await onlineModelService.listClones()).filter(c => isRemoteProviderOffered(c.baseProvider));
         const models = await Promise.all(clones.map(async c => {
           const savedModel = await onlineModelService.getModelName(c.id);
           const modelName = savedModel || onlineModelService.getDefaultModelName(c.baseProvider);
+          const chinaChat = isMainlandChina() && c.baseProvider === 'chatgpt';
+          const safeSaved = savedModel && !/gpt-|openai|chatgpt|gemini|claude/i.test(savedModel) ? savedModel : '';
           return {
             id: c.id,
-            name: modelName,
-            provider: c.baseProvider,
+            name: chinaChat ? (safeSaved || 'Compatible API') : modelName,
+            provider: chinaChat ? 'Custom' : c.baseProvider,
             isOnline: true as const,
           };
         }));
@@ -339,7 +345,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
         const hasOpenAIKey = await onlineModelService.hasApiKey('chatgpt');
         const hasClaudeKey = await onlineModelService.hasApiKey('claude');
 
-        const clones = (await onlineModelService.listClones()).filter(c => ['gemini', 'chatgpt', 'claude'].includes(c.baseProvider));
+        const clones = (await onlineModelService.listClones()).filter(c => isRemoteProviderOffered(c.baseProvider));
         const cloneStatuses: {[key: string]: boolean} = {};
         for (const clone of clones) {
           cloneStatuses[clone.id] = await onlineModelService.hasApiKey(clone.id);

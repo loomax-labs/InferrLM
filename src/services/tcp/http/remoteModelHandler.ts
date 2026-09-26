@@ -2,6 +2,7 @@ import type { ProviderType } from '../../ModelManagementService';
 import { onlineModelService } from '../../OnlineModelService';
 import providerKeyStorage from '../../../utils/ProviderKeyStorage';
 import { logger } from '../../../utils/logger';
+import { errorProviderName, isRemoteProviderOffered } from '../../regionPolicy';
 import type { ApiHandler, JsonResponder } from './apiTypes';
 
 type RemoteProvider = Exclude<ProviderType, 'local' | 'apple-foundation'>;
@@ -83,6 +84,9 @@ async function getRemoteProviderState(provider: RemoteProvider): Promise<RemoteP
 async function buildRemoteProviderSummaries(): Promise<RemoteProviderState[]> {
   const results: RemoteProviderState[] = [];
   for (const provider of REMOTE_PROVIDERS) {
+    if (!isRemoteProviderOffered(provider)) {
+      continue;
+    }
     const state = await getRemoteProviderState(provider);
     results.push(state);
   }
@@ -90,11 +94,12 @@ async function buildRemoteProviderSummaries(): Promise<RemoteProviderState[]> {
 }
 
 function getRemoteProviderLabel(provider: RemoteProvider): string {
+  if (!isRemoteProviderOffered(provider) || provider === 'chatgpt') {
+    return errorProviderName(provider);
+  }
   switch (provider) {
     case 'gemini':
       return 'Gemini';
-    case 'chatgpt':
-      return 'OpenAI';
     case 'claude':
       return 'Anthropic Claude';
     default:
@@ -113,6 +118,12 @@ export function createRemoteModelHandler(context: Context): ApiHandler {
     const segment = segments[0];
     const providerFromPath = segment ? normalizeRemoteProvider(segment) : null;
     if (segment && !providerFromPath) {
+      context.respond(socket, 404, { error: 'provider_not_found' });
+      logger.logWebRequest(method, path, 404);
+      return true;
+    }
+
+    if (providerFromPath && !isRemoteProviderOffered(providerFromPath)) {
       context.respond(socket, 404, { error: 'provider_not_found' });
       logger.logWebRequest(method, path, 404);
       return true;
@@ -192,6 +203,12 @@ export function createRemoteModelHandler(context: Context): ApiHandler {
       }
 
       try {
+        if (!isRemoteProviderOffered(target)) {
+          context.respond(socket, 404, { error: 'provider_not_found' });
+          logger.logWebRequest(method, path, 404);
+          return true;
+        }
+
         const hasKey = await onlineModelService.hasApiKey(target);
         if (!hasKey) {
           const label = getRemoteProviderLabel(target);

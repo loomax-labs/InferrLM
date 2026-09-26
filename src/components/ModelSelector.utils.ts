@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ProviderType } from '../services/ModelManagementService';
 import { OnlineModelService } from '../services/OnlineModelService';
+import { chinaPickerName, isMainlandChina, isRemoteProviderOffered } from '../services/regionPolicy';
 import { StoredModel, MLXGroup, OnlineModel } from './ModelSelector.types';
 
 export const formatBytes = (bytes: number) => {
@@ -23,13 +24,15 @@ export const getModelNameFromPath = (path: string | null, models: StoredModel[],
     return cloneModel.name;
   }
   
-  if (path === 'gemini') return remoteNames['gemini'] || 'Gemini';
-  if (path === 'chatgpt') return remoteNames['chatgpt'] || 'ChatGPT';
-  if (path === 'claude') return remoteNames['claude'] || 'Claude';
+  if (path === 'gemini') return chinaPickerName(path, remoteNames['gemini'] || 'Gemini');
+  if (path === 'chatgpt') return chinaPickerName(path, remoteNames['chatgpt'] || 'ChatGPT');
+  if (path === 'claude') return chinaPickerName(path, remoteNames['claude'] || 'Claude');
   if (path === 'apple-foundation') return 'Apple Foundation';
 
   if (OnlineModelService.isClone(path)) {
     const baseProvider = OnlineModelService.getBaseProvider(path);
+    if (!isRemoteProviderOffered(baseProvider)) return 'Select a Model';
+    if (isMainlandChina() && baseProvider === 'chatgpt') return 'Compatible API';
     if (baseProvider === 'gemini') return 'Gemini Clone';
     if (baseProvider === 'chatgpt') return 'ChatGPT Clone';
     if (baseProvider === 'claude') return 'Claude Clone';

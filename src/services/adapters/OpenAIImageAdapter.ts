@@ -1,4 +1,5 @@
 import { onlineModelService } from '../OnlineModelService';
+import { isMainlandChina, isRemoteProviderOffered, rejectBlockedEndpoint, userFacingApiName } from '../regionPolicy';
 import { fs as FileSystem } from '../fs';
 
 export type ImageSize = '1024x1024' | '1024x1792' | '1792x1024' | '256x256' | '512x512';
@@ -22,11 +23,15 @@ export type GeneratedImage = {
 
 class OpenAIImageAdapterClass {
   private async getAuth(provider: string): Promise<{ apiKey: string; baseUrl: string }> {
+    if (!isRemoteProviderOffered(provider)) {
+      throw new Error('This model is not available.');
+    }
     const apiKey = await onlineModelService.getApiKey(provider);
     if (!apiKey) {
-      throw new Error('OpenAI API key not found');
+      throw new Error(`${userFacingApiName()} key not found`);
     }
     const baseUrl = await onlineModelService.getBaseUrl(provider);
+    rejectBlockedEndpoint(baseUrl);
     return { apiKey, baseUrl };
   }
 
@@ -40,7 +45,10 @@ class OpenAIImageAdapterClass {
     }
 
     const { apiKey, baseUrl } = await this.getAuth(provider);
-    const model = options.model || 'gpt-image-1';
+    const model = options.model || (isMainlandChina() ? '' : 'gpt-image-1');
+    if (!model) {
+      throw new Error('Set a model name in Settings.');
+    }
     const size = options.size || '1024x1024';
     const quality = options.quality || 'auto';
     const n = options.n || 1;

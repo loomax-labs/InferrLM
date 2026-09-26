@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TextInput, Button } from 'react-native-paper';
 import Dialog from '../components/Dialog';
+import { isMainlandChina } from '../services/regionPolicy';
 import * as ImagePicker from 'expo-image-picker';
 import { fs as FileSystem } from '../services/fs';
 import { useTheme } from '../context/ThemeContext';
@@ -281,7 +282,7 @@ export default function ReportScreen() {
               ]}
               value={modelName}
               onChangeText={setModelName}
-              placeholder="e.g., GPT-4, Claude 3.5 Sonnet, Llama 3.1, etc."
+              placeholder={isMainlandChina() ? 'e.g., Llama 3.1' : 'e.g., GPT-4, Claude 3.5 Sonnet, Llama 3.1, etc.'}
               placeholderTextColor={themeColors.secondaryText}
               autoCapitalize="words"
               maxLength={100}

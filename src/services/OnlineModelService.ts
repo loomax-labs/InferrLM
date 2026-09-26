@@ -6,6 +6,7 @@ import Constants from 'expo-constants';
 import providerKeyStorage from '../utils/ProviderKeyStorage';
 import type { Tool, ToolCall } from './tools/ToolRegistry';
 import type { GeneratedImage, ImageGenOptions } from './adapters/OpenAIImageAdapter';
+import { isBlockedProviderUrl, isMainlandChina, isRemoteProviderOffered } from './regionPolicy';
 
 export interface ChatMessage {
   id: string;
@@ -239,6 +240,9 @@ export class OnlineModelService {
 
   getDefaultModelName(provider: string): string {
     const base = OnlineModelService.getBaseProvider(provider);
+    if (isMainlandChina() && (base === 'chatgpt' || !isRemoteProviderOffered(base))) {
+      return '';
+    }
     const defaults: Record<string, string> = {
       gemini: 'gemini-2.5-flash',
       chatgpt: 'gpt-4.1',
@@ -249,14 +253,18 @@ export class OnlineModelService {
 
   getDefaultBaseUrl(provider: string): string {
     const base = OnlineModelService.getBaseProvider(provider);
-    return this.defaultUrls[base] || '';
+    const url = this.defaultUrls[base] || '';
+    if (isBlockedProviderUrl(url)) {
+      return '';
+    }
+    return url;
   }
 
   async getBaseUrl(provider: string): Promise<string> {
     try {
       await this.ensureInitialized();
       const customUrl = await this.getCustomBaseUrl(provider);
-      if (customUrl) {
+      if (customUrl && !isBlockedProviderUrl(customUrl)) {
         return this.normalizeBaseUrl(customUrl);
       }
       return this.getDefaultBaseUrl(provider);
@@ -279,6 +287,9 @@ export class OnlineModelService {
     try {
       await this.ensureInitialized();
       const normalized = this.normalizeBaseUrl(baseUrl);
+      if (normalized && isBlockedProviderUrl(normalized)) {
+        return false;
+      }
       if (!normalized) {
         await providerKeyStorage.upsertEntry(provider, { baseUrl: null });
       } else {
@@ -359,12 +370,19 @@ export class OnlineModelService {
     await providerKeyStorage.upsertEntry(provider, { displayName: name });
   }
 
+  private assertOffered(provider: string): void {
+    if (!isRemoteProviderOffered(provider)) {
+      throw new Error('This model is not available.');
+    }
+  }
+
   async sendMessageToGemini(
     messages: ChatMessage[],
     options: OnlineModelRequestOptions = {},
     onToken?: (token: string) => boolean | void,
     provider = 'gemini'
   ): Promise<string> {
+    this.assertOffered(provider);
     const geminiService = this._geminiServiceGetter();
     if (!geminiService) {
       throw new Error('GeminiService not initialized');
@@ -398,6 +416,7 @@ export class OnlineModelService {
     onToken?: (token: string) => boolean | void,
     provider = 'chatgpt'
   ): Promise<string> {
+    this.assertOffered(provider);
     const openAIService = this._openAIServiceGetter();
     if (!openAIService) {
       throw new Error('OpenAIService not initialized');
@@ -431,6 +450,7 @@ export class OnlineModelService {
     onToken?: (token: string) => boolean | void,
     provider = 'claude'
   ): Promise<string> {
+    this.assertOffered(provider);
     const claudeService = this._claudeServiceGetter();
     if (!claudeService) {
       console.log('online_claude_service_missing', { provider });
@@ -472,6 +492,7 @@ export class OnlineModelService {
     options: OnlineModelRequestOptions = {},
     onToken?: (token: string) => boolean | void
   ): Promise<string> {
+    this.assertOffered(provider);
     const base = OnlineModelService.getBaseProvider(provider);
     switch (base) {
       case 'gemini':
@@ -492,6 +513,7 @@ export class OnlineModelService {
     onToken?: (token: string) => boolean | void,
     provider = 'chatgpt'
   ): Promise<OpenAIResponse> {
+    this.assertOffered(provider);
     const openAIService = this._openAIServiceGetter();
     if (!openAIService) {
       throw new Error('OpenAIService not initialized');
@@ -519,6 +541,7 @@ export class OnlineModelService {
     onToken?: (token: string) => boolean | void,
     provider = 'gemini'
   ): Promise<GeminiResponse> {
+    this.assertOffered(provider);
     const geminiService = this._geminiServiceGetter();
     if (!geminiService) {
       throw new Error('GeminiService not initialized');
@@ -546,6 +569,7 @@ export class OnlineModelService {
     onToken?: (token: string) => boolean | void,
     provider = 'claude'
   ): Promise<ClaudeResponse> {
+    this.assertOffered(provider);
     const claudeService = this._claudeServiceGetter();
     if (!claudeService) {
       console.log('online_claude_tools_service_missing', { provider });
@@ -584,6 +608,7 @@ export class OnlineModelService {
     options: ImageGenOptions = {},
     provider = 'chatgpt'
   ): Promise<GeneratedImage> {
+    this.assertOffered(provider);
     const openAIService = this._openAIServiceGetter();
     if (!openAIService) {
       throw new Error('OpenAIService not initialized');

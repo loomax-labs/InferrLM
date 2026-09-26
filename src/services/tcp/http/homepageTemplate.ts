@@ -1,5 +1,7 @@
+import { localApiWording } from '../../regionPolicy';
+
 export function getHomepageHTML(): string {
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -670,4 +672,5 @@ data: [DONE]</pre>
   </div>
 </body>
 </html>`;
+  return localApiWording(html);
 }

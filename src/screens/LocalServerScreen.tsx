@@ -10,6 +10,7 @@ import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
 import { useT } from '../i18n';
+import { isMainlandChina } from '../services/regionPolicy';
 import AppHeader from '../components/AppHeader';
 import SettingsSection from '../components/settings/SettingsSection';
 import { localServer } from '../services/LocalServer';
@@ -554,7 +555,7 @@ export default function LocalServerScreen() {
                   {t('server.apiGuide')}
                 </Text>
                 <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-                  {t('server.apiGuideHint')}
+                  {isMainlandChina() ? t('server.apiGuideHintLocal') : t('server.apiGuideHint')}
                 </Text>
               </View>
             </View>

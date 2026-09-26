@@ -2,6 +2,7 @@ import { ChatMessage } from '../utils/ChatManager';
 import { llamaManager } from '../utils/LlamaManager';
 import { engineService } from './runtime-service';
 import { onlineModelService, OnlineModelService } from './OnlineModelService';
+import { errorProviderName } from './regionPolicy';
 import chatManager from '../utils/ChatManager';
 import { generateRandomId } from '../utils/homeScreenUtils';
 import { appleFoundationService } from './AppleFoundationService';
@@ -19,7 +20,7 @@ interface RegenerationCallbacks {
   saveMessagesImmediate: (messages: ChatMessage[]) => Promise<void>;
   saveMessages: (messages: ChatMessage[]) => void;
   saveMessagesDebounced: { cancel: () => void };
-  handleApiError: (error: unknown, provider: 'Gemini' | 'OpenAI' | 'Claude') => void;
+  handleApiError: (error: unknown, provider: string) => void;
 }
 
 export class RegenerationService {
@@ -664,13 +665,8 @@ export class RegenerationService {
     }
   }
 
-  private getProviderDisplayName(provider: string): 'Gemini' | 'OpenAI' | 'Claude' {
-    switch (provider) {
-      case 'gemini': return 'Gemini';
-      case 'chatgpt': return 'OpenAI';
-      case 'claude': return 'Claude';
-      default: return 'OpenAI';
-    }
+  private getProviderDisplayName(provider: string): string {
+    return errorProviderName(provider);
   }
 
   private async resolveResponderModelName(activeProvider: ProviderType | null): Promise<string | undefined> {

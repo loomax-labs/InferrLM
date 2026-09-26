@@ -3,6 +3,7 @@ import { llamaManager } from '../utils/LlamaManager';
 import { engineService } from './runtime-service';
 import chatManager from '../utils/ChatManager';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { chinaPickerName, isMainlandChina, isRemoteProviderOffered } from './regionPolicy';
 import type { Dispatch, SetStateAction } from 'react';
 
 export interface ModelSelectorOptions {
@@ -77,6 +78,9 @@ export class ModelManagementService {
       setSelectedModelPath('apple-foundation');
       chatManager.setCurrentProvider('apple-foundation');
     } else {
+      if (!isRemoteProviderOffered(model)) {
+        return;
+      }
       if (model === 'gemini') {
         const hasApiKey = await onlineModelService.hasApiKey('gemini');
         if (!hasApiKey) {
@@ -123,21 +127,27 @@ export class ModelManagementService {
         iconName = "cube";
       }
     } else if (activeProvider === 'gemini') {
-      modelName = 'Gemini';
+      modelName = chinaPickerName('gemini', 'Gemini');
       iconName = "cloud";
     } else if (activeProvider === 'chatgpt') {
-      modelName = 'ChatGPT';
+      modelName = chinaPickerName('chatgpt', 'ChatGPT');
       iconName = "cloud";
     } else if (activeProvider === 'claude') {
-      modelName = 'Claude';
+      modelName = chinaPickerName('claude', 'Claude');
       iconName = "cloud";
     } else if (activeProvider === 'apple-foundation') {
       modelName = 'Apple Foundation';
       iconName = "apple";
     } else if (activeProvider && OnlineModelService.isClone(activeProvider)) {
       const base = OnlineModelService.getBaseProvider(activeProvider);
-      const baseName = base.charAt(0).toUpperCase() + base.slice(1);
-      modelName = `${baseName} (clone)`;
+      if (!isRemoteProviderOffered(base)) {
+        modelName = 'Select a Model';
+      } else if (isMainlandChina() && base === 'chatgpt') {
+        modelName = 'Compatible API';
+      } else {
+        const baseName = base.charAt(0).toUpperCase() + base.slice(1);
+        modelName = `${baseName} (clone)`;
+      }
       iconName = "cloud";
       currentModelPath = activeProvider;
     }

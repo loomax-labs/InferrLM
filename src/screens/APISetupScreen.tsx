@@ -8,6 +8,7 @@ import AppHeader from '../components/AppHeader';
 import { useStoredModels } from '../hooks/useStoredModels';
 import { ModelType } from '../types/models';
 import { appleFoundationService } from '../services/AppleFoundationService';
+import { localApiWording } from '../services/regionPolicy';
 
 const steps = [
   {
@@ -62,7 +63,7 @@ export default function APISetupScreen() {
           Quick Start
         </Text>
         <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>
-          Connect any OpenAI-compatible app to your local models. This works with any application or library that supports the OpenAI API. Both devices must be on the same local network.
+          {localApiWording('Connect any OpenAI-compatible app to your local models. This works with any application or library that supports the OpenAI API. Both devices must be on the same local network.')}
         </Text>
 
         {steps.slice(0, 3).map((step, i) => (
@@ -71,7 +72,7 @@ export default function APISetupScreen() {
             style={[styles.card, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.06)' : '#f7f9fc' }]}
           >
             <Text style={[styles.stepTitle, { color: themeColors.text }]}>{step.title}</Text>
-            <Text style={[styles.stepBody, { color: themeColors.secondaryText }]}>{step.body}</Text>
+            <Text style={[styles.stepBody, { color: themeColors.secondaryText }]}>{localApiWording(step.body)}</Text>
           </View>
         ))}
 

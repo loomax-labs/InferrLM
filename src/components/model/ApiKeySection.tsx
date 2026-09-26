@@ -8,6 +8,7 @@ import { Surface } from 'react-native-paper';
 import Dialog from '../Dialog';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useT } from '../../i18n';
+import { isBlockedProviderUrl, isMainlandChina, isRemoteProviderOffered } from '../../services/regionPolicy';
 
 interface ApiKeyItem {
   id: string;
@@ -40,6 +41,20 @@ const BASE_PROVIDERS = [
   { id: 'gemini', name: 'Gemini API', placeholder: 'Enter your Gemini API key', url: 'https://ai.google.dev/' },
   { id: 'claude', name: 'Claude API', placeholder: 'Enter your Claude API key', url: 'https://www.anthropic.com' },
 ];
+
+const providersForRegion = () => (
+  BASE_PROVIDERS
+    .filter(provider => isRemoteProviderOffered(provider.id))
+    .map(provider => (
+      isMainlandChina() && provider.id === 'chatgpt'
+        ? { ...provider, name: 'Compatible API', placeholder: 'Enter your API key', url: '' }
+        : provider
+    ))
+);
+
+const presetsForRegion = () => (
+  openAIPresetUrls.filter(preset => !isBlockedProviderUrl(preset.url))
+);
 
 const ApiKeySection: React.FC = () => {
   const t = useT();
@@ -138,7 +153,7 @@ const ApiKeySection: React.FC = () => {
     setIsLoadingApiKeys(true);
     try {
       const hydratedBase = await Promise.all(
-        BASE_PROVIDERS.map(async (bp) => {
+        providersForRegion().map(async (bp) => {
           const isUsingDefault = await onlineModelService.isUsingDefaultKey(bp.id);
           const customKey = await onlineModelService.getApiKey(bp.id);
           const modelName = await onlineModelService.getModelName(bp.id);
@@ -158,7 +173,7 @@ const ApiKeySection: React.FC = () => {
             useCustomKey: !isUsingDefault,
             modelName: modelName || defaultModelName,
             defaultModelName,
-            baseUrl: customBaseUrl || '',
+            baseUrl: customBaseUrl && !isBlockedProviderUrl(customBaseUrl) ? customBaseUrl : '',
             defaultBaseUrl,
             isClone: false,
             baseProvider: bp.id,
@@ -168,7 +183,7 @@ const ApiKeySection: React.FC = () => {
       );
 
       const clones = await onlineModelService.listClones();
-      const hydratedClones = await Promise.all(
+      const hydratedClones = (await Promise.all(
         clones.map(async (clone) => {
           const isUsingDefault = await onlineModelService.isUsingDefaultKey(clone.id);
           const customKey = await onlineModelService.getApiKey(clone.id);
@@ -177,10 +192,15 @@ const ApiKeySection: React.FC = () => {
           const customBaseUrl = await onlineModelService.getCustomBaseUrl(clone.id);
           const defaultBaseUrl = onlineModelService.getDefaultBaseUrl(clone.id);
           const systemInstruction = await onlineModelService.getSystemInstruction(clone.id);
-          const baseMeta = BASE_PROVIDERS.find(b => b.id === clone.baseProvider);
+          const baseMeta = providersForRegion().find(b => b.id === clone.baseProvider);
+          if (!isRemoteProviderOffered(clone.baseProvider)) {
+            return null;
+          }
           return {
             id: clone.id,
-            name: clone.displayName,
+            name: isMainlandChina() && /openai|chatgpt|gemini|claude/i.test(clone.displayName)
+              ? 'Compatible API'
+              : clone.displayName,
             key: customKey || '',
             placeholder: t('models.enterKeyNamed', { name: baseMeta?.name || 'API' }),
             url: baseMeta?.url || '',
@@ -190,14 +210,14 @@ const ApiKeySection: React.FC = () => {
             useCustomKey: !isUsingDefault,
             modelName: modelName || defaultModelName,
             defaultModelName,
-            baseUrl: customBaseUrl || '',
+            baseUrl: customBaseUrl && !isBlockedProviderUrl(customBaseUrl) ? customBaseUrl : '',
             defaultBaseUrl,
             isClone: true,
             baseProvider: clone.baseProvider,
             systemInstruction: systemInstruction || '',
           } as ApiKeyItem;
         })
-      );
+      )).filter((item): item is ApiKeyItem => item !== null);
 
       const ordered: ApiKeyItem[] = [];
       for (const base of hydratedBase) {
@@ -219,6 +239,10 @@ const ApiKeySection: React.FC = () => {
       if (!item) return;
 
       const trimmedUrl = item.baseUrl.trim();
+      if (trimmedUrl && isBlockedProviderUrl(trimmedUrl)) {
+        showDialog(t('common.error'), t('models.invalidUrl'));
+        return;
+      }
       if (trimmedUrl && !isValidUrl(trimmedUrl)) {
         showDialog(t('common.error'), t('models.invalidUrl'));
         return;
@@ -450,7 +474,9 @@ const ApiKeySection: React.FC = () => {
                 <Text style={[styles.inputLabel, { color: themeColors.text }]}>{t('models.modelName')}</Text>
                 <TextInput
                   style={[styles.input, { color: themeColors.text, backgroundColor: themeColors.background, borderColor: themeColors.borderColor }]}
-                  placeholder={t('models.defaultValue', { value: item.defaultModelName })}
+                  placeholder={item.defaultModelName
+                    ? t('models.defaultValue', { value: item.defaultModelName })
+                    : t('models.modelName')}
                   placeholderTextColor={themeColors.secondaryText}
                   value={item.modelName}
                   onChangeText={(text) => updateModelName(item.id, text)}
@@ -497,7 +523,7 @@ const ApiKeySection: React.FC = () => {
                 <View style={styles.presetContainer}>
                   <Text style={[styles.presetLabel, { color: themeColors.text }]}>{t('models.popularEndpoints')}</Text>
                   <View style={styles.presetChips}>
-                    {openAIPresetUrls.map(preset => (
+                    {presetsForRegion().map(preset => (
                       <TouchableOpacity
                         key={preset.label}
                         style={[styles.presetChip, { borderColor: themeColors.borderColor }]}

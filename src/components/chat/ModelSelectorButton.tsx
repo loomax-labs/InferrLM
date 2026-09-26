@@ -6,6 +6,7 @@ import { theme } from '../../constants/theme';
 import { engineService } from '../../services/runtime-service';
 import path from 'path';
 import type { ProviderType } from '../../services/ModelManagementService';
+import { chinaPickerName } from '../../services/regionPolicy';
 
 interface ModelSelectorButtonProps {
   activeProvider: ProviderType | null;
@@ -39,13 +40,13 @@ const ModelSelectorButton: React.FC<ModelSelectorButtonProps> = ({
         iconName = 'cube-outline';
       }
     } else if (activeProvider === 'gemini') {
-      modelName = 'Gemini';
+      modelName = chinaPickerName('gemini', 'Gemini');
       iconName = 'google';
     } else if (activeProvider === 'chatgpt') {
-      modelName = 'ChatGPT';
+      modelName = chinaPickerName('chatgpt', 'ChatGPT');
       iconName = 'robot';
     } else if (activeProvider === 'claude') {
-      modelName = 'Claude';
+      modelName = chinaPickerName('claude', 'Claude');
       iconName = 'account-tie';
     } else if (activeProvider === 'apple-foundation') {
       modelName = 'Apple Foundation';

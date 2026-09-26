@@ -1,4 +1,5 @@
 import { onlineModelService } from './OnlineModelService';
+import { isMainlandChina, isRemoteProviderOffered, providerBase } from './regionPolicy';
 export class ProviderKeysService {
   static async validateApiKey(
     provider: string, 
@@ -11,6 +12,13 @@ export class ProviderKeysService {
   }> {
     if (provider === 'local' || provider === 'apple-foundation') {
       return { isValid: true };
+    }
+    if (!isRemoteProviderOffered(provider)) {
+      return {
+        isValid: false,
+        errorType: 'no_key',
+        errorMessage: 'This model is not available.',
+      };
     }
     if (!enableRemoteModels || !isLoggedIn) {
       return {
@@ -30,6 +38,12 @@ export class ProviderKeysService {
     return { isValid: true };
   }
   static getProviderDisplayName(provider: string): string {
+    if (isMainlandChina() && providerBase(provider) === 'chatgpt') {
+      return 'Compatible API';
+    }
+    if (!isRemoteProviderOffered(provider) && provider !== 'local' && provider !== 'apple-foundation') {
+      return 'Remote API';
+    }
     switch (provider) {
       case 'gemini': return 'Gemini';
       case 'chatgpt': return 'gpt-4.1';
