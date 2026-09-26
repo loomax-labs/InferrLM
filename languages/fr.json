@@ -1,0 +1,16 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "L'accès à l'appareil photo sert à prendre des fichiers directement et à les analyser par OCR dans InferrLM.",
+    "NSPhotoLibraryUsageDescription": "InferrLM a besoin d'accéder à ta photothèque pour que tu puisses choisir des images à analyser et pour l'OCR.",
+    "NSPhotoLibraryAddUsageDescription": "InferrLM a besoin de l'autorisation d'enregistrer dans ta photothèque les photos prises et les images générées.",
+    "NSMicrophoneUsageDescription": "InferrLM utilise ton micro pour enregistrer l'audio, puis le transcrire et le traduire sur ce téléphone.",
+    "NSContactsUsageDescription": "InferrLM n'accède à tes contacts que lorsque tu approuves une action mobile pour créer ou modifier un contact.",
+    "NSCalendarsUsageDescription": "InferrLM n'accède à ton calendrier que lorsque tu approuves une action mobile pour créer un événement.",
+    "NSRemindersUsageDescription": "InferrLM n'accède à tes rappels que lorsque tu approuves une action de type calendrier qui vise les rappels.",
+    "NSUserNotificationsUsageDescription": "InferrLM n'utilise les notifications que lorsque tu approuves une compétence ou une action mobile pour programmer un rappel.",
+    "NSLocalNetworkUsageDescription": "InferrLM utilise le réseau local pour partager ton interface de discussion IA avec d'autres appareils sur ton réseau Wi-Fi, afin que tu puisses ouvrir ton assistant depuis un navigateur sur un ordinateur, une tablette ou un autre téléphone."
+  },
+  "android": {
+    "app_name": "InferrLM"
+  }
+}
