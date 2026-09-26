@@ -129,6 +129,7 @@
     "audioAttachment": "오디오 첨부",
     "newChat": "새 채팅 시작",
     "send": "보내기",
+    "mode": "모드",
     "storingDocument": "검색용으로 문서를 저장하는 중 {{progress}}",
     "aiTermsTitle": "AI가 만든 콘텐츠 안내",
     "aiTermsAccept": "이해했어요"
