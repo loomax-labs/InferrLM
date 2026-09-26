@@ -8,6 +8,7 @@ import { DownloadableModel } from './DownloadableModelItem';
 import { StoredModel } from '../../services/ModelDownloaderTypes';
 import { DOWNLOADABLE_MODELS } from '../../constants/DownloadableModels';
 import { FilterOptions } from '../ModelFilter';
+import { useT } from '../../i18n';
 
 interface DownloadableModelsTabProps {
   storedModels: StoredModel[];
@@ -22,6 +23,7 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
   setDownloadProgress,
   onCustomDownload
 }) => {
+  const t = useT();
   const [customUrlDialogVisible, setCustomUrlDialogVisible] = useState(false);
   const [guidanceDialogVisible, setGuidanceDialogVisible] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -107,50 +109,41 @@ export const DownloadableModelsTab: React.FC<DownloadableModelsTabProps> = ({
       />
 
       <Dialog visible={guidanceDialogVisible} onDismiss={() => setGuidanceDialogVisible(false)}
-        buttonText="Got it!"
+        buttonText={t('models.guidanceGotIt')}
         onClose={() => setGuidanceDialogVisible(false)}
       >
-          <Dialog.Title>Model Download Guidance</Dialog.Title>
+          <Dialog.Title>{t('models.guidanceTitle')}</Dialog.Title>
           <Dialog.Content>
             <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
               <PaperText style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
-                Unsure what to download?
+                {t('models.guidanceUnsureTitle')}
               </PaperText>
               <PaperText style={{ marginBottom: 16, lineHeight: 20 }}>
-                If you don't know what to download first, start with the ones with the 'recommended' tag.
+                {t('models.guidanceUnsureBody')}
               </PaperText>
 
               <PaperText style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
-                Understanding Model Sizes
+                {t('models.guidanceSizeTitle')}
               </PaperText>
               <PaperText style={{ marginBottom: 16, lineHeight: 20 }}>
-                • <PaperText style={{ fontWeight: '600' }}>1B-3B models:</PaperText> Fast and lightweight, great for simple tasks{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>7B-9B models:</PaperText> Good balance of speed and capability{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>13B+ models:</PaperText> More capable but slower, need more memory
+                {t('models.guidanceSizeBody')}
               </PaperText>
 
               <PaperText style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
-                Quantization Explained
+                {t('models.guidanceSmallerTitle')}
               </PaperText>
               <PaperText style={{ marginBottom: 12, lineHeight: 20 }}>
-                Quantization reduces model size while trying to preserve quality:
+                {t('models.guidanceSmallerBody')}
               </PaperText>
 
-              <PaperText style={{ fontWeight: '600', marginBottom: 4 }}>Quality Levels (Best to Fastest):</PaperText>
+              <PaperText style={{ fontWeight: '600', marginBottom: 4 }}>{t('models.guidanceQualityTitle')}</PaperText>
               <PaperText style={{ marginBottom: 12, lineHeight: 18 }}>
-                • <PaperText style={{ fontWeight: '600' }}>Q8_0:</PaperText> Highest quality, largest size{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>Q6_K:</PaperText> Very good quality{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>Q5_K_M:</PaperText> Good balance{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>Q4_K_M:</PaperText> Decent quality, smaller size{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>Q3_K_M:</PaperText> Lower quality but very fast
+                {t('models.guidanceQualityBody')}
               </PaperText>
 
-              <PaperText style={{ fontWeight: '600', marginBottom: 4 }}>Advanced Types:</PaperText>
+              <PaperText style={{ fontWeight: '600', marginBottom: 4 }}>{t('models.guidanceAdvancedTitle')}</PaperText>
               <PaperText style={{ marginBottom: 12, lineHeight: 18 }}>
-                • <PaperText style={{ fontWeight: '600' }}>IQ types:</PaperText> More precise but slower than Q types{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>_XS:</PaperText> Extra small, more compressed{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>_NL:</PaperText> Non-linear, better results with more compute{'\n'}
-                • <PaperText style={{ fontWeight: '600' }}>_K types:</PaperText> Mixed precision for better quality
+                {t('models.guidanceAdvancedBody')}
               </PaperText>
             </ScrollView>
           </Dialog.Content>

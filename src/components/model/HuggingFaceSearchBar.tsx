@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Searchbar, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { useT } from '../../i18n';
 
 interface HuggingFaceSearchBarProps {
   searchQuery: string;
@@ -19,13 +20,14 @@ export const HuggingFaceSearchBar: React.FC<HuggingFaceSearchBarProps> = ({
   onClearSearch,
   isLoading
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
 
   return (
     <>
       <Searchbar
-        placeholder="Search on HuggingFace..."
+        placeholder={t('models.searchHuggingFace')}
         onChangeText={onSearchChange}
         onSubmitEditing={onSearchSubmit}
         value={searchQuery}
@@ -51,7 +53,7 @@ export const HuggingFaceSearchBar: React.FC<HuggingFaceSearchBarProps> = ({
               style={styles.clearButton}
               icon="close"
             >
-              Clear Search
+              {t('models.clearSearch')}
             </Button>
           )}
           {isLoading && <ActivityIndicator size="small" color={themeColors.primary} style={styles.loader} />}

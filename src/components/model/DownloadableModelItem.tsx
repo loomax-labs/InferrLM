@@ -9,6 +9,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { getThemeAwareColor } from '../../utils/ColorUtils';
+import { useT } from '../../i18n';
 
 import { ModelType, ModelFormat } from '../../types/models';
 
@@ -84,6 +85,7 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
   onDownload,
   onPress,
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
 
@@ -114,41 +116,41 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
                 {model.tags?.includes('fastest') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#00a67e', currentTheme) }]}>
                     <MaterialCommunityIcons name="flash" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
-                    <Text style={styles.modelTagText}>Fastest</Text>
+                    <Text style={styles.modelTagText}>{t('models.fastest')}</Text>
                   </View>
                 )}
                 {model.tags?.includes('recommended') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#FF8C00', currentTheme) }]}>
                     <MaterialCommunityIcons name="star" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
-                    <Text style={styles.modelTagText}>Recommended</Text>
+                    <Text style={styles.modelTagText}>{t('models.recommended')}</Text>
                   </View>
                 )}
                 {model.tags?.includes('vision') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#9C27B0', currentTheme) }]}>
                     <MaterialCommunityIcons name="eye" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
-                    <Text style={styles.modelTagText}>Vision</Text>
+                    <Text style={styles.modelTagText}>{t('models.vision')}</Text>
                   </View>
                 )}
                 {model.tags?.includes('reasoning') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#E91E63', currentTheme) }]}>
                     <MaterialCommunityIcons name="brain" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
-                    <Text style={styles.modelTagText}>Reasoning</Text>
+                    <Text style={styles.modelTagText}>{t('models.reasoning')}</Text>
                   </View>
                 )}
                 {model.tags?.includes('litert') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#1a7340', currentTheme) }]}>
-                    <Text style={styles.modelTagText}>LiteRT</Text>
+                    <Text style={styles.modelTagText}>{t('models.litert')}</Text>
                   </View>
                 )}
                 {model.tags?.includes('llama.cpp') && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#7b3f00', currentTheme) }]}>
-                    <Text style={styles.modelTagText}>llama.cpp</Text>
+                    <Text style={styles.modelTagText}>{t('models.llamaCpp')}</Text>
                   </View>
                 )}
                 {isDownloaded && (
                   <View style={[styles.modelTag, { backgroundColor: getThemeAwareColor('#666', currentTheme) }]}>
                     <MaterialCommunityIcons name="check" size={12} color={themeColors.headerText} style={{ marginRight: 4 }} />
-                    <Text style={styles.modelTagText}>Downloaded</Text>
+                    <Text style={styles.modelTagText}>{t('models.downloaded')}</Text>
                   </View>
                 )}
               </View>
@@ -192,7 +194,7 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
             <View style={styles.additionalFilesRow}>
               <MaterialCommunityIcons name="information-outline" size={14} color={currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'} />
               <Text style={[styles.additionalFilesNote, { color: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }]}>
-                {' '}This download includes {model.additionalFiles.length} additional file{model.additionalFiles.length > 1 ? 's' : ''}: {model.additionalFiles.map(file => file.name.replace(/\.(gguf|bin)$/i, '')).join(', ')}
+                {' '}{t('models.additionalFiles', { names: model.additionalFiles.map(file => file.name.replace(/\.(gguf|bin)$/i, '')).join(', ') })}
               </Text>
             </View>
           )}
@@ -200,7 +202,11 @@ const DownloadableModelItem: React.FC<DownloadableModelItemProps> = ({
           {downloadProgress && downloadProgress.status !== 'completed' && downloadProgress.status !== 'failed' && downloadProgress.status !== 'cancelled' && (
             <View style={styles.downloadProgress}>
               <Text style={[styles.modelDetails, { color: themeColors.secondaryText }]}>
-                {getProgressText(downloadProgress)}
+                {t('notifications.progress', {
+                  progress: Math.floor(downloadProgress.progress || 0),
+                  downloaded: formatBytes(downloadProgress.bytesDownloaded),
+                  total: formatBytes(downloadProgress.totalBytes),
+                })}
               </Text>
               <View style={[styles.progressBar, { backgroundColor: themeColors.background }]}>
                 <View 

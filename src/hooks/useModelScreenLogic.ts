@@ -17,6 +17,7 @@ import { getActiveDownloadsCount } from '../utils/ModelUtils';
 import { StoredModel } from '../services/ModelDownloaderTypes';
 import { ShowDialogFn } from './useDialog';
 import { SHARE_CANCELLED_ERROR } from '../services/StoredModelsManager';
+import { useT } from '../i18n';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -39,6 +40,7 @@ const cleanupOldTask = async () => {
 cleanupOldTask();
 
 export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
+  const t = useT();
   const { enableRemoteModels, isLoggedIn, checkLoginStatus, toggleRemoteModels } = useRemoteModel();
   const { storedModels, isLoading: isLoadingStoredModels, isRefreshing: isRefreshingStoredModels, refreshStoredModels, rescanStoredModels } = useStoredModels();
   const downloadProgress = useDownloadProgress();
@@ -103,12 +105,12 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       }
       
       if (result.success) {
-        showDialog('Logged Out', 'You have been successfully logged out.');
+        showDialog(t('models.loggedOutTitle'), t('models.loggedOutBody'));
       } else {
-        showDialog('Logout Issue', result.error || 'There was an issue logging out. Please try again.');
+        showDialog(t('common.error'), t('models.logoutIssue'));
       }
     } catch (error) {
-      showDialog('Error', 'Failed to log out. Please try again.');
+      showDialog(t('common.error'), t('models.logoutFailed'));
     }
   };
 
@@ -150,7 +152,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
 
       const file = result.assets?.[0];
       if (!file?.uri || !file?.name) {
-        showDialog('Error', 'No valid file was selected. Please try again.');
+        showDialog(t('common.error'), t('models.noFile'));
         return;
       }
 
@@ -159,7 +161,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       const isSafe = fileName.endsWith('.safetensors');
 
       if (!isGguf && !isSafe) {
-        showDialog('Invalid File', 'Please select a GGUF or safetensors model file');
+        showDialog(t('models.invalidFileTitle'), t('models.invalidFileBody'));
         return;
       }
 
@@ -167,7 +169,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       const pickedName = normalizeModelName(file.name);
       const duplicate = existingModels.some(model => normalizeModelName(model.name) === pickedName);
       if (duplicate) {
-        showDialog('Model Already Exists', `${file.name} is already imported.`);
+        showDialog(t('models.existsTitle'), t('models.existsBody', { name: file.name }));
         return;
       }
 
@@ -179,23 +181,23 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
         await modelDownloader.linkExternalModel(file.uri, file.name);
         setIsLoading(false);
         setImportingModelName(null);
-        showDialog('Model Imported', 'The model has been successfully imported to the app.');
+        showDialog(t('models.importedTitle'), t('models.importedBody'));
         await refreshStoredModels();
       } catch (error) {
         setIsLoading(false);
         setImportingModelName(null);
         if (isDuplicateModelError(error)) {
-          showDialog('Model Already Exists', `${file.name} is already imported.`);
+          showDialog(t('models.existsTitle'), t('models.existsBody', { name: file.name }));
           return;
         }
-        showDialog('Error', 'Failed to import the model. Please try again.');
+        showDialog(t('common.error'), t('models.importFailed'));
       }
     } catch (error) {
       setIsLoading(false);
       const errorMessage = Platform.OS === 'ios'
-        ? 'Could not open the file picker. Please try again.'
-        : 'Could not open the file picker. Please ensure the app has storage permissions.';
-      showDialog('Error', errorMessage);
+        ? t('models.pickerFailed')
+        : t('models.pickerPermission');
+      showDialog(t('common.error'), errorMessage);
     }
   };
 
@@ -231,14 +233,14 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
 
       await refreshStoredModels();
     } catch (error) {
-      showDialog('Error', 'Failed to cancel download');
+      showDialog(t('common.error'), t('models.cancelDownloadFailed'));
     }
   };
 
   const handleDelete = async (model: StoredModel, showDialog: ShowDialogFn, hideDialog: () => void) => {
     showDialog(
-      'Delete Model',
-      `Are you sure you want to delete ${model.name}?`
+      t('models.deleteTitle'),
+      t('models.deleteConfirm', { name: model.name })
     );
   };
 
@@ -258,7 +260,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       
       await refreshStoredModels();
     } catch (error) {
-      showDialog('Error', 'Failed to delete model');
+      showDialog(t('common.error'), t('models.deleteFailed'));
     }
   };
 
@@ -274,7 +276,7 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
       if (isShareCancelledError(error)) {
         return;
       }
-      showDialog('Share Failed', `Failed to share ${modelName}. Please try again.`);
+      showDialog(t('models.shareFailedTitle'), t('models.shareFailedBody', { name: modelName }));
     } finally {
       setIsLoading(false);
       setIsExporting(false);
@@ -289,8 +291,8 @@ export const useModelScreenLogic = (routeParams?: ModelRouteParams) => {
     if (tab === 'remote') {
       if (!isLoggedIn || !enableRemoteModels) {
         showDialog(
-          'Remote Models Disabled',
-          'Remote models require the "Enable Remote Models" setting to be turned on and you need to be signed in. Would you like to go to Settings to configure this?'
+          t('models.remoteDisabledTitle'),
+          t('models.remoteDisabledBody')
         );
         return;
       }

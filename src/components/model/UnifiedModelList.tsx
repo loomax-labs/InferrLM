@@ -16,6 +16,7 @@ import { HuggingFaceModelsList } from './HuggingFaceModelsList';
 import { CuratedModelsList } from './CuratedModelsList';
 import { useUnifiedModelList } from '../../hooks/useUnifiedModelList';
 import { useModelDownloadHandlers } from '../../hooks/useModelDownloadHandlers';
+import { useT } from '../../i18n';
 
 
 interface UnifiedModelListProps {
@@ -41,6 +42,7 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
   onCustomUrlPress,
   onGuidancePress
 }) => {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -88,10 +90,10 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
             </View>
             <View style={styles.customUrlTextContainer}>
               <Text style={[styles.customUrlButtonTitle, { color: themeColors.text }]}>
-                Download from URL
+                {t('models.downloadFromUrl')}
               </Text>
               <Text style={[styles.customUrlButtonSubtitle, { color: themeColors.secondaryText }]}>
-                Download a custom GGUF or LiteRT model from a URL
+                {t('models.downloadUrlSubtitle')}
               </Text>
             </View>
           </View>
@@ -160,16 +162,16 @@ const UnifiedModelList: React.FC<UnifiedModelListProps> = ({
       <Dialog
         visible={logic.mlxDirDialogVisible && !modelFilesOpen}
         onClose={logic.hideMLXDirDialog}
-        title="MLX Folder Name"
-        description="Enter a folder name for this MLX model package. All required MLX files will be downloaded into this folder."
-        primaryButtonText="Download"
+        title={t('models.folderTitle')}
+        description={t('models.folderBody')}
+        primaryButtonText={t('models.download')}
         onPrimaryPress={logic.confirmMLXDirDownload}
-        secondaryButtonText="Cancel"
+        secondaryButtonText={t('common.cancel')}
         onSecondaryPress={logic.hideMLXDirDialog}
       >
         <TextInput
           mode="outlined"
-          label="Folder Name"
+          label={t('models.folderLabel')}
           value={logic.mlxDirName}
           onChangeText={logic.setMlxDirName}
           autoCapitalize="none"

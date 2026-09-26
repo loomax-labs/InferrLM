@@ -7,6 +7,7 @@ import { onlineModelService } from '../../services/OnlineModelService';
 import { Surface } from 'react-native-paper';
 import Dialog from '../Dialog';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useT } from '../../i18n';
 
 interface ApiKeyItem {
   id: string;
@@ -41,6 +42,7 @@ const BASE_PROVIDERS = [
 ];
 
 const ApiKeySection: React.FC = () => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const [isLoadingApiKeys, setIsLoadingApiKeys] = useState(false);
@@ -148,7 +150,7 @@ const ApiKeySection: React.FC = () => {
             id: bp.id,
             name: bp.name,
             key: customKey || '',
-            placeholder: bp.placeholder,
+            placeholder: t('models.enterKeyNamed', { name: bp.name }),
             url: bp.url,
             expanded: false,
             defaultKeyAvailable: onlineModelService.hasDefaultKey(bp.id),
@@ -180,7 +182,7 @@ const ApiKeySection: React.FC = () => {
             id: clone.id,
             name: clone.displayName,
             key: customKey || '',
-            placeholder: baseMeta?.placeholder || 'Enter your API key',
+            placeholder: t('models.enterKeyNamed', { name: baseMeta?.name || 'API' }),
             url: baseMeta?.url || '',
             expanded: false,
             defaultKeyAvailable: onlineModelService.hasDefaultKey(clone.id),
@@ -204,7 +206,7 @@ const ApiKeySection: React.FC = () => {
       }
       setApiKeyItems(ordered);
     } catch {
-      showDialog('Error', 'Failed to load API keys');
+      showDialog(t('common.error'), t('models.loadKeysFailed'));
     } finally {
       setIsLoadingApiKeys(false);
     }
@@ -218,7 +220,7 @@ const ApiKeySection: React.FC = () => {
 
       const trimmedUrl = item.baseUrl.trim();
       if (trimmedUrl && !isValidUrl(trimmedUrl)) {
-        showDialog('Error', 'Enter a valid URL starting with http:// or https://');
+        showDialog(t('common.error'), t('models.invalidUrl'));
         return;
       }
 
@@ -266,10 +268,10 @@ const ApiKeySection: React.FC = () => {
         setApiKeyItems(prev => prev.map(i => i.id === id ? { ...i, systemInstruction: '' } : i));
       }
 
-      showDialog('Success', `${item.name} settings saved`);
+      showDialog(t('common.success'), t('models.settingsSaved', { name: item.name }));
     } catch {
       const item = apiKeyItems.find(i => i.id === id);
-      showDialog('Error', `Failed to save ${item?.name || id} settings`);
+      showDialog(t('common.error'), t('models.saveSettingsFailed', { name: item?.name || id }));
     } finally {
       setSaving(null);
     }
@@ -286,7 +288,7 @@ const ApiKeySection: React.FC = () => {
         id: cloneId,
         name: displayName,
         key: '',
-        placeholder: base.placeholder,
+        placeholder: t('models.enterKeyNamed', { name: base.name }),
         url: base.url,
         expanded: true,
         defaultKeyAvailable: onlineModelService.hasDefaultKey(cloneId),
@@ -310,7 +312,7 @@ const ApiKeySection: React.FC = () => {
         return next;
       });
     } catch {
-      showDialog('Error', 'Failed to create clone');
+      showDialog(t('common.error'), t('models.cloneFailed'));
     }
   };
 
@@ -319,13 +321,13 @@ const ApiKeySection: React.FC = () => {
       await onlineModelService.deleteClone(cloneId);
       setApiKeyItems(prev => prev.filter(i => i.id !== cloneId));
     } catch {
-      showDialog('Error', 'Failed to delete configuration');
+      showDialog(t('common.error'), t('models.deleteConfigFailed'));
     }
   };
 
   const getDescriptionText = (item: ApiKeyItem): string => {
-    if (item.useCustomKey) return item.key ? 'Custom key configured' : 'Enter your API key';
-    return item.usingDefaultKey ? 'Using built-in key' : 'No API key available';
+    if (item.useCustomKey) return item.key ? t('models.customKeyReady') : t('models.enterKey');
+    return item.usingDefaultKey ? t('models.usingBuiltInKey') : t('models.noKey');
   };
 
   const getDescriptionColor = (item: ApiKeyItem): string => {
@@ -339,7 +341,7 @@ const ApiKeySection: React.FC = () => {
     return (
       <Surface style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={themeColors.primary} />
-        <Text style={[styles.loadingText, { color: themeColors.text }]}>Loading API keys...</Text>
+        <Text style={[styles.loadingText, { color: themeColors.text }]}>{t('models.loadingKeys')}</Text>
       </Surface>
     );
   }
@@ -400,10 +402,10 @@ const ApiKeySection: React.FC = () => {
             <Surface style={[styles.accordionContent, { backgroundColor: themeColors.background }]}>
               {item.isClone && (
                 <View style={styles.inputContainer}>
-                  <Text style={[styles.inputLabel, { color: themeColors.text }]}>Display Name</Text>
+                  <Text style={[styles.inputLabel, { color: themeColors.text }]}>{t('models.displayName')}</Text>
                   <TextInput
                     style={[styles.input, { color: themeColors.text, backgroundColor: themeColors.background, borderColor: themeColors.borderColor }]}
-                    placeholder="e.g., Groq, LM Studio, OpenRouter"
+                    placeholder={t('models.displayNamePlaceholder')}
                     placeholderTextColor={themeColors.secondaryText}
                     value={item.name}
                     onChangeText={(text) => updateDisplayName(item.id, text)}
@@ -414,7 +416,7 @@ const ApiKeySection: React.FC = () => {
 
               {item.defaultKeyAvailable && !item.isClone && (
                 <View style={styles.toggleContainer}>
-                  <Text style={[styles.toggleLabel, { color: themeColors.text }]}>Use your own API key</Text>
+                  <Text style={[styles.toggleLabel, { color: themeColors.text }]}>{t('models.useOwnKey')}</Text>
                   <AppSwitch
                     value={item.useCustomKey}
                     onValueChange={() => toggleUseCustomKey(item.id)}
@@ -445,10 +447,10 @@ const ApiKeySection: React.FC = () => {
               )}
 
               <View style={styles.inputContainer}>
-                <Text style={[styles.inputLabel, { color: themeColors.text }]}>Model Name</Text>
+                <Text style={[styles.inputLabel, { color: themeColors.text }]}>{t('models.modelName')}</Text>
                 <TextInput
                   style={[styles.input, { color: themeColors.text, backgroundColor: themeColors.background, borderColor: themeColors.borderColor }]}
-                  placeholder={`Default: ${item.defaultModelName}`}
+                  placeholder={t('models.defaultValue', { value: item.defaultModelName })}
                   placeholderTextColor={themeColors.secondaryText}
                   value={item.modelName}
                   onChangeText={(text) => updateModelName(item.id, text)}
@@ -457,10 +459,10 @@ const ApiKeySection: React.FC = () => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={[styles.inputLabel, { color: themeColors.text }]}>Base URL</Text>
+                <Text style={[styles.inputLabel, { color: themeColors.text }]}>{t('models.baseUrl')}</Text>
                 <TextInput
                   style={[styles.input, { color: themeColors.text, backgroundColor: themeColors.background, borderColor: themeColors.borderColor, paddingRight: 12 }]}
-                  placeholder={`Default: ${item.defaultBaseUrl || 'None'}`}
+                  placeholder={t('models.defaultValue', { value: item.defaultBaseUrl || t('common.na') })}
                   placeholderTextColor={themeColors.secondaryText}
                   value={item.baseUrl}
                   onChangeText={(text) => updateBaseUrl(item.id, text)}
@@ -471,7 +473,7 @@ const ApiKeySection: React.FC = () => {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={[styles.inputLabel, { color: themeColors.text }]}>System Instruction</Text>
+                <Text style={[styles.inputLabel, { color: themeColors.text }]}>{t('models.systemInstruction')}</Text>
                 <TextInput
                   style={[
                     styles.input,
@@ -482,7 +484,7 @@ const ApiKeySection: React.FC = () => {
                       borderColor: themeColors.borderColor,
                     }
                   ]}
-                  placeholder="Default: Settings → Model Settings → System Prompt"
+                  placeholder={t('models.systemInstructionPlaceholder')}
                   placeholderTextColor={themeColors.secondaryText}
                   value={item.systemInstruction}
                   onChangeText={(text) => updateSystemInstruction(item.id, text)}
@@ -493,7 +495,7 @@ const ApiKeySection: React.FC = () => {
 
               {(item.id === 'chatgpt' || item.baseProvider === 'chatgpt') && (
                 <View style={styles.presetContainer}>
-                  <Text style={[styles.presetLabel, { color: themeColors.text }]}>Popular endpoints</Text>
+                  <Text style={[styles.presetLabel, { color: themeColors.text }]}>{t('models.popularEndpoints')}</Text>
                   <View style={styles.presetChips}>
                     {openAIPresetUrls.map(preset => (
                       <TouchableOpacity
@@ -517,7 +519,7 @@ const ApiKeySection: React.FC = () => {
                   {saving === item.id ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Text style={styles.saveButtonText}>Save</Text>
+                    <Text style={styles.saveButtonText}>{t('common.save')}</Text>
                   )}
                 </TouchableOpacity>
               </View>

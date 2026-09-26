@@ -12,6 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { modelDownloader } from '../services/ModelDownloader';
 import { huggingFaceService } from '../services/HuggingFaceService';
+import { useT } from '../i18n';
 
 interface DownloadsDialogProps {
   visible: boolean;
@@ -36,6 +37,7 @@ const formatBytes = (bytes: number) => {
 };
 
 const DownloadsDialog = ({ visible, onClose, downloads, setDownloadProgress }: DownloadsDialogProps) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
 
@@ -139,7 +141,7 @@ const DownloadsDialog = ({ visible, onClose, downloads, setDownloadProgress }: D
           <ScrollView style={styles.downloadsList}>
             {activeDownloads.length === 0 ? (
               <Text style={[styles.emptyText, { color: themeColors.secondaryText }]}>
-                No active downloads
+                {t('downloads.empty')}
               </Text>
             ) : (
               activeDownloads.map(([name, data]) => (
@@ -152,8 +154,17 @@ const DownloadsDialog = ({ visible, onClose, downloads, setDownloadProgress }: D
                   </Text>
                   
                   <Text style={[styles.downloadProgress, { color: themeColors.secondaryText }]}>
-                    {data.isPaused ? 'Paused • ' : ''}
-                    {`${Math.floor(data.progress)}% • ${formatBytes(data.bytesDownloaded)} / ${formatBytes(data.totalBytes)}`}
+                    {data.isPaused
+                      ? t('notifications.pausedDetail', {
+                        progress: Math.floor(data.progress),
+                        downloaded: formatBytes(data.bytesDownloaded),
+                        total: formatBytes(data.totalBytes),
+                      })
+                      : t('notifications.progress', {
+                        progress: Math.floor(data.progress),
+                        downloaded: formatBytes(data.bytesDownloaded),
+                        total: formatBytes(data.totalBytes),
+                      })}
                   </Text>
                   
                   <View style={[styles.progressBar, { backgroundColor: themeColors.background }]}>
@@ -179,7 +190,7 @@ const DownloadsDialog = ({ visible, onClose, downloads, setDownloadProgress }: D
                         color="#fff" 
                       />
                       <Text style={styles.controlButtonText}>
-                        {data.isPaused ? 'Resume' : 'Pause'}
+                        {data.isPaused ? t('downloads.resume') : t('downloads.pause')}
                       </Text>
                     </TouchableOpacity>
 
@@ -188,7 +199,7 @@ const DownloadsDialog = ({ visible, onClose, downloads, setDownloadProgress }: D
                       onPress={() => handleCancel(name)}
                     >
                       <MaterialCommunityIcons name="close" size={20} color="#fff" />
-                      <Text style={styles.controlButtonText}>Cancel</Text>
+                      <Text style={styles.controlButtonText}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { getBrowserDownloadTextColor } from '../../utils/ColorUtils';
+import { useT } from '../../i18n';
 
 interface ModelWarningDialogProps {
   visible: boolean;
@@ -20,6 +21,7 @@ export const ModelWarningDialog: React.FC<ModelWarningDialogProps> = ({
   onAccept,
   onCancel
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -38,18 +40,18 @@ export const ModelWarningDialog: React.FC<ModelWarningDialogProps> = ({
 
   return (
     <Dialog visible={visible} onDismiss={onCancel}
-      primaryButtonText="Continue"
+      primaryButtonText={t('common.continue')}
       onPrimaryPress={() => onAccept(dontShowAgain)}
-      secondaryButtonText="Cancel"
+      secondaryButtonText={t('common.cancel')}
       onSecondaryPress={onCancel}
     >
         <Dialog.Title style={{ color: themeColors.text }}>
-          Content Warning
+          {t('models.contentWarningTitle')}
         </Dialog.Title>
         
         <Dialog.Content>
           <Text style={{ color: themeColors.text, marginBottom: 16 }}>
-            We do not own these models. They may generate harmful, biased, or inappropriate content. Use responsibly and at your own discretion.
+            {t('models.contentWarningBody')}
           </Text>
 
           {!!licenseLink && (
@@ -65,7 +67,7 @@ export const ModelWarningDialog: React.FC<ModelWarningDialogProps> = ({
                 style={{ marginRight: 6 }}
               />
               <Text style={[styles.licenseText, { color: getBrowserDownloadTextColor(currentTheme) }]}>
-                View model license
+                {t('models.viewLicense')}
               </Text>
             </TouchableOpacity>
           )}
@@ -90,7 +92,7 @@ export const ModelWarningDialog: React.FC<ModelWarningDialogProps> = ({
               )}
             </View>
             <Text style={[styles.checkboxText, { color: themeColors.text }]}>
-              Don't show again
+              {t('models.dontShowAgain')}
             </Text>
           </TouchableOpacity>
         </Dialog.Content>

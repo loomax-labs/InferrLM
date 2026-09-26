@@ -19,9 +19,11 @@ import ModelDownloadsDialog from '../components/model/ModelDownloadsDialog';
 import { useModelScreenLogic } from '../hooks/useModelScreenLogic';
 import { getActiveDownloadsCount } from '../utils/ModelUtils';
 import { StoredModel } from '../services/ModelDownloaderTypes';
+import { useT } from '../i18n';
 
 
 export default function ModelScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const insets = useSafeAreaInsets();
   const { isWideScreen } = useResponsiveLayout();
@@ -71,16 +73,16 @@ export default function ModelScreen() {
 
   const handleDelete = (model: StoredModel) => {
     showDialog(
-      'Delete Model',
-      `Are you sure you want to delete ${model.name}?`,
+      t('models.deleteTitle'),
+      t('models.deleteConfirm', { name: model.name }),
       {
-        label: 'Delete',
+        label: t('common.delete'),
         onPress: async () => {
           hideDialog();
           await logic.confirmDelete(model, showDialog);
         }
       },
-      { label: 'Cancel', onPress: hideDialog }
+      { label: t('common.cancel'), onPress: hideDialog }
     );
   };
 
@@ -196,10 +198,10 @@ export default function ModelScreen() {
           <View style={[styles.loadingContainer, { backgroundColor: themeColors.borderColor }]}>
             <ActivityIndicator size="large" color={themeColors.primary} />
             <Text style={[styles.loadingText, { color: themeColors.text, textAlign: 'center' }]}>
-              {logic.isExporting ? 'Exporting model...' : (logic.importingModelName ? `Importing ${logic.importingModelName}...` : 'Importing model...')}
+              {logic.isExporting ? t('models.exporting') : (logic.importingModelName ? t('models.importingNamed', { name: logic.importingModelName }) : t('models.importing'))}
             </Text>
             <Text style={[styles.loadingSubtext, { color: themeColors.secondaryText, textAlign: 'center' }]}>
-              {logic.isExporting ? 'Preparing model for sharing' : (logic.importingModelName ? 'Moving model to app storage' : 'This may take a while for large models')}
+              {logic.isExporting ? t('models.preparingShare') : (logic.importingModelName ? t('models.movingStorage') : t('models.importWait'))}
             </Text>
           </View>
         </View>

@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet, Animated, LayoutChangeEvent }
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { useT } from '../../i18n';
 
 export type TabType = 'stored' | 'downloadable' | 'remote';
 
@@ -17,6 +18,7 @@ export const ModelScreenTabs: React.FC<ModelScreenTabsProps> = ({
   onTabPress,
   enableRemoteModels
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
 
@@ -55,9 +57,9 @@ export const ModelScreenTabs: React.FC<ModelScreenTabsProps> = ({
   };
 
   const tabLabels: Record<TabType, string> = {
-    stored: 'Stored Models',
-    downloadable: 'Download Models',
-    remote: 'Remote Models',
+    stored: t('models.storedTab'),
+    downloadable: t('models.downloadTab'),
+    remote: t('models.remoteTab'),
   };
 
   return (

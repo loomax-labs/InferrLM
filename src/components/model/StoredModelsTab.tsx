@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { fs as FileSystem } from '../../services/fs';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { useT } from '../../i18n';
 import MlxIcon from '../icons/MlxIcon';
 import { getThemeAwareColor, getDocumentIconColor } from '../../utils/ColorUtils';
 import StoredModelItem from './StoredModelItem';
@@ -72,6 +73,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
   onExport,
   onSettings
 }) => {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
@@ -251,7 +253,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
   const StoredModelsHeader = () => (
     <View style={styles.storedModelsHeader}>
       <View style={styles.storedHeaderActions}>
-        <Text style={[styles.storedHeaderTitle, { color: themeColors.text }]}>Stored Models</Text>
+        <Text style={[styles.storedHeaderTitle, { color: themeColors.text }]}>{t('models.storedTab')}</Text>
         <TouchableOpacity
           style={[styles.refreshButton, { backgroundColor: themeColors.borderColor }]}
           onPress={onRefresh}
@@ -274,10 +276,10 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
           </View>
           <View style={styles.customUrlTextContainer}>
             <Text style={[styles.customUrlButtonTitle, { color: themeColors.text }]}>
-              Import Model
+              {t('models.importModel')}
             </Text>
             <Text style={[styles.customUrlButtonSubtitle, { color: themeColors.secondaryText }]}>
-              Import a GGUF model from the storage
+              {t('models.importModelSubtitle')}
             </Text>
           </View>
         </View>
@@ -447,7 +449,7 @@ export const StoredModelsTab: React.FC<StoredModelsTabProps> = ({
               color={themeColors.secondaryText}
             />
             <Text style={[styles.emptyText, { color: themeColors.secondaryText }]}>
-              No models downloaded yet. Go to the "Download Models" tab to get started.
+              {t('models.emptyStored')}
             </Text>
           </View>
         )

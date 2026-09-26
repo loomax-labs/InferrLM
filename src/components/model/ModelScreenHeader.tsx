@@ -6,6 +6,7 @@ import { theme } from '../../constants/theme';
 import AppHeader from '../AppHeader';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
 import { headerBtn, headerTint } from '../../utils/headerChrome';
+import { useT } from '../../i18n';
 
 interface ModelScreenHeaderProps {
   isLoggedIn: boolean;
@@ -16,13 +17,14 @@ export const ModelScreenHeader: React.FC<ModelScreenHeaderProps> = ({
   isLoggedIn,
   onProfilePress
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const { isWideScreen, useIosHeader } = useResponsiveLayout();
   const colors = theme[currentTheme];
 
   return (
     <AppHeader 
-      title="Models" 
+      title={t('tabs.models')} 
       rightButtons={
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <TouchableOpacity

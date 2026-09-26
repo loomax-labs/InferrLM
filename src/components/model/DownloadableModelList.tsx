@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import DownloadableModelItem, { DownloadableModel } from './DownloadableModelItem';
 import { modelDownloader } from '../../services/ModelDownloader';
 import Dialog from '../Dialog';
+import { useT } from '../../i18n';
 
 interface DownloadableModelListProps {
   models: DownloadableModel[];
@@ -20,6 +21,7 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
   setDownloadProgress,
   onDownload
 }) => {
+  const t = useT();
   const router = useRouter();
   const [initializingDownloads, setInitializingDownloads] = useState<{ [key: string]: boolean }>({});
 
@@ -79,8 +81,8 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
     const mainFilename = getModelFilename(model);
     if (isModelDownloaded(mainFilename)) {
       showDialog(
-        'Model Already Downloaded',
-        'This model is already in your stored models.'
+        t('models.alreadyDownloadedTitle'),
+        t('models.alreadyDownloadedBody')
       );
       return;
     }
@@ -139,7 +141,7 @@ const DownloadableModelList: React.FC<DownloadableModelListProps> = ({
           delete newProgress[file.filename];
           return newProgress;
         });
-        showDialog('Error', `Failed to start download for ${file.filename}`);
+        showDialog(t('common.error'), t('models.downloadStartFailed', { name: file.filename }));
       } finally {
         setInitializingDownloads(prev => ({ ...prev, [file.filename]: false }));
       }

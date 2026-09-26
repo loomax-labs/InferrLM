@@ -24,6 +24,7 @@ import Dialog from '../components/Dialog';
 import { isActiveDownload } from '../utils/ModelUtils';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { headerBtn, headerTint } from '../utils/headerChrome';
+import { useT } from '../i18n';
 
 const formatBytes = (bytes: number) => {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
@@ -72,6 +73,7 @@ interface DownloadItem {
 }
 
 export default function DownloadsScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const { isWideScreen } = useResponsiveLayout();
@@ -147,8 +149,18 @@ export default function DownloadsScreen() {
         const isTransferring = data.status === 'transferring';
         const isPaused = !!data.isPaused || data.status === 'paused';
         const progressText = isTransferring
-          ? 'Transferring to models...'
-          : `${isPaused ? 'Paused • ' : ''}${Math.floor(progress)}% • ${formatBytes(bytesDownloaded)} / ${formatBytes(totalBytes)}`;
+          ? t('downloads.transferring')
+          : (isPaused
+            ? t('notifications.pausedDetail', {
+              progress: Math.floor(progress),
+              downloaded: formatBytes(bytesDownloaded),
+              total: formatBytes(totalBytes),
+            })
+            : t('notifications.progress', {
+              progress: Math.floor(progress),
+              downloaded: formatBytes(bytesDownloaded),
+              total: formatBytes(totalBytes),
+            }));
         return {
           id: data.downloadId || 0,
           name,
@@ -210,9 +222,9 @@ export default function DownloadsScreen() {
       if (data.status === 'failed' && prev[name] && prev[name] !== 'failed') {
         console.log('download_failed', name, data.error);
         if (isStorageError(data.error)) {
-          showDialog('Not Enough Storage', 'Download stopped because the device ran out of storage space. Free up storage and try again.');
+          showDialog(t('downloads.notEnoughStorageTitle'), t('downloads.notEnoughStorageBody'));
         } else {
-          showDialog('Download Failed', `"${name}" could not be downloaded. Please try again.`);
+          showDialog(t('notifications.failedTitle'), t('downloads.failedNamed', { name }));
         }
       }
     }
@@ -235,7 +247,7 @@ export default function DownloadsScreen() {
       const { hasEnoughSpace } = await getStorageInfo();
       if (!hasEnoughSpace) {
         storageWarnedRef.current = true;
-        showDialog('Low Storage', 'Your device is running low on storage space. Active downloads may fail.');
+        showDialog(t('downloads.lowStorageTitle'), t('downloads.lowStorageBody'));
       }
     };
 
@@ -373,7 +385,7 @@ export default function DownloadsScreen() {
         await modelDownloader.pauseDownload(downloadId);
       }
     } catch {
-      showDialog('Error', isPaused ? 'Failed to resume download' : 'Failed to pause download');
+      showDialog(t('common.error'), isPaused ? t('downloads.resumeFailed') : t('downloads.pauseFailed'));
       setDownloadProgress(prev => ({
         ...prev,
         [modelName]: {
@@ -423,7 +435,7 @@ export default function DownloadsScreen() {
 
       await modelDownloader.restartDownload(modelName, huggingFaceService.getAccessToken());
     } catch {
-      showDialog('Error', 'Failed to restart download');
+      showDialog(t('common.error'), t('downloads.restartFailed'));
     } finally {
       buttonProcessingRef.current.delete(modelName);
       setIsRestarting(false);
@@ -460,7 +472,7 @@ export default function DownloadsScreen() {
     try {
       await modelDownloader.cancelDownload(modelName);
     } catch {
-      showDialog('Error', 'Failed to cancel download');
+      showDialog(t('common.error'), t('downloads.cancelFailed'));
     } finally {
       buttonProcessingRef.current.delete(modelName);
     }
@@ -499,17 +511,17 @@ export default function DownloadsScreen() {
           return next;
         });
       } catch {
-        showDialog('Error', 'Some downloads could not be cancelled. Please try again.');
+        showDialog(t('common.error'), t('downloads.cancelSomeFailed'));
       } finally {
         setIsCancellingAll(false);
       }
     };
 
     showDialog(
-      'Cancel All Downloads',
-      `Are you sure you want to cancel ${activeNames.length} active downloads?`,
-      { label: 'Yes', onPress: confirmCancelAll },
-      { label: 'No', onPress: hideDialog }
+      t('downloads.cancelAllTitle'),
+      t('downloads.cancelAllBody', { count: activeNames.length }),
+      { label: t('common.yes'), onPress: confirmCancelAll },
+      { label: t('common.no'), onPress: hideDialog }
     );
   };
 
@@ -636,7 +648,7 @@ export default function DownloadsScreen() {
     <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <GradientBg />
       <AppHeader
-        title="Active Downloads"
+        title={t('downloads.activeTitle')}
         showBackButton
         showLogo={false}
         rightButtons={headerRightButtons}
@@ -651,7 +663,7 @@ export default function DownloadsScreen() {
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
               <Text style={[styles.emptyText, { color: themeColors.secondaryText }]}>
-                No active downloads
+                {t('downloads.empty')}
               </Text>
             </View>
           )}
@@ -672,26 +684,26 @@ export default function DownloadsScreen() {
       <Dialog
         visible={cancelDialogVisible}
         onClose={hideCancelDialog}
-        title="Cancel Download"
-        description="Are you sure you want to cancel this download?"
+        title={t('downloads.cancelOneTitle')}
+        description={t('downloads.cancelOneBody')}
         iconName="close-circle-outline"
-        primaryButtonText="Yes"
+        primaryButtonText={t('common.yes')}
         onPrimaryPress={confirmCancellation}
-        secondaryButtonText="No"
+        secondaryButtonText={t('common.no')}
         onSecondaryPress={hideCancelDialog}
       />
 
       <Dialog
         visible={restartDialogVisible}
         onClose={hideRestartDialog}
-        title="Restart Download"
-        description="This will stop the current download, and start over the download from the beginning. Continue?"
+        title={t('downloads.restartTitle')}
+        description={t('downloads.restartBody')}
         iconName="restart"
-        primaryButtonText="Yes"
+        primaryButtonText={t('common.yes')}
         onPrimaryPress={confirmRestart}
         primaryButtonLoading={isRestarting}
         primaryButtonDisabled={isRestarting}
-        secondaryButtonText="No"
+        secondaryButtonText={t('common.no')}
         onSecondaryPress={hideRestartDialog}
       />
     </View>

@@ -4,8 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import ApiKeySection from './ApiKeySection';
+import { useT } from '../../i18n';
 
 export const RemoteModelsTab: React.FC = () => {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
@@ -24,7 +26,7 @@ export const RemoteModelsTab: React.FC = () => {
         automaticallyAdjustKeyboardInsets
       >
         <Text style={[styles.sectionTitle, { color: themeColors.text, marginBottom: 16 }]}>
-          API Settings for Remote Models
+          {t('models.remoteSettings')}
         </Text>
         <ApiKeySection />
       </ScrollView>

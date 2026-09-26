@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 import { getThemeAwareColor } from '../../utils/ColorUtils';
+import { useT } from '../../i18n';
 
 interface StorageWarningDialogProps {
   visible: boolean;
@@ -18,6 +19,7 @@ export const StorageWarningDialog: React.FC<StorageWarningDialogProps> = ({
   onAccept,
   onCancel
 }) => {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const [dontShowAgain, setDontShowAgain] = useState(false);
@@ -26,19 +28,19 @@ export const StorageWarningDialog: React.FC<StorageWarningDialogProps> = ({
     <Dialog 
       visible={visible} 
       onDismiss={onCancel}
-      primaryButtonText="Continue"
+      primaryButtonText={t('common.continue')}
       onPrimaryPress={() => onAccept(dontShowAgain)}
-      secondaryButtonText="Cancel"
+      secondaryButtonText={t('common.cancel')}
       onSecondaryPress={onCancel}
       style={{
         zIndex: 10000,
         elevation: 10000
       }}
     >
-        <Dialog.Title>File Manager Warning</Dialog.Title>
+        <Dialog.Title>{t('models.fileManagerTitle')}</Dialog.Title>
         <Dialog.Content>
           <PaperText variant="bodyMedium" style={{ marginBottom: 16 }}>
-            Large model files may cause the file manager to become temporarily stuck on some devices. Please be patient and wait for the file manager to respond once you click on a file.
+            {t('models.fileManagerBody')}
           </PaperText>
           
           <TouchableOpacity 
@@ -61,7 +63,7 @@ export const StorageWarningDialog: React.FC<StorageWarningDialogProps> = ({
               )}
             </View>
             <PaperText style={[styles.checkboxText, { color: themeColors.text }]}>
-              Don't show again
+              {t('models.dontShowAgain')}
             </PaperText>
           </TouchableOpacity>
         </Dialog.Content>
