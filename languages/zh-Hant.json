@@ -1,0 +1,16 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "相機權限讓你在 InferrLM 裡直接拍照上傳，並做 OCR 分析。",
+    "NSPhotoLibraryUsageDescription": "InferrLM 需要存取你的相簿，好讓你選圖片來分析和做 OCR。",
+    "NSPhotoLibraryAddUsageDescription": "InferrLM 需要把拍下的照片和生成的圖片儲存到你的相簿。",
+    "NSMicrophoneUsageDescription": "InferrLM 用麥克風錄音，在手機上把語音轉成文字並翻譯。",
+    "NSContactsUsageDescription": "只有你同意某項手機操作去新增或更新聯絡人時，InferrLM 才會存取聯絡人。",
+    "NSCalendarsUsageDescription": "只有你同意某項手機操作去新增行程時，InferrLM 才會存取行事曆。",
+    "NSRemindersUsageDescription": "只有你同意針對提醒事項的行事曆類操作時，InferrLM 才會存取提醒事項。",
+    "NSUserNotificationsUsageDescription": "只有你同意某個技能或手機操作去安排提醒時，InferrLM 才會使用通知。",
+    "NSLocalNetworkUsageDescription": "InferrLM 使用區域網路，把 AI 聊天介面分享給同一 Wi-Fi 上的其他裝置，這樣你就能在電腦、平板或其他手機的瀏覽器裡打開助手。"
+  },
+  "android": {
+    "app_name": "InferrLM"
+  }
+}
