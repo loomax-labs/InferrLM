@@ -18,6 +18,7 @@ import { modelDownloader } from '../services/ModelDownloader';
 import AppearanceSection from '../components/settings/AppearanceSection';
 import { getCurrentUser } from '../services/AuthService';
 import SupportSection from '../components/settings/SupportSection';
+import { onboardingStore } from '../onboarding/OnboardingStore';
 import ModelSettingsSection from '../components/settings/ModelSettingsSection';
 import SystemInfoSection from '../components/settings/SystemInfoSection';
 import StorageSection from '../components/settings/StorageSection';
@@ -644,6 +645,40 @@ export default function SettingsScreen() {
               </Text>
               <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
                 Optional AppFunctions and root elevation tools
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
+          </TouchableOpacity>
+        </SettingsSection>
+
+        <SettingsSection title="Setup">
+          <TouchableOpacity
+            style={styles.capabilityRow}
+            onPress={async () => {
+              await onboardingStore.clearCompleted();
+              router.push('/onboarding');
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.capabilityTitle, { color: themeColors.text }]}>
+                Run setup again
+              </Text>
+              <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
+                Walk through onboarding from the start. Your downloaded models stay on device.
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.capabilityRow, { borderTopWidth: 1, borderTopColor: 'rgba(150, 150, 150, 0.1)' }]}
+            onPress={() => router.push({ pathname: '/onboarding', params: { mode: 'lessons-only' } })}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.capabilityTitle, { color: themeColors.text }]}>
+                How to use InferrLM
+              </Text>
+              <Text style={[styles.capabilityDesc, { color: themeColors.secondaryText }]}>
+                Replay the guided lessons for chat, models, and tools
               </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={22} color={themeColors.secondaryText} />
