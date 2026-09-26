@@ -1,4 +1,4 @@
-[English](REST_APIs.md) | [简体中文](REST_APIs.zh-CN.md) | [日本語](REST_APIs.ja.md)
+[English](REST_APIs.md) | [简体中文](REST_APIs.zh-CN.md) | [繁體中文](REST_APIs.zh-TW.md) | [日本語](REST_APIs.ja.md) | [한국어](REST_APIs.ko.md) | [Deutsch](REST_APIs.de.md) | [Français](REST_APIs.fr.md) | [Nederlands](REST_APIs.nl.md)
 
 # InferrLM REST API Documentation
 

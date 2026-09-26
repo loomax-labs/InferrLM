@@ -1,17 +1,17 @@
 [English](REST_APIs.md) | [简体中文](REST_APIs.zh-CN.md) | [繁體中文](REST_APIs.zh-TW.md) | [日本語](REST_APIs.ja.md) | [한국어](REST_APIs.ko.md) | [Deutsch](REST_APIs.de.md) | [Français](REST_APIs.fr.md) | [Nederlands](REST_APIs.nl.md)
 
-# InferrLM REST API 文档
+# Documentation de l'API REST InferrLM
 
-InferrLM 本地 HTTP 服务器的完整接口说明。REST API（通过网络请求调用的接口）把手机上的 AI 开放给同一网络里的其他设备。
+Description complète du serveur HTTP local d'InferrLM. L'API REST (des appels par requêtes réseau) ouvre l'IA de ton téléphone aux autres appareils du même réseau.
 
-## 开始使用
+## Pour commencer
 
-### 快速开始
+### Démarrage rapide
 
-1. **启动服务器** — 打开 InferrLM，进入 **服务器** 页，把开关打开。网址会出现（例如 `http://192.168.1.10:8889`）。
-2. **下载模型** — 在 **模型** 页至少下载一个 GGUF（一种模型文件格式）。API 请求里用的模型名不带 `.gguf`。
-3. **配置客户端** — 把任何兼容 OpenAI 的客户端指向 `http://YOUR_DEVICE_IP:8889/v1`。不需要 API 密钥。如果客户端非要填一个，随便写个占位就行。
-4. **发一条请求：**
+1. **Démarrer le serveur** : ouvre InferrLM, va dans l'onglet **Serveur** et active l'interrupteur. Ton adresse apparaît (par exemple `http://192.168.1.10:8889`).
+2. **Télécharger un modèle** : télécharge au moins un GGUF (un format de fichier de modèle) dans l'onglet **Modèles**. Le nom du modèle dans les requêtes API est sans `.gguf`.
+3. **Régler le client** : pointe un client compatible OpenAI vers `http://YOUR_DEVICE_IP:8889/v1`. Aucune clé d'API n'est requise. Si le client en exige une, mets n'importe quel texte de remplacement.
+4. **Envoyer une requête :**
 
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
@@ -19,45 +19,45 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
   -d '{"model": "llama-3.2-1b", "messages": [{"role": "user", "content": "Hello!"}]}'
 ```
 
-> 任何支持 OpenAI API 的软件或库都能用，只要指向 `http://YOUR_DEVICE_IP:8889/v1`。两台设备必须在同一个本地网络。模型名里的 `.gguf` 后缀可写可不写。
+> Ça marche avec toute application ou bibliothèque qui prend en charge l'API OpenAI : pointe-la vers `http://YOUR_DEVICE_IP:8889/v1`. Les deux appareils doivent être sur le même réseau local. L'extension `.gguf` dans le nom du modèle est facultative.
 
-### 启动服务器
+### Démarrer le serveur
 
-1. 在手机上打开 InferrLM
-2. 进入 **服务器** 页
-3. 打开服务器开关
-4. 会显示服务器网址（一般是 `http://YOUR_DEVICE_IP:8889`）
-5. 你可以用二维码分享这个网址，也可以复制后在其他设备上打开
+1. Ouvre l'application InferrLM sur ton appareil
+2. Va dans l'onglet **Serveur**
+3. Active l'interrupteur du serveur
+4. L'adresse du serveur s'affiche (en général `http://YOUR_DEVICE_IP:8889`)
+5. Tu peux partager cette adresse par QR code, ou la copier pour l'ouvrir sur d'autres appareils
 
-### 可以改的选项
+### Options que tu peux changer
 
-- **自动启动**：软件打开时自动启动服务器
-- **端口**：默认端口是 8889（可以在设置里改）
+- **Démarrage automatique** : démarre le serveur quand l'application s'ouvre
+- **Port** : le port par défaut est 8889 (modifiable dans les réglages)
 
-### 基础配置
+### Configuration de base
 
-**基础网址**：`http://YOUR_DEVICE_IP:8889`  
-**Content-Type**：`application/json`  
-**CORS**：对所有来源都已打开
+**Adresse de base** : `http://YOUR_DEVICE_IP:8889`  
+**Content-Type** : `application/json`  
+**CORS** : activé pour toutes les origines
 
-### 选择模型跑在哪
+### Choisir la cible du modèle
 
-每个会生成文字的请求都带一个 `model` 字符串，用来决定由哪一种方式来跑：
+Chaque requête qui produit du texte contient une chaîne `model`. Elle choisit le moteur qui fait le travail :
 
-| 模型取值 | 实际跑在哪 | 说明 |
+| Valeur du modèle | Moteur visé | Notes |
 |-------------|----------------|-------|
-| 已保存的模型名（例如 `llama-3.2-1b`） | 在手机上运行的本地 GGUF | 先在 InferrLM 里下载这个 GGUF。 |
-| `apple-foundation` | Apple Intelligence 的 Foundation 模型 | 仅 iOS。在软件设置里打开，并用 `GET /api/models/apple-foundation` 确认。 |
+| Nom de modèle enregistré (par exemple `llama-3.2-1b`) | GGUF local sur cet appareil | Télécharge d'abord le GGUF dans l'application InferrLM. |
+| `apple-foundation` | Modèle Apple Intelligence Foundation | iOS seulement. Active-le dans les réglages et vérifie avec `GET /api/models/apple-foundation`. |
 
 ---
 
-## 助手（本地）
+## Assistants (locaux)
 
 ### GET /api/assistants
 
-列出这台手机上 `deployment: "local"` 的助手。响应里不会带系统提示、技能说明和密钥。
+Liste les assistants de cet appareil avec `deployment: "local"`. Les réponses omettent les prompts système, les consignes de skills et les secrets.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "assistants": [
@@ -71,20 +71,20 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/assistants
 ```
 
 ---
 
-## 聊天和补全接口
+## API de discussion et de complétion
 
 ### POST /api/chat
 
-按完整对话记录来聊天，可以一边生成一边返回，也可以一次返回。可以用本地 GGUF 模型名，也可以用 `apple-foundation`。
+Diffuse une discussion ou la termine avec tout l'historique. Accepte un nom de modèle GGUF local ou `apple-foundation`.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -98,14 +98,14 @@ curl http://YOUR_DEVICE_IP:8889/api/assistants
 }
 ```
 
-**流式响应（NDJSON）：**
+**Réponse en flux (NDJSON) :**
 ```
 {"model":"llama-3.2-1b.gguf","created_at":"...","message":{"role":"assistant","content":"Hi"},"done":false}
 {"model":"llama-3.2-1b.gguf","created_at":"...","message":{"role":"assistant","content":" there"},"done":false}
 {"model":"llama-3.2-1b.gguf","created_at":"...","message":{"role":"assistant","content":""},"done":true}
 ```
 
-**非流式响应：**
+**Réponse sans flux :**
 ```json
 {
   "model": "llama-3.2-1b.gguf",
@@ -115,17 +115,17 @@ curl http://YOUR_DEVICE_IP:8889/api/assistants
 }
 ```
 
-**参数：**
-- `model`（字符串，必填）：要用哪一种方式来跑
-- `messages`（数组，必填）：对话记录。每一条有 `role`（`system` | `user` | `assistant`）和 `content`
-- `assistant`（字符串，可选）：本地助手的 id，来自 `GET /api/assistants`。填了它，并且请求体里没有系统消息（`messages` 里 `role: "system"`、顶层 `system`，或 `options.system_prompt`）时，服务器会在生成前加上这个助手的系统提示。id 不存在时返回 `404`，内容是 `{ "error": "assistant_not_found" }`。
-- `stream`（布尔值，可选）：是否用 NDJSON 一边生成一边返回（默认：`true`）
-- `temperature`（数字，可选）：随机程度，范围 0.0–2.0
-- `max_tokens`（数字，可选）：一次最多生成多少内容
-- `top_p`（数字，可选）：Top-p 抽样，只从概率较高的候选里挑
-- `top_k`（数字，可选）：Top-k 抽样，只从最可能的前几个里挑
+**Paramètres :**
+- `model` (chaîne, obligatoire) : moteur visé
+- `messages` (tableau, obligatoire) : historique. Chaque entrée a `role` (`system` | `user` | `assistant`) et `content`
+- `assistant` (chaîne, facultatif) : id d'un assistant local venant de `GET /api/assistants`. S'il est défini et que le corps n'a pas de message système (`messages` avec `role: "system"`, `system` au premier niveau, ou `options.system_prompt`), le serveur place le prompt système de cet assistant avant la génération. Un id inconnu renvoie `404` avec `{ "error": "assistant_not_found" }`.
+- `stream` (booléen, facultatif) : active les réponses NDJSON en flux (par défaut : `true`)
+- `temperature` (nombre, facultatif) : température d'échantillonnage 0.0–2.0
+- `max_tokens` (nombre, facultatif) : nombre maximal de tokens à produire
+- `top_p` (nombre, facultatif) : échantillonnage top-p
+- `top_k` (nombre, facultatif) : échantillonnage top-k
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
   -H "Content-Type: application/json" \
@@ -140,9 +140,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
 
 ### POST /api/generate
 
-根据一条提示生成内容，不带之前的对话。
+Produit une réponse à partir d'un seul prompt (sans contexte de discussion).
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -152,7 +152,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "model": "llama-3.2-1b.gguf",
@@ -162,14 +162,14 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
 }
 ```
 
-**参数：**
-- `model`（字符串，必填）：要用哪一种方式来跑
-- `prompt`（字符串，必填）：输入的提示
-- `stream`（布尔值，可选）：是否用 NDJSON 一边生成一边返回
-- `max_tokens`（数字，可选）：一次最多生成多少内容
-- `temperature`（数字，可选）：随机程度
+**Paramètres :**
+- `model` (chaîne, obligatoire) : moteur visé
+- `prompt` (chaîne, obligatoire) : prompt d'entrée
+- `stream` (booléen, facultatif) : active les réponses NDJSON en flux
+- `max_tokens` (nombre, facultatif) : nombre maximal de tokens à produire
+- `temperature` (nombre, facultatif) : température d'échantillonnage
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/generate \
   -H "Content-Type: application/json" \
@@ -178,13 +178,13 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/generate \
 
 ---
 
-## 兼容 OpenAI 的 API
+## API compatible OpenAI
 
 ### GET /v1/models
 
-按 OpenAI 的格式列出可用模型。兼容各种 OpenAI 客户端库。
+Liste les modèles disponibles au format OpenAI. Compatible avec toute bibliothèque cliente OpenAI.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "object": "list",
@@ -199,7 +199,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/generate \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/v1/models
 ```
@@ -208,9 +208,9 @@ curl http://YOUR_DEVICE_IP:8889/v1/models
 
 ### POST /v1/chat/completions
 
-兼容 OpenAI 的聊天补全接口。按 OpenAI API 写的软件可以直接换过来用。不需要 API 密钥。如果客户端要求 `Authorization` 头，填任意非空占位即可。
+Point d'accès de complétion de discussion compatible OpenAI. Remplacement direct pour les apps faites pour l'API OpenAI. Aucune clé d'API n'est requise. Si le client exige un en-tête `Authorization`, mets un texte de remplacement non vide.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -223,9 +223,9 @@ curl http://YOUR_DEVICE_IP:8889/v1/models
 }
 ```
 
-可选的 `assistant` 和 `POST /api/chat` 里一样（只支持本地助手；找不到时返回 `assistant_not_found`）。
+Le `assistant` facultatif se comporte comme sur `POST /api/chat` (assistants locaux seulement ; `assistant_not_found` s'il manque).
 
-**非流式响应：**
+**Réponse sans flux :**
 ```json
 {
   "id": "chatcmpl-...",
@@ -243,7 +243,7 @@ curl http://YOUR_DEVICE_IP:8889/v1/models
 }
 ```
 
-**流式响应（SSE）：**
+**Réponse en flux (SSE) :**
 ```
 data: {"id":"chatcmpl-...","object":"chat.completion.chunk","created":...,"model":"llama-3.2-1b.gguf","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}
 
@@ -252,7 +252,7 @@ data: {"id":"chatcmpl-...","object":"chat.completion.chunk","created":...,"model
 data: [DONE]
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -261,13 +261,13 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
 
 ---
 
-## 聊天记录
+## Historique de discussion
 
 ### GET /api/chats
 
-列出所有已保存的聊天，不含消息内容。
+Liste toutes les discussions enregistrées (sans les messages).
 
-**响应：**
+**Réponse :**
 ```json
 {
   "chats": [
@@ -282,7 +282,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/chats
 ```
@@ -291,9 +291,9 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 
 ### POST /api/chats
 
-新建一段聊天。
+Crée une nouvelle discussion.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "title": "My Conversation",
@@ -304,7 +304,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 }
 ```
 
-**响应（201）：**
+**Réponse (201) :**
 ```json
 {
   "chat": {
@@ -318,17 +318,17 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 }
 ```
 
-**参数：**
-- `title`（字符串，可选）：聊天标题
-- `messages`（数组，可选）：用来开头的初始消息
+**Paramètres :**
+- `title` (chaîne, facultatif) : titre de la discussion
+- `messages` (tableau, facultatif) : messages de départ
 
 ---
 
 ### GET /api/chats/:id
 
-获取某一段聊天，包含全部消息。
+Récupère une discussion précise, avec tous les messages.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "chat": {
@@ -342,7 +342,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 ```
@@ -351,9 +351,9 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 
 ### DELETE /api/chats/:id
 
-删除一段聊天。
+Supprime une discussion.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "status": "deleted",
@@ -361,7 +361,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X DELETE http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 ```
@@ -370,9 +370,9 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 
 ### GET /api/chats/:id/messages
 
-只获取某一段聊天的消息。
+Récupère seulement les messages d'une discussion.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "messages": [
@@ -382,7 +382,7 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 ```
@@ -391,9 +391,9 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 
 ### POST /api/chats/:id/messages
 
-往已有聊天里追加一条或多条消息。
+Ajoute un ou plusieurs messages à une discussion existante.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "messages": [
@@ -402,7 +402,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 }
 ```
 
-**响应（201）：**
+**Réponse (201) :**
 ```json
 {
   "messages": [
@@ -411,7 +411,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages \
   -H "Content-Type: application/json" \
@@ -420,13 +420,13 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages \
 
 ---
 
-## 模型管理
+## Gestion des modèles
 
 ### GET /api/tags
 
-列出手机上保存的全部模型。
+Liste tous les modèles enregistrés sur l'appareil.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "models": [
@@ -442,7 +442,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/tags
 ```
@@ -451,9 +451,9 @@ curl http://YOUR_DEVICE_IP:8889/api/tags
 
 ### GET /api/ps
 
-列出当前已载入的模型（正在内存里的模型）。
+Liste les modèles actuellement chargés (en mémoire).
 
-**响应：**
+**Réponse :**
 ```json
 {
   "models": [
@@ -469,9 +469,9 @@ curl http://YOUR_DEVICE_IP:8889/api/tags
 }
 ```
 
-没有模型载入时，返回空的 `models` 数组。
+S'il n'y a pas de modèle chargé, `models` est un tableau vide.
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/ps
 ```
@@ -480,16 +480,16 @@ curl http://YOUR_DEVICE_IP:8889/api/ps
 
 ### POST /api/show
 
-查看某个模型的详细信息，包括 GGUF 元数据和当前设置。
+Récupère le détail d'un modèle, y compris les métadonnées GGUF et les réglages actuels.
 
-**请求体**（用 `name`、`model` 或 `path`）：
+**Corps de la requête** (utilise `name`, `model` ou `path`) :
 ```json
 {
   "model": "llama-3.2-1b"
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "name": "llama-3.2-1b.gguf",
@@ -513,7 +513,7 @@ curl http://YOUR_DEVICE_IP:8889/api/ps
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
   -H "Content-Type: application/json" \
@@ -524,9 +524,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
 
 ### POST /api/pull
 
-从网址把模型直接下载到手机。
+Télécharge un modèle depuis une URL directement sur l'appareil.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "url": "https://huggingface.co/model.gguf",
@@ -534,7 +534,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "status": "downloading",
@@ -543,9 +543,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
 }
 ```
 
-下载在后台跑。用 `GET /api/tags` 看模型什么时候出现。
+Le téléchargement se fait en arrière-plan. Utilise `GET /api/tags` pour voir quand le modèle apparaît.
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
   -H "Content-Type: application/json" \
@@ -556,9 +556,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
 
 ### POST /api/copy
 
-把已有的模型文件复制成一个新名字。
+Copie un fichier de modèle existant sous un nouveau nom.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "source": "llama-3.2-1b",
@@ -566,7 +566,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "status": "copied",
@@ -575,9 +575,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
 }
 ```
 
-如果目标名字已经存在，返回 `409`。外部模型不能复制。
+Renvoie `409` si le nom de destination existe déjà. Les modèles externes ne peuvent pas être copiés.
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/copy \
   -H "Content-Type: application/json" \
@@ -588,23 +588,23 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/copy \
 
 ### DELETE /api/delete
 
-从本地存储删除一个模型。
+Supprime un modèle du stockage local.
 
-**请求体**（用 `name` 或 `path`）：
+**Corps de la requête** (utilise `name` ou `path`) :
 ```json
 {
   "name": "llama-3.2-1b"
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "success": true
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
   -H "Content-Type: application/json" \
@@ -615,9 +615,9 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 
 ### POST /api/models
 
-做模型的加载、卸载这类操作。
+Fait les opérations de cycle de vie d'un modèle.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "action": "load",
@@ -625,16 +625,16 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 }
 ```
 
-**可用操作：**
+**Actions disponibles :**
 
-| 操作 | 说明 | `model` 字段 |
+| Action | Description | Champ `model` |
 |--------|-------------|---------------|
-| `load` | 把模型载入内存 | 必填 — 模型名或路径 |
-| `unload` | 释放当前已载入的模型 | 不用 |
-| `reload` | 重新初始化当前已载入的模型 | 不用 |
-| `refresh` | 重新扫描存储并刷新模型列表 | 不用 |
+| `load` | Charge un modèle en mémoire | Obligatoire : nom ou chemin du modèle |
+| `unload` | Libère le modèle actuellement chargé | Non utilisé |
+| `reload` | Réinitialise le modèle actuellement chargé | Non utilisé |
+| `refresh` | Relit le stockage et recharge la liste des modèles | Non utilisé |
 
-**响应（`load`）：**
+**Réponse (`load`) :**
 ```json
 {
   "status": "loaded",
@@ -646,7 +646,7 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 }
 ```
 
-**响应（`refresh`）：**
+**Réponse (`refresh`) :**
 ```json
 {
   "status": "refreshed",
@@ -655,7 +655,7 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/models \
   -H "Content-Type: application/json" \
@@ -666,9 +666,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/models \
 
 ### GET /api/models/apple-foundation
 
-查看 Apple Foundation 模型是否可用、是否准备好（仅 iOS）。
+Vérifie si le modèle Apple Foundation est disponible et prêt (iOS seulement).
 
-**响应：**
+**Réponse :**
 ```json
 {
   "available": true,
@@ -679,12 +679,12 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/models \
 }
 ```
 
-| `status` | 含义 |
+| `status` | Sens |
 |----------|---------|
-| `ready` | 可用且已打开 — 请求里用 `model: "apple-foundation"` |
-| `configure` | 不可用或未打开 — 看 `message` 里的说明 |
+| `ready` | Disponible et activé. Utilise `model: "apple-foundation"` dans les requêtes |
+| `configure` | Pas disponible ou pas activé. Le détail est dans `message` |
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 ```
@@ -693,21 +693,21 @@ curl http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 
 ### POST /api/models/apple-foundation
 
-确认 Apple Foundation 已经可以处理请求。如果设备不支持、条件没满足，或软件设置里没打开，会返回错误。
+Vérifie qu'Apple Foundation peut traiter les requêtes. Renvoie une erreur s'il n'est pas disponible, si les conditions manquent, ou si la fonction n'est pas activée dans les réglages.
 
-**响应（已就绪）：**
+**Réponse (prêt) :**
 ```json
 {
   "status": "ready"
 }
 ```
 
-**错误响应：**
-- `501` — `apple_foundation_unavailable`：设备不支持 Apple Intelligence
-- `428` — `requirements_not_met`：设备需要更新
-- `409` — `apple_foundation_disabled`：先在软件设置里打开
+**Réponses d'erreur :**
+- `501`, `apple_foundation_unavailable` : l'appareil ne prend pas en charge Apple Intelligence
+- `428`, `requirements_not_met` : l'appareil doit être mis à jour
+- `409`, `apple_foundation_disabled` : active-le d'abord dans les réglages
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 ```
@@ -716,31 +716,29 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 
 ### GET /api/version
 
-获取当前软件版本。
+Récupère la version actuelle de l'application.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "version": "0.8.3"
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/version
 ```
 
 ---
 
-## RAG 和 embedding
-
-RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把文字变成一组数字，方便以后查找。
+## RAG et embeddings
 
 ### POST /api/embeddings
 
-用本地模型为一句或多句文字生成 embedding。
+Produit des embeddings (le texte devient des nombres, pour le retrouver) pour un ou plusieurs textes avec un modèle local.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -748,7 +746,7 @@ RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把
 }
 ```
 
-一次请求里要处理多段文字时，传入数组：
+Passe un tableau pour traiter plusieurs textes dans une seule requête :
 ```json
 {
   "model": "llama-3.2-1b",
@@ -756,7 +754,7 @@ RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "embeddings": [
@@ -766,11 +764,11 @@ RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把
 }
 ```
 
-**参数：**
-- `model`（字符串，必填）：用来生成 embedding 的本地模型
-- `input`（字符串或数组，必填）：要处理的文字。也可以用 `prompt` 或 `text`。
+**Paramètres :**
+- `model` (chaîne, obligatoire) : modèle local utilisé pour l'embedding
+- `input` (chaîne ou tableau, obligatoire) : texte(s) à transformer. Accepté aussi comme `prompt` ou `text`.
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
   -H "Content-Type: application/json" \
@@ -781,9 +779,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
 
 ### POST /api/files/ingest
 
-把内容放进 RAG。可以是原始文字、手机上的文件路径，或多条文件路径。
+Met du contenu dans le RAG. Texte brut, un chemin de fichier sur l'appareil, ou plusieurs chemins.
 
-**请求体（原始文字）：**
+**Corps de la requête (texte brut) :**
 ```json
 {
   "content": "Document content to store for RAG...",
@@ -791,21 +789,21 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
 }
 ```
 
-**请求体（单个文件路径）：**
+**Corps de la requête (un chemin de fichier) :**
 ```json
 {
   "filePath": "/path/to/doc.txt"
 }
 ```
 
-**请求体（多个文件路径）：**
+**Corps de la requête (plusieurs chemins) :**
 ```json
 {
   "files": ["/path/to/doc1.txt", "/path/to/doc2.txt"]
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "status": "stored",
@@ -815,16 +813,16 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
 }
 ```
 
-**参数：**
-- `content`（字符串）：原始文字 *（如果没写 `filePath` 和 `files`，则必填）*
-- `filePath`（字符串，可选）：手机上文件的绝对路径
-- `files`（数组，可选）：绝对路径组成的数组
-- `fileName`（字符串，可选）：文档显示名（默认：`"uploaded.txt"`）
-- `chatId`（字符串，可选）：把文档关联到某一段聊天
-- `provider`（字符串，可选）：RAG 用哪一家来做 embedding
-- `rag`（布尔值，可选）：设为 `false` 则跳过 RAG 索引（默认：`true`）
+**Paramètres :**
+- `content` (chaîne) : texte brut *(obligatoire si `filePath` et `files` sont absents)*
+- `filePath` (chaîne, facultatif) : chemin absolu d'un fichier sur l'appareil
+- `files` (tableau, facultatif) : tableau de chemins absolus
+- `fileName` (chaîne, facultatif) : nom affiché du document (par défaut : `"uploaded.txt"`)
+- `chatId` (chaîne, facultatif) : associe le document à une discussion
+- `provider` (chaîne, facultatif) : fournisseur d'embedding RAG
+- `rag` (booléen, facultatif) : `false` pour sauter l'indexation RAG (par défaut : `true`)
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
   -H "Content-Type: application/json" \
@@ -835,9 +833,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
 
 ### GET /api/rag
 
-获取当前 RAG 的状态。
+Récupère l'état actuel du RAG.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "enabled": true,
@@ -847,7 +845,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/rag
 ```
@@ -856,9 +854,9 @@ curl http://YOUR_DEVICE_IP:8889/api/rag
 
 ### POST /api/rag
 
-配置 RAG：打开或关闭、设置存储方式，或做初始化。
+Règle le RAG (activer ou désactiver, type de stockage, ou initialisation).
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "enabled": true,
@@ -867,7 +865,7 @@ curl http://YOUR_DEVICE_IP:8889/api/rag
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "enabled": true,
@@ -877,13 +875,13 @@ curl http://YOUR_DEVICE_IP:8889/api/rag
 }
 ```
 
-**参数：**
-- `enabled`（布尔值，可选）：打开或关闭 RAG
-- `storage`（字符串，可选）：`"memory"` 或 `"persistent"`
-- `initialize`（布尔值，可选）：触发 RAG 初始化
-- `provider`（字符串，可选）：初始化时用哪一家来做 embedding
+**Paramètres :**
+- `enabled` (booléen, facultatif) : activer ou désactiver le RAG
+- `storage` (chaîne, facultatif) : `"memory"` ou `"persistent"`
+- `initialize` (booléen, facultatif) : lancer l'initialisation du RAG
+- `provider` (chaîne, facultatif) : fournisseur d'embedding pour l'initialisation
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/rag \
   -H "Content-Type: application/json" \
@@ -894,9 +892,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/rag \
 
 ### POST /api/rag/reset
 
-清掉 RAG 里已经入库的全部文档。
+Efface tous les documents déjà mis dans le RAG.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "status": "cleared",
@@ -906,20 +904,20 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/rag \
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/rag/reset
 ```
 
 ---
 
-## 服务器和设置
+## Serveur et réglages
 
 ### GET /api/status
 
-获取服务器状态、当前模型，以及 RAG 状态。
+Récupère l'état du serveur, le modèle actif et l'état du RAG.
 
-**响应：**
+**Réponse :**
 ```json
 {
   "server": {
@@ -938,7 +936,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/rag/reset
 }
 ```
 
-**示例：**
+**Exemple :**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/status
 ```
@@ -947,16 +945,16 @@ curl http://YOUR_DEVICE_IP:8889/api/status
 
 ### POST /api/settings/thinking
 
-为当前已载入的模型打开或关闭思考模式（多想一会儿再回答）。
+Active ou désactive le mode réflexion (réfléchir plus longtemps avant de répondre) pour le modèle actuellement chargé.
 
-**请求体：**
+**Corps de la requête :**
 ```json
 {
   "enabled": true
 }
 ```
 
-**响应：**
+**Réponse :**
 ```json
 {
   "status": "updated",
@@ -964,10 +962,10 @@ curl http://YOUR_DEVICE_IP:8889/api/status
 }
 ```
 
-**参数：**
-- `enabled`（布尔值，必填）：打开或关闭思考模式
+**Paramètres :**
+- `enabled` (booléen, obligatoire) : activer ou désactiver le mode réflexion
 
-**示例：**
+**Exemple :**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/settings/thinking \
   -H "Content-Type: application/json" \
@@ -976,24 +974,24 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/settings/thinking \
 
 ---
 
-## 错误处理
+## Gestion des erreurs
 
-所有接口都返回标准 HTTP 状态码。出错时带 JSON 错误体。
+Tous les points d'accès renvoient des codes HTTP standards, et un corps JSON en cas d'erreur.
 
-**成功：**
+**Codes de succès :**
 - `200 OK`
 - `201 Created`
 
-**错误：**
-- `400 Bad Request` — 缺少参数或参数无效
-- `404 Not Found` — 资源不存在
+**Codes d'erreur :**
+- `400 Bad Request` : paramètre manquant ou invalide
+- `404 Not Found` : la ressource n'existe pas
 - `405 Method Not Allowed`
-- `409 Conflict` — 前置条件没满足（例如远程模型被关掉了）
-- `422 Unprocessable Entity` — 请求格式没问题，但做不了（例如缺少 API 密钥）
+- `409 Conflict` : la condition préalable n'est pas remplie (par exemple les modèles distants sont désactivés)
+- `422 Unprocessable Entity` : requête valide, mais l'action est impossible (par exemple clé d'API absente)
 - `500 Internal Server Error`
-- `503 Service Unavailable` — 模型还没载入
+- `503 Service Unavailable` : le modèle n'est pas chargé
 
-**错误响应格式：**
+**Format de la réponse d'erreur :**
 ```json
 {
   "error": "error_code"
@@ -1002,24 +1000,24 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/settings/thinking \
 
 ---
 
-## 安全方面要注意的事
+## Sécurité
 
-- 这个服务器只打算在本地网络里用
-- 不需要登录（靠网络隔离来保护）
-- 对所有来源都开了 CORS
-- 如果要暴露到本地网络之外，先考虑 VPN 或防火墙
-
----
-
-## 请求频率
-
-没有频率限制。快慢取决于手机的 CPU 和内存、模型大小，以及同时连进来的数量。
+- Ce serveur est prévu pour le réseau local seulement
+- Aucune connexion n'est requise (protégé par l'isolement du réseau)
+- CORS est activé pour toutes les origines
+- Avant d'ouvrir le serveur au-delà de ton réseau local, pense à un VPN ou à un pare-feu
 
 ---
 
-## 常见用法
+## Limite de débit
 
-### 和本地模型聊天
+Aucune limite de débit. Les performances dépendent du CPU, de la mémoire, de la taille du modèle et du nombre de connexions en même temps.
+
+---
+
+## Cas courants
+
+### Discuter avec un modèle local
 
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
@@ -1034,7 +1032,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
   }'
 ```
 
-### 把文档入库并查看 RAG 状态
+### Mettre un document et vérifier l'état du RAG
 
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
@@ -1044,7 +1042,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
 curl http://YOUR_DEVICE_IP:8889/api/rag
 ```
 
-### 模型管理
+### Gestion des modèles
 
 ```bash
 # List available models
@@ -1061,24 +1059,24 @@ curl http://YOUR_DEVICE_IP:8889/api/ps
 
 ---
 
-## 示例程序
+## Exemples d'applications
 
 ### InferrLM CLI
 
-InferrLM CLI 是用 React、Ink 和 TypeScript 做的命令行工具。它连上你的 InferrLM 服务器，在终端里提供完整的聊天界面，支持一边生成一边返回，也保留对话记录。
+InferrLM CLI est un outil en ligne de commande fait avec React, Ink et TypeScript. Il se connecte à ton serveur InferrLM et discute dans le terminal, avec les réponses au fil de l'eau et l'historique.
 
-源码：[github.com/sbhjt-gr/inferra-cli](https://github.com/sbhjt-gr/inferra-cli)
-
----
-
-## 更多资料
-
-- [InferrLM GitHub 仓库](https://github.com/sbhjt-gr/inferra)
-- [InferrLM CLI 工具](https://github.com/sbhjt-gr/inferra-cli)
-- [贡献指南](CONTRIBUTING.zh-CN.md)
-- [许可证](../LICENSE)
+Code source : [github.com/sbhjt-gr/inferra-cli](https://github.com/sbhjt-gr/inferra-cli)
 
 ---
 
-**最近更新**：2026 年 3 月 20 日  
-**API 版本**：0.8.3
+## Autres ressources
+
+- [Dépôt GitHub InferrLM](https://github.com/sbhjt-gr/inferra)
+- [Outil CLI InferrLM](https://github.com/sbhjt-gr/inferra-cli)
+- [Guide de contribution](CONTRIBUTING.fr.md)
+- [Licence](../LICENSE)
+
+---
+
+**Dernière mise à jour** : 20 mars 2026  
+**Version de l'API** : 0.8.3

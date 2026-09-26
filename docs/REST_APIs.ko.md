@@ -1,17 +1,17 @@
 [English](REST_APIs.md) | [简体中文](REST_APIs.zh-CN.md) | [繁體中文](REST_APIs.zh-TW.md) | [日本語](REST_APIs.ja.md) | [한국어](REST_APIs.ko.md) | [Deutsch](REST_APIs.de.md) | [Français](REST_APIs.fr.md) | [Nederlands](REST_APIs.nl.md)
 
-# InferrLM REST API 文档
+# InferrLM REST API 문서
 
-InferrLM 本地 HTTP 服务器的完整接口说明。REST API（通过网络请求调用的接口）把手机上的 AI 开放给同一网络里的其他设备。
+InferrLM 로컬 HTTP 서버의 전체 인터페이스 설명이에요. REST API(네트워크 요청으로 부르는 인터페이스)로 휴대폰의 AI를 같은 네트워크의 다른 기기에 열어요.
 
-## 开始使用
+## 시작
 
-### 快速开始
+### 빠르게 시작
 
-1. **启动服务器** — 打开 InferrLM，进入 **服务器** 页，把开关打开。网址会出现（例如 `http://192.168.1.10:8889`）。
-2. **下载模型** — 在 **模型** 页至少下载一个 GGUF（一种模型文件格式）。API 请求里用的模型名不带 `.gguf`。
-3. **配置客户端** — 把任何兼容 OpenAI 的客户端指向 `http://YOUR_DEVICE_IP:8889/v1`。不需要 API 密钥。如果客户端非要填一个，随便写个占位就行。
-4. **发一条请求：**
+1. **서버 시작**: InferrLM을 열고 **서버** 탭에서 스위치를 켜요. 주소가 나타나요 (예: `http://192.168.1.10:8889`).
+2. **모델 다운로드**: **모델** 탭에서 GGUF(모델 파일 형식)를 하나 이상 받아요. API 요청의 모델 이름에는 `.gguf`를 붙이지 않아요.
+3. **클라이언트 설정**: OpenAI와 맞는 클라이언트를 `http://YOUR_DEVICE_IP:8889/v1`로 향하게 해요. API 키는 필요 없어요. 클라이언트가 꼭 요구하면 아무 자리표시나 넣어요.
+4. **요청 보내기:**
 
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
@@ -19,45 +19,45 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
   -d '{"model": "llama-3.2-1b", "messages": [{"role": "user", "content": "Hello!"}]}'
 ```
 
-> 任何支持 OpenAI API 的软件或库都能用，只要指向 `http://YOUR_DEVICE_IP:8889/v1`。两台设备必须在同一个本地网络。模型名里的 `.gguf` 后缀可写可不写。
+> OpenAI API를 지원하는 앱이나 라이브러리라면 `http://YOUR_DEVICE_IP:8889/v1`만 가리키면 돼요. 두 기기는 같은 로컬 네트워크에 있어야 해요. 모델 이름의 `.gguf`는 있어도 되고 없어도 돼요.
 
-### 启动服务器
+### 서버 시작
 
-1. 在手机上打开 InferrLM
-2. 进入 **服务器** 页
-3. 打开服务器开关
-4. 会显示服务器网址（一般是 `http://YOUR_DEVICE_IP:8889`）
-5. 你可以用二维码分享这个网址，也可以复制后在其他设备上打开
+1. 휴대폰에서 InferrLM을 열어요
+2. **서버** 탭으로 이동해요
+3. 서버 스위치를 켜요
+4. 서버 주소가 표시돼요 (보통 `http://YOUR_DEVICE_IP:8889`)
+5. QR 코드로 이 주소를 공유하거나, 복사해서 다른 기기에서 열 수 있어요
 
-### 可以改的选项
+### 바꿀 수 있는 옵션
 
-- **自动启动**：软件打开时自动启动服务器
-- **端口**：默认端口是 8889（可以在设置里改）
+- **자동 시작**: 앱이 켜질 때 서버를 자동으로 시작해요
+- **포트**: 기본 포트는 8889예요 (설정에서 바꿀 수 있어요)
 
-### 基础配置
+### 기본 설정
 
-**基础网址**：`http://YOUR_DEVICE_IP:8889`  
-**Content-Type**：`application/json`  
-**CORS**：对所有来源都已打开
+**기본 주소**: `http://YOUR_DEVICE_IP:8889`  
+**Content-Type**: `application/json`  
+**CORS**: 모든 출처에 열려 있어요
 
-### 选择模型跑在哪
+### 모델 대상 고르기
 
-每个会生成文字的请求都带一个 `model` 字符串，用来决定由哪一种方式来跑：
+글을 만드는 모든 요청에는 `model` 문자열이 있어요. 어느 실행 쪽이 처리할지 정해요.
 
-| 模型取值 | 实际跑在哪 | 说明 |
+| 모델 값 | 가는 곳 | 설명 |
 |-------------|----------------|-------|
-| 已保存的模型名（例如 `llama-3.2-1b`） | 在手机上运行的本地 GGUF | 先在 InferrLM 里下载这个 GGUF。 |
-| `apple-foundation` | Apple Intelligence 的 Foundation 模型 | 仅 iOS。在软件设置里打开，并用 `GET /api/models/apple-foundation` 确认。 |
+| 저장된 모델 이름 (예: `llama-3.2-1b`) | 이 기기에서 실행되는 로컬 GGUF | 먼저 InferrLM 앱에서 GGUF를 받아요. |
+| `apple-foundation` | Apple Intelligence Foundation 모델 | iOS만 해당해요. 앱 설정에서 켜고 `GET /api/models/apple-foundation`으로 확인해요. |
 
 ---
 
-## 助手（本地）
+## 어시스턴트 (로컬)
 
 ### GET /api/assistants
 
-列出这台手机上 `deployment: "local"` 的助手。响应里不会带系统提示、技能说明和密钥。
+이 기기에 `deployment: "local"`로 저장된 어시스턴트를 나열해요. 응답에는 system prompt, 스킬 설명, 비밀 값이 빠져요.
 
-**响应：**
+**응답:**
 ```json
 {
   "assistants": [
@@ -71,20 +71,20 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/assistants
 ```
 
 ---
 
-## 聊天和补全接口
+## 채팅과 완성 API
 
 ### POST /api/chat
 
-按完整对话记录来聊天，可以一边生成一边返回，也可以一次返回。可以用本地 GGUF 模型名，也可以用 `apple-foundation`。
+전체 대화 기록으로 채팅을 스트리밍하거나 한 번에 완료해요. 로컬 GGUF 모델 이름이나 `apple-foundation`을 받아요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -98,14 +98,14 @@ curl http://YOUR_DEVICE_IP:8889/api/assistants
 }
 ```
 
-**流式响应（NDJSON）：**
+**스트리밍 응답 (NDJSON):**
 ```
 {"model":"llama-3.2-1b.gguf","created_at":"...","message":{"role":"assistant","content":"Hi"},"done":false}
 {"model":"llama-3.2-1b.gguf","created_at":"...","message":{"role":"assistant","content":" there"},"done":false}
 {"model":"llama-3.2-1b.gguf","created_at":"...","message":{"role":"assistant","content":""},"done":true}
 ```
 
-**非流式响应：**
+**일반 응답:**
 ```json
 {
   "model": "llama-3.2-1b.gguf",
@@ -115,17 +115,17 @@ curl http://YOUR_DEVICE_IP:8889/api/assistants
 }
 ```
 
-**参数：**
-- `model`（字符串，必填）：要用哪一种方式来跑
-- `messages`（数组，必填）：对话记录。每一条有 `role`（`system` | `user` | `assistant`）和 `content`
-- `assistant`（字符串，可选）：本地助手的 id，来自 `GET /api/assistants`。填了它，并且请求体里没有系统消息（`messages` 里 `role: "system"`、顶层 `system`，或 `options.system_prompt`）时，服务器会在生成前加上这个助手的系统提示。id 不存在时返回 `404`，内容是 `{ "error": "assistant_not_found" }`。
-- `stream`（布尔值，可选）：是否用 NDJSON 一边生成一边返回（默认：`true`）
-- `temperature`（数字，可选）：随机程度，范围 0.0–2.0
-- `max_tokens`（数字，可选）：一次最多生成多少内容
-- `top_p`（数字，可选）：Top-p 抽样，只从概率较高的候选里挑
-- `top_k`（数字，可选）：Top-k 抽样，只从最可能的前几个里挑
+**매개변수:**
+- `model` (문자열, 필수): 대상 실행 쪽
+- `messages` (배열, 필수): 대화 기록. 각 항목에 `role` (`system` | `user` | `assistant`)과 `content`가 있어요
+- `assistant` (문자열, 선택): `GET /api/assistants`의 로컬 어시스턴트 id예요. 지정했고 본문에 system 메시지가 없으면 (`messages`의 `role: "system"`, 최상위 `system`, 또는 `options.system_prompt`), 서버가 생성 전에 그 어시스턴트의 system prompt를 앞에 붙여요. 없는 id는 `404`와 `{ "error": "assistant_not_found" }`를 돌려요.
+- `stream` (불리언, 선택): 스트리밍 NDJSON 응답을 켜요 (기본값: `true`)
+- `temperature` (숫자, 선택): 샘플링 온도 0.0–2.0
+- `max_tokens` (숫자, 선택): 만들 최대 token 수
+- `top_p` (숫자, 선택): Top-p 샘플링
+- `top_k` (숫자, 선택): Top-k 샘플링
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
   -H "Content-Type: application/json" \
@@ -140,9 +140,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
 
 ### POST /api/generate
 
-根据一条提示生成内容，不带之前的对话。
+대화 맥락 없이 프롬프트 하나로 답을 만들어요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -152,7 +152,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "model": "llama-3.2-1b.gguf",
@@ -162,14 +162,14 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
 }
 ```
 
-**参数：**
-- `model`（字符串，必填）：要用哪一种方式来跑
-- `prompt`（字符串，必填）：输入的提示
-- `stream`（布尔值，可选）：是否用 NDJSON 一边生成一边返回
-- `max_tokens`（数字，可选）：一次最多生成多少内容
-- `temperature`（数字，可选）：随机程度
+**매개변수:**
+- `model` (문자열, 필수): 대상 실행 쪽
+- `prompt` (문자열, 필수): 입력 프롬프트
+- `stream` (불리언, 선택): 스트리밍 NDJSON 응답을 켜요
+- `max_tokens` (숫자, 선택): 만들 최대 token 수
+- `temperature` (숫자, 선택): 샘플링 온도
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/generate \
   -H "Content-Type: application/json" \
@@ -178,13 +178,13 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/generate \
 
 ---
 
-## 兼容 OpenAI 的 API
+## OpenAI와 맞는 API
 
 ### GET /v1/models
 
-按 OpenAI 的格式列出可用模型。兼容各种 OpenAI 客户端库。
+OpenAI 형식으로 쓸 수 있는 모델을 나열해요. OpenAI 클라이언트 라이브러리와 맞아요.
 
-**响应：**
+**응답:**
 ```json
 {
   "object": "list",
@@ -199,7 +199,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/generate \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/v1/models
 ```
@@ -208,9 +208,9 @@ curl http://YOUR_DEVICE_IP:8889/v1/models
 
 ### POST /v1/chat/completions
 
-兼容 OpenAI 的聊天补全接口。按 OpenAI API 写的软件可以直接换过来用。不需要 API 密钥。如果客户端要求 `Authorization` 头，填任意非空占位即可。
+OpenAI와 맞는 채팅 완성 엔드포인트예요. OpenAI API용으로 만든 앱을 그대로 바꿔 쓸 수 있어요. API 키는 필요 없어요. 클라이언트가 `Authorization` 헤더를 요구하면 비어 있지 않은 자리표시를 넣어요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -223,9 +223,9 @@ curl http://YOUR_DEVICE_IP:8889/v1/models
 }
 ```
 
-可选的 `assistant` 和 `POST /api/chat` 里一样（只支持本地助手；找不到时返回 `assistant_not_found`）。
+선택 항목 `assistant`는 `POST /api/chat`과 같아요 (로컬 어시스턴트만, 없으면 `assistant_not_found`).
 
-**非流式响应：**
+**일반 응답:**
 ```json
 {
   "id": "chatcmpl-...",
@@ -243,7 +243,7 @@ curl http://YOUR_DEVICE_IP:8889/v1/models
 }
 ```
 
-**流式响应（SSE）：**
+**스트리밍 응답 (SSE):**
 ```
 data: {"id":"chatcmpl-...","object":"chat.completion.chunk","created":...,"model":"llama-3.2-1b.gguf","choices":[{"index":0,"delta":{"content":"Hi"},"finish_reason":null}]}
 
@@ -252,7 +252,7 @@ data: {"id":"chatcmpl-...","object":"chat.completion.chunk","created":...,"model
 data: [DONE]
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
   -H "Content-Type: application/json" \
@@ -261,13 +261,13 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
 
 ---
 
-## 聊天记录
+## 채팅 기록
 
 ### GET /api/chats
 
-列出所有已保存的聊天，不含消息内容。
+저장된 채팅을 모두 나열해요 (메시지는 빠져요).
 
-**响应：**
+**응답:**
 ```json
 {
   "chats": [
@@ -282,7 +282,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/v1/chat/completions \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/chats
 ```
@@ -291,9 +291,9 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 
 ### POST /api/chats
 
-新建一段聊天。
+새 채팅을 만들어요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "title": "My Conversation",
@@ -304,7 +304,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 }
 ```
 
-**响应（201）：**
+**응답 (201):**
 ```json
 {
   "chat": {
@@ -318,17 +318,17 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 }
 ```
 
-**参数：**
-- `title`（字符串，可选）：聊天标题
-- `messages`（数组，可选）：用来开头的初始消息
+**매개변수:**
+- `title` (문자열, 선택): 채팅 제목
+- `messages` (배열, 선택): 대화를 시작할 메시지
 
 ---
 
 ### GET /api/chats/:id
 
-获取某一段聊天，包含全部消息。
+특정 채팅과 모든 메시지를 가져와요.
 
-**响应：**
+**응답:**
 ```json
 {
   "chat": {
@@ -342,7 +342,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 ```
@@ -351,9 +351,9 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 
 ### DELETE /api/chats/:id
 
-删除一段聊天。
+채팅을 삭제해요.
 
-**响应：**
+**응답:**
 ```json
 {
   "status": "deleted",
@@ -361,7 +361,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X DELETE http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 ```
@@ -370,9 +370,9 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 
 ### GET /api/chats/:id/messages
 
-只获取某一段聊天的消息。
+특정 채팅의 메시지만 가져와요.
 
-**响应：**
+**응답:**
 ```json
 {
   "messages": [
@@ -382,7 +382,7 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 ```
@@ -391,9 +391,9 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 
 ### POST /api/chats/:id/messages
 
-往已有聊天里追加一条或多条消息。
+기존 채팅에 메시지를 하나 이상 추가해요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "messages": [
@@ -402,7 +402,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 }
 ```
 
-**响应（201）：**
+**응답 (201):**
 ```json
 {
   "messages": [
@@ -411,7 +411,7 @@ curl http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages \
   -H "Content-Type: application/json" \
@@ -420,13 +420,13 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages \
 
 ---
 
-## 模型管理
+## 모델 관리
 
 ### GET /api/tags
 
-列出手机上保存的全部模型。
+기기에 저장된 모델을 모두 나열해요.
 
-**响应：**
+**응답:**
 ```json
 {
   "models": [
@@ -442,7 +442,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chats/chat-abc123/messages \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/tags
 ```
@@ -451,9 +451,9 @@ curl http://YOUR_DEVICE_IP:8889/api/tags
 
 ### GET /api/ps
 
-列出当前已载入的模型（正在内存里的模型）。
+지금 메모리에 올라온 모델을 나열해요.
 
-**响应：**
+**응답:**
 ```json
 {
   "models": [
@@ -469,9 +469,9 @@ curl http://YOUR_DEVICE_IP:8889/api/tags
 }
 ```
 
-没有模型载入时，返回空的 `models` 数组。
+올라온 모델이 없으면 `models`는 빈 배열이에요.
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/ps
 ```
@@ -480,16 +480,16 @@ curl http://YOUR_DEVICE_IP:8889/api/ps
 
 ### POST /api/show
 
-查看某个模型的详细信息，包括 GGUF 元数据和当前设置。
+특정 모델의 자세한 정보를 가져와요. GGUF 메타데이터와 현재 설정이 포함돼요.
 
-**请求体**（用 `name`、`model` 或 `path`）：
+**요청 본문** (`name`, `model`, 또는 `path`를 써요):
 ```json
 {
   "model": "llama-3.2-1b"
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "name": "llama-3.2-1b.gguf",
@@ -513,7 +513,7 @@ curl http://YOUR_DEVICE_IP:8889/api/ps
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
   -H "Content-Type: application/json" \
@@ -524,9 +524,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
 
 ### POST /api/pull
 
-从网址把模型直接下载到手机。
+URL에서 모델을 기기로 바로 받아요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "url": "https://huggingface.co/model.gguf",
@@ -534,7 +534,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "status": "downloading",
@@ -543,9 +543,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/show \
 }
 ```
 
-下载在后台跑。用 `GET /api/tags` 看模型什么时候出现。
+다운로드는 백그라운드에서 돌아요. `GET /api/tags`로 모델이 나타났는지 확인해요.
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
   -H "Content-Type: application/json" \
@@ -556,9 +556,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
 
 ### POST /api/copy
 
-把已有的模型文件复制成一个新名字。
+기존 모델 파일을 새 이름으로 복사해요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "source": "llama-3.2-1b",
@@ -566,7 +566,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "status": "copied",
@@ -575,9 +575,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/pull \
 }
 ```
 
-如果目标名字已经存在，返回 `409`。外部模型不能复制。
+대상 이름이 이미 있으면 `409`를 돌려요. 외부 모델은 복사할 수 없어요.
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/copy \
   -H "Content-Type: application/json" \
@@ -588,23 +588,23 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/copy \
 
 ### DELETE /api/delete
 
-从本地存储删除一个模型。
+로컬 저장공간에서 모델을 삭제해요.
 
-**请求体**（用 `name` 或 `path`）：
+**요청 본문** (`name` 또는 `path`를 써요):
 ```json
 {
   "name": "llama-3.2-1b"
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "success": true
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
   -H "Content-Type: application/json" \
@@ -615,9 +615,9 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 
 ### POST /api/models
 
-做模型的加载、卸载这类操作。
+모델의 수명 주기 작업을 해요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "action": "load",
@@ -625,16 +625,16 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 }
 ```
 
-**可用操作：**
+**쓸 수 있는 동작:**
 
-| 操作 | 说明 | `model` 字段 |
+| 동작 | 설명 | `model` 필드 |
 |--------|-------------|---------------|
-| `load` | 把模型载入内存 | 必填 — 模型名或路径 |
-| `unload` | 释放当前已载入的模型 | 不用 |
-| `reload` | 重新初始化当前已载入的模型 | 不用 |
-| `refresh` | 重新扫描存储并刷新模型列表 | 不用 |
+| `load` | 모델을 메모리에 올려요 | 필수: 모델 이름 또는 경로 |
+| `unload` | 지금 올라온 모델을 내려요 | 쓰지 않아요 |
+| `reload` | 지금 올라온 모델을 다시 초기화해요 | 쓰지 않아요 |
+| `refresh` | 저장공간을 다시 살펴보고 모델 목록을 다시 읽어요 | 쓰지 않아요 |
 
-**响应（`load`）：**
+**응답 (`load`):**
 ```json
 {
   "status": "loaded",
@@ -646,7 +646,7 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 }
 ```
 
-**响应（`refresh`）：**
+**응답 (`refresh`):**
 ```json
 {
   "status": "refreshed",
@@ -655,7 +655,7 @@ curl -X DELETE http://YOUR_DEVICE_IP:8889/api/delete \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/models \
   -H "Content-Type: application/json" \
@@ -666,9 +666,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/models \
 
 ### GET /api/models/apple-foundation
 
-查看 Apple Foundation 模型是否可用、是否准备好（仅 iOS）。
+Apple Foundation 모델을 쓸 수 있는지, 준비됐는지 확인해요 (iOS만).
 
-**响应：**
+**응답:**
 ```json
 {
   "available": true,
@@ -679,12 +679,12 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/models \
 }
 ```
 
-| `status` | 含义 |
+| `status` | 뜻 |
 |----------|---------|
-| `ready` | 可用且已打开 — 请求里用 `model: "apple-foundation"` |
-| `configure` | 不可用或未打开 — 看 `message` 里的说明 |
+| `ready` | 쓸 수 있고 켜져 있어요. 요청에 `model: "apple-foundation"`을 써요 |
+| `configure` | 쓸 수 없거나 꺼져 있어요. 자세한 내용은 `message`를 봐요 |
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 ```
@@ -693,21 +693,21 @@ curl http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 
 ### POST /api/models/apple-foundation
 
-确认 Apple Foundation 已经可以处理请求。如果设备不支持、条件没满足，或软件设置里没打开，会返回错误。
+Apple Foundation이 요청을 처리할 준비가 됐는지 확인해요. 쓸 수 없거나, 조건이 안 맞거나, 앱 설정에서 꺼져 있으면 오류를 돌려요.
 
-**响应（已就绪）：**
+**응답 (준비됨):**
 ```json
 {
   "status": "ready"
 }
 ```
 
-**错误响应：**
-- `501` — `apple_foundation_unavailable`：设备不支持 Apple Intelligence
-- `428` — `requirements_not_met`：设备需要更新
-- `409` — `apple_foundation_disabled`：先在软件设置里打开
+**오류 응답:**
+- `501` — `apple_foundation_unavailable`: 기기가 Apple Intelligence를 지원하지 않아요
+- `428` — `requirements_not_met`: 기기를 업데이트해야 해요
+- `409` — `apple_foundation_disabled`: 먼저 앱 설정에서 켜요
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 ```
@@ -716,31 +716,29 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/models/apple-foundation
 
 ### GET /api/version
 
-获取当前软件版本。
+현재 앱 버전을 가져와요.
 
-**响应：**
+**응답:**
 ```json
 {
   "version": "0.8.3"
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/version
 ```
 
 ---
 
-## RAG 和 embedding
-
-RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把文字变成一组数字，方便以后查找。
+## RAG와 embeddings
 
 ### POST /api/embeddings
 
-用本地模型为一句或多句文字生成 embedding。
+로컬 모델로 하나 이상의 글에 embedding(글을 숫자로 바꿔 찾기 쉽게 하는 것)을 만들어요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "model": "llama-3.2-1b",
@@ -748,7 +746,7 @@ RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把
 }
 ```
 
-一次请求里要处理多段文字时，传入数组：
+한 요청에 배열을 넘기면 여러 글을 한 번에 처리해요.
 ```json
 {
   "model": "llama-3.2-1b",
@@ -756,7 +754,7 @@ RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "embeddings": [
@@ -766,11 +764,11 @@ RAG 是先找出文档里相关的内容，再让模型回答。embedding 是把
 }
 ```
 
-**参数：**
-- `model`（字符串，必填）：用来生成 embedding 的本地模型
-- `input`（字符串或数组，必填）：要处理的文字。也可以用 `prompt` 或 `text`。
+**매개변수:**
+- `model` (문자열, 필수): embedding에 쓸 로컬 모델
+- `input` (문자열 또는 배열, 필수): 바꿀 글. `prompt`나 `text`로도 받아요.
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
   -H "Content-Type: application/json" \
@@ -781,9 +779,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
 
 ### POST /api/files/ingest
 
-把内容放进 RAG。可以是原始文字、手机上的文件路径，或多条文件路径。
+내용을 RAG에 넣어요. 원문, 기기의 파일 경로 하나, 또는 여러 경로를 받아요.
 
-**请求体（原始文字）：**
+**요청 본문 (원문):**
 ```json
 {
   "content": "Document content to store for RAG...",
@@ -791,21 +789,21 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
 }
 ```
 
-**请求体（单个文件路径）：**
+**요청 본문 (파일 경로 하나):**
 ```json
 {
   "filePath": "/path/to/doc.txt"
 }
 ```
 
-**请求体（多个文件路径）：**
+**요청 본문 (파일 경로 여러 개):**
 ```json
 {
   "files": ["/path/to/doc1.txt", "/path/to/doc2.txt"]
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "status": "stored",
@@ -815,16 +813,16 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/embeddings \
 }
 ```
 
-**参数：**
-- `content`（字符串）：原始文字 *（如果没写 `filePath` 和 `files`，则必填）*
-- `filePath`（字符串，可选）：手机上文件的绝对路径
-- `files`（数组，可选）：绝对路径组成的数组
-- `fileName`（字符串，可选）：文档显示名（默认：`"uploaded.txt"`）
-- `chatId`（字符串，可选）：把文档关联到某一段聊天
-- `provider`（字符串，可选）：RAG 用哪一家来做 embedding
-- `rag`（布尔值，可选）：设为 `false` 则跳过 RAG 索引（默认：`true`）
+**매개변수:**
+- `content` (문자열): 원문 *( `filePath`와 `files`가 없으면 필수)*
+- `filePath` (문자열, 선택): 기기에 있는 파일의 절대 경로
+- `files` (배열, 선택): 절대 경로의 배열
+- `fileName` (문자열, 선택): 문서 표시 이름 (기본값: `"uploaded.txt"`)
+- `chatId` (문자열, 선택): 문서를 특정 채팅에 연결해요
+- `provider` (문자열, 선택): RAG embedding 제공자
+- `rag` (불리언, 선택): `false`면 RAG 색인을 건너뛰어요 (기본값: `true`)
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
   -H "Content-Type: application/json" \
@@ -835,9 +833,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
 
 ### GET /api/rag
 
-获取当前 RAG 的状态。
+현재 RAG 상태를 가져와요.
 
-**响应：**
+**응답:**
 ```json
 {
   "enabled": true,
@@ -847,7 +845,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/rag
 ```
@@ -856,9 +854,9 @@ curl http://YOUR_DEVICE_IP:8889/api/rag
 
 ### POST /api/rag
 
-配置 RAG：打开或关闭、设置存储方式，或做初始化。
+RAG를 설정해요 (켜기/끄기, 저장 방식, 또는 초기화).
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "enabled": true,
@@ -867,7 +865,7 @@ curl http://YOUR_DEVICE_IP:8889/api/rag
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "enabled": true,
@@ -877,13 +875,13 @@ curl http://YOUR_DEVICE_IP:8889/api/rag
 }
 ```
 
-**参数：**
-- `enabled`（布尔值，可选）：打开或关闭 RAG
-- `storage`（字符串，可选）：`"memory"` 或 `"persistent"`
-- `initialize`（布尔值，可选）：触发 RAG 初始化
-- `provider`（字符串，可选）：初始化时用哪一家来做 embedding
+**매개변수:**
+- `enabled` (불리언, 선택): RAG를 켜거나 꺼요
+- `storage` (문자열, 선택): `"memory"` 또는 `"persistent"`
+- `initialize` (불리언, 선택): RAG 초기화를 시작해요
+- `provider` (문자열, 선택): 초기화에 쓸 embedding 제공자
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/rag \
   -H "Content-Type: application/json" \
@@ -894,9 +892,9 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/rag \
 
 ### POST /api/rag/reset
 
-清掉 RAG 里已经入库的全部文档。
+RAG에 넣은 문서를 모두 지워요.
 
-**响应：**
+**응답:**
 ```json
 {
   "status": "cleared",
@@ -906,20 +904,20 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/rag \
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/rag/reset
 ```
 
 ---
 
-## 服务器和设置
+## 서버와 설정
 
 ### GET /api/status
 
-获取服务器状态、当前模型，以及 RAG 状态。
+서버 상태, 활성 모델, RAG 상태를 가져와요.
 
-**响应：**
+**응답:**
 ```json
 {
   "server": {
@@ -938,7 +936,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/rag/reset
 }
 ```
 
-**示例：**
+**예:**
 ```bash
 curl http://YOUR_DEVICE_IP:8889/api/status
 ```
@@ -947,16 +945,16 @@ curl http://YOUR_DEVICE_IP:8889/api/status
 
 ### POST /api/settings/thinking
 
-为当前已载入的模型打开或关闭思考模式（多想一会儿再回答）。
+지금 올라온 모델의 생각 모드(답을 내기 전에 더 생각하는 방식)를 켜거나 꺼요.
 
-**请求体：**
+**요청 본문:**
 ```json
 {
   "enabled": true
 }
 ```
 
-**响应：**
+**응답:**
 ```json
 {
   "status": "updated",
@@ -964,10 +962,10 @@ curl http://YOUR_DEVICE_IP:8889/api/status
 }
 ```
 
-**参数：**
-- `enabled`（布尔值，必填）：打开或关闭思考模式
+**매개변수:**
+- `enabled` (불리언, 필수): 생각 모드를 켜거나 꺼요
 
-**示例：**
+**예:**
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/settings/thinking \
   -H "Content-Type: application/json" \
@@ -976,24 +974,24 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/settings/thinking \
 
 ---
 
-## 错误处理
+## 오류 처리
 
-所有接口都返回标准 HTTP 状态码。出错时带 JSON 错误体。
+모든 엔드포인트는 표준 HTTP 상태 코드와 JSON 오류 본문을 돌려요.
 
-**成功：**
+**성공 코드:**
 - `200 OK`
 - `201 Created`
 
-**错误：**
-- `400 Bad Request` — 缺少参数或参数无效
-- `404 Not Found` — 资源不存在
+**오류 코드:**
+- `400 Bad Request`: 매개변수가 없거나 잘못됐어요
+- `404 Not Found`: 리소스가 없어요
 - `405 Method Not Allowed`
-- `409 Conflict` — 前置条件没满足（例如远程模型被关掉了）
-- `422 Unprocessable Entity` — 请求格式没问题，但做不了（例如缺少 API 密钥）
+- `409 Conflict`: 전제가 안 맞아요 (예: 원격 모델이 꺼짐)
+- `422 Unprocessable Entity`: 요청은 유효하지만 동작을 할 수 없어요 (예: API 키 없음)
 - `500 Internal Server Error`
-- `503 Service Unavailable` — 模型还没载入
+- `503 Service Unavailable`: 모델이 올라와 있지 않아요
 
-**错误响应格式：**
+**오류 응답 형식:**
 ```json
 {
   "error": "error_code"
@@ -1002,24 +1000,24 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/settings/thinking \
 
 ---
 
-## 安全方面要注意的事
+## 보안
 
-- 这个服务器只打算在本地网络里用
-- 不需要登录（靠网络隔离来保护）
-- 对所有来源都开了 CORS
-- 如果要暴露到本地网络之外，先考虑 VPN 或防火墙
-
----
-
-## 请求频率
-
-没有频率限制。快慢取决于手机的 CPU 和内存、模型大小，以及同时连进来的数量。
+- 이 서버는 로컬 네트워크에서만 쓰도록 만들어졌어요
+- 로그인은 필요 없어요 (네트워크 격리로 지켜요)
+- CORS는 모든 출처에 열려 있어요
+- 로컬 네트워크 밖으로 서버를 열려면 VPN이나 방화벽을 먼저 고려해요
 
 ---
 
-## 常见用法
+## 속도 제한
 
-### 和本地模型聊天
+속도 제한은 없어요. 성능은 기기 CPU, 메모리, 모델 크기, 동시 연결 수에 따라요.
+
+---
+
+## 자주 쓰는 예
+
+### 로컬 모델과 채팅
 
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
@@ -1034,7 +1032,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/chat \
   }'
 ```
 
-### 把文档入库并查看 RAG 状态
+### 문서를 넣고 RAG 상태 확인
 
 ```bash
 curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
@@ -1044,7 +1042,7 @@ curl -X POST http://YOUR_DEVICE_IP:8889/api/files/ingest \
 curl http://YOUR_DEVICE_IP:8889/api/rag
 ```
 
-### 模型管理
+### 모델 관리
 
 ```bash
 # List available models
@@ -1061,24 +1059,24 @@ curl http://YOUR_DEVICE_IP:8889/api/ps
 
 ---
 
-## 示例程序
+## 예제 앱
 
 ### InferrLM CLI
 
-InferrLM CLI 是用 React、Ink 和 TypeScript 做的命令行工具。它连上你的 InferrLM 服务器，在终端里提供完整的聊天界面，支持一边生成一边返回，也保留对话记录。
+InferrLM CLI는 React, Ink, TypeScript로 만든 명령줄 도구예요. InferrLM 서버에 연결해서 터미널에서 채팅하고, 답이 나오는 동안 표시하며, 대화 기록을 남겨요.
 
-源码：[github.com/sbhjt-gr/inferra-cli](https://github.com/sbhjt-gr/inferra-cli)
-
----
-
-## 更多资料
-
-- [InferrLM GitHub 仓库](https://github.com/sbhjt-gr/inferra)
-- [InferrLM CLI 工具](https://github.com/sbhjt-gr/inferra-cli)
-- [贡献指南](CONTRIBUTING.zh-CN.md)
-- [许可证](../LICENSE)
+소스: [github.com/sbhjt-gr/inferra-cli](https://github.com/sbhjt-gr/inferra-cli)
 
 ---
 
-**最近更新**：2026 年 3 月 20 日  
-**API 版本**：0.8.3
+## 더 볼 자료
+
+- [InferrLM GitHub 저장소](https://github.com/sbhjt-gr/inferra)
+- [InferrLM CLI 도구](https://github.com/sbhjt-gr/inferra-cli)
+- [기여 가이드](CONTRIBUTING.ko.md)
+- [라이선스](../LICENSE)
+
+---
+
+**마지막 업데이트**: 2026년 3월 20일  
+**API 버전**: 0.8.3
