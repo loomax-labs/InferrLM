@@ -1,0 +1,16 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Die Kamera brauchst du, damit du in InferrLM Fotos aufnehmen und Text darin erkennen kannst.",
+    "NSPhotoLibraryUsageDescription": "InferrLM braucht Zugriff auf deine Fotos, damit du Bilder zur Analyse und Texterkennung auswählen kannst.",
+    "NSPhotoLibraryAddUsageDescription": "InferrLM braucht die Erlaubnis, aufgenommene Fotos und erzeugte Bilder in deiner Mediathek zu speichern.",
+    "NSMicrophoneUsageDescription": "InferrLM nutzt dein Mikrofon, um Sprache aufzunehmen. Die Aufnahme wird auf diesem Handy in Text umgewandelt und übersetzt.",
+    "NSContactsUsageDescription": "InferrLM greift auf Kontakte nur zu, wenn du eine Handy-Aktion zum Anlegen oder Ändern eines Kontakts erlaubst.",
+    "NSCalendarsUsageDescription": "InferrLM greift auf den Kalender nur zu, wenn du eine Handy-Aktion zum Anlegen eines Termins erlaubst.",
+    "NSRemindersUsageDescription": "InferrLM greift auf Erinnerungen nur zu, wenn du eine Kalender-Aktion erlaubst, die Erinnerungen betrifft.",
+    "NSUserNotificationsUsageDescription": "InferrLM schickt Mitteilungen nur, wenn du eine Fähigkeit oder Handy-Aktion erlaubst, die eine Erinnerung plant.",
+    "NSLocalNetworkUsageDescription": "InferrLM nutzt das lokale Netzwerk, um deinen AI-Chat mit anderen Geräten im WLAN zu teilen. So erreichst du deinen Assistenten im Browser auf Computern, Tablets oder anderen Handys."
+  },
+  "android": {
+    "app_name": "InferrLM"
+  }
+}
