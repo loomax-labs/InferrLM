@@ -10,6 +10,15 @@ export default {
     description: "AI-powered mobile chat assistant supporting both local and cloud-based language models. Features include AI text generation, image analysis, document processing, multimodal interactions, optional Android AppFunctions tooling, and optional user-enabled root elevation tools that never root the device.",
     privacy: "public",
     keywords: ["AI", "chat", "assistant", "machine learning", "language model", "artificial intelligence"],
+    locales: {
+      "zh-Hans": "./languages/zh-Hans.json",
+      "zh-Hant": "./languages/zh-Hant.json",
+      ja: "./languages/ja.json",
+      ko: "./languages/ko.json",
+      de: "./languages/de.json",
+      fr: "./languages/fr.json",
+      nl: "./languages/nl.json",
+    },
     newArchEnabled: true,
     updates: {
       enabled: true,
