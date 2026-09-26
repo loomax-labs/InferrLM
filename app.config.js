@@ -54,6 +54,17 @@ export default {
         UIViewControllerBasedStatusBarAppearance: true,
         UIGestureRecognizerShouldBegin: false,
         UINavigationControllerHidesBarsOnSwipe: false,
+        UIApplicationSceneManifest: {
+          UIApplicationSupportsMultipleScenes: false,
+          UISceneConfigurations: {
+            UIWindowSceneSessionRoleApplication: [
+              {
+                UISceneConfigurationName: "Default Configuration",
+                UISceneDelegateClassName: "$(PRODUCT_MODULE_NAME).SceneDelegate"
+              }
+            ]
+          }
+        },
         CFBundleURLTypes: [
           {
             CFBundleURLName: "google",

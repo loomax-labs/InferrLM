@@ -135,6 +135,24 @@ function setAutomaticSigning(project) {
     if (!buildSettings.CODE_SIGN_STYLE) {
       buildSettings.CODE_SIGN_STYLE = 'Automatic';
     }
+
+    // LiteRT-LM 0.15 adds a Rust personality. Xcode's debug dylib merge then
+    // packs Swift + C++ + ObjC + Rust into one image, which compact unwind
+    // cannot encode.
+    buildSettings.ENABLE_DEBUG_DYLIB = 'NO';
+    const flag = '-Wl,-no_compact_unwind';
+    const ldflags = buildSettings.OTHER_LDFLAGS;
+    if (Array.isArray(ldflags)) {
+      if (!ldflags.includes(flag)) {
+        ldflags.push(flag);
+      }
+    } else if (typeof ldflags === 'string') {
+      if (!ldflags.includes(flag)) {
+        buildSettings.OTHER_LDFLAGS = `${ldflags} ${flag}`;
+      }
+    } else {
+      buildSettings.OTHER_LDFLAGS = ['$(inherited)', '-ObjC', '-lc++', flag];
+    }
   }
 
   return project;
@@ -158,6 +176,38 @@ function injectLlamaBuildFromSource(contents) {
   return `${line}\n${contents}`;
 }
 
+function addEmbedSwiftTestingPhase(project) {
+  const target = project.getFirstTarget();
+  if (!target?.uuid) {
+    return project;
+  }
+
+  const name = 'Embed Swift Testing for ExpoContacts';
+  const phases = project.hash.project.objects.PBXShellScriptBuildPhase || {};
+  const exists = Object.keys(phases).some((key) => {
+    if (key.endsWith('_comment')) {
+      return false;
+    }
+    const phase = phases[key];
+    return phase?.name === name || phase?.name === `"${name}"`;
+  });
+  if (exists) {
+    return project;
+  }
+
+  project.addBuildPhase(
+    [],
+    'PBXShellScriptBuildPhase',
+    name,
+    target.uuid,
+    {
+      shellPath: '/bin/sh',
+      shellScript: '"${SRCROOT}/scripts/embed-swift-testing.sh"\n',
+    },
+  );
+  return project;
+}
+
 function withIos(config) {
   config = withPodfile(config, (modConfig) => {
     modConfig.modResults.contents = disableDeterministicPodUuids(modConfig.modResults.contents);
@@ -172,6 +222,7 @@ function withIos(config) {
   return withXcodeProject(config, (modConfig) => {
     stripProjectBuildSettings(modConfig.modResults);
     setAutomaticSigning(modConfig.modResults);
+    addEmbedSwiftTestingPhase(modConfig.modResults);
     return modConfig;
   });
 }
