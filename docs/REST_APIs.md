@@ -49,6 +49,33 @@ Every request that generates text includes a `model` string that determines whic
 
 ---
 
+## Assistants (local)
+
+### GET /api/assistants
+
+List assistants stored on this device with `deployment: "local"`. Responses omit system prompts, skill instructions, and secrets.
+
+**Response:**
+```json
+{
+  "assistants": [
+    {
+      "id": "asst-abc",
+      "name": "Research helper",
+      "task": "Summarize papers",
+      "model": { "provider": "local", "modelId": "llama-3.2-1b" }
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl http://YOUR_DEVICE_IP:8889/api/assistants
+```
+
+---
+
 ## Chat & Completion APIs
 
 ### POST /api/chat
@@ -89,6 +116,7 @@ Stream or complete a chat with full conversation history. Accepts local GGUF mod
 **Parameters:**
 - `model` (string, required): Target backend
 - `messages` (array, required): Conversation history — each entry has `role` (`system` | `user` | `assistant`) and `content`
+- `assistant` (string, optional): Id of a local assistant from `GET /api/assistants`. When set and the body has no system message (`messages` with `role: "system"`, top-level `system`, or `options.system_prompt`), the server prepends that assistant's system prompt before generation. Unknown ids return `404` with `{ "error": "assistant_not_found" }`.
 - `stream` (boolean, optional): Enable streaming NDJSON responses (default: `true`)
 - `temperature` (number, optional): Sampling temperature 0.0–2.0
 - `max_tokens` (number, optional): Maximum tokens to generate
@@ -184,6 +212,7 @@ OpenAI-compatible chat completions endpoint. Drop-in replacement for apps built 
 ```json
 {
   "model": "llama-3.2-1b",
+  "assistant": "asst-abc",
   "messages": [
     {"role": "user", "content": "Hello!"}
   ],
@@ -191,6 +220,8 @@ OpenAI-compatible chat completions endpoint. Drop-in replacement for apps built 
   "max_tokens": 100
 }
 ```
+
+Optional `assistant` behaves the same as on `POST /api/chat` (local assistants only; `assistant_not_found` when missing).
 
 **Non-streaming Response:**
 ```json
