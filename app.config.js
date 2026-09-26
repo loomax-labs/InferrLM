@@ -3,7 +3,7 @@ export default {
     name: "InferrLM",
     slug: "inferrlm",
     owner: "subhajitgorai",
-    version: "0.8.7",
+    version: "0.9.0",
     orientation: "default",
     icon: "./assets/icon.png",
     userInterfaceStyle: "automatic",
@@ -34,7 +34,7 @@ export default {
       bundleIdentifier: "com.gorai.inferra",
       appleTeamId: "GXKD77CCQ6",
       buildNumber: "293",
-      runtimeVersion: "0.8.7",
+      runtimeVersion: "0.9.0",
       infoPlist: {
         UIBackgroundModes: [
           "fetch",
@@ -74,7 +74,7 @@ export default {
         backgroundColor: "#660880"
       },
       package: "com.gorai.ragionare",
-      runtimeVersion: "0.8.7",
+      runtimeVersion: "0.9.0",
       resizeableActivity: true,
       supportsFreeform: true,
       permissions: [
