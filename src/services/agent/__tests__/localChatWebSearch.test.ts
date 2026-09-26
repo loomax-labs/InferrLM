@@ -29,6 +29,9 @@ jest.mock('../../tools/ToolExecutor', () => ({
 jest.mock('../../tools/ToolRegistry', () => ({
   toolRegistry: {
     hasTools: jest.fn().mockReturnValue(true),
+    getMeta: jest.fn((name: string) =>
+      name === 'web_search' ? { source: 'stock', risk: 'read', ownerId: 'test' } : undefined,
+    ),
   },
 }));
 

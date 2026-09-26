@@ -1,3 +1,11 @@
+jest.mock('../../tools/ToolRegistry', () => ({
+  toolRegistry: {
+    getMeta: jest.fn((name: string) =>
+      name === 'web_search' ? { source: 'stock', risk: 'read', ownerId: 'test' } : undefined,
+    ),
+  },
+}));
+
 import {
   litertToolSignature,
   toLitertToolsFromCatalog,

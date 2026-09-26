@@ -6,6 +6,7 @@ jest.mock('../ToolRegistry', () => ({
     isBuiltin: jest.fn().mockReturnValue(false),
     getExecutor: jest.fn(),
     getSchema: jest.fn(),
+    getMeta: jest.fn(),
   },
 }));
 
@@ -22,6 +23,11 @@ describe('ToolExecutor structured outcomes', () => {
   });
 
   it('returns invalid_arguments for missing required fields', async () => {
+    (toolRegistry.getMeta as jest.Mock).mockReturnValue({
+      source: 'stock',
+      risk: 'read',
+      ownerId: 'test',
+    });
     (toolRegistry.getSchema as jest.Mock).mockReturnValue({
       function: { parameters: { required: ['query'] } },
     });
@@ -56,9 +62,21 @@ describe('ToolExecutor structured outcomes', () => {
   });
 
   it('returns timeout on slow tools', async () => {
+    (toolRegistry.getMeta as jest.Mock).mockReturnValue({
+      source: 'stock',
+      risk: 'read',
+      ownerId: 'test',
+    });
     (toolRegistry.getSchema as jest.Mock).mockReturnValue({ function: { parameters: {} } });
     (toolRegistry.getExecutor as jest.Mock).mockReturnValue(
-      () => new Promise(resolve => setTimeout(() => resolve('late'), 50)),
+      (_args: unknown, ctx: { signal?: AbortSignal }) =>
+        new Promise((resolve, reject) => {
+          const timer = setTimeout(() => resolve('late'), 50);
+          ctx.signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(new Error('tool_timeout'));
+          });
+        }),
     );
 
     const outcome = await toolExecutor.executeStructured(
