@@ -129,6 +129,7 @@
     "audioAttachment": "語音附件",
     "newChat": "開新的聊天",
     "send": "送出",
+    "mode": "模式",
     "storingDocument": "正在為搜尋儲存檔案 {{progress}}",
     "aiTermsTitle": "AI 產生內容的說明",
     "aiTermsAccept": "我知道了"
