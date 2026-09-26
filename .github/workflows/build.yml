@@ -1,8 +1,6 @@
 name: build
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       profile:
@@ -50,13 +48,8 @@ jobs:
       - name: resolve_profile
         id: profile
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "profile=${{ inputs.profile }}" >> $GITHUB_OUTPUT
-            echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
-          else
-            echo "profile=production" >> $GITHUB_OUTPUT
-            echo "platform=all" >> $GITHUB_OUTPUT
-          fi
+          echo "profile=${{ inputs.profile }}" >> $GITHUB_OUTPUT
+          echo "platform=${{ inputs.platform }}" >> $GITHUB_OUTPUT
 
       - name: eas_build
         run: |
