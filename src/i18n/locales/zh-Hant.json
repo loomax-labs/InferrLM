@@ -110,7 +110,17 @@
     "cacheClearFailed": "沒辦法清除快取",
     "modelsCleared": "已清除所有模型",
     "modelsClearFailed": "沒辦法清除模型",
-    "modelLoad": "沒辦法載入模型"
+    "modelLoad": "沒辦法載入模型",
+    "quotaTitle": "{{provider}} 已到上限",
+    "quotaBody": "你的 {{provider}} 用量已到上限。請稍後再試，或升級方案。",
+    "authTitle": "{{provider}} 登入失敗",
+    "authBody": "你的 {{provider}} API 金鑰看起來不對。請到設定裡確認。",
+    "serverTitle": "{{provider}} 目前無法使用",
+    "serverBody": "{{provider}} 現在出了點問題。請稍後再試。",
+    "invalidRequestBody": "送給 {{provider}} 的要求沒有被接受。換一則訊息再試。",
+    "permissionBody": "你沒有權限使用這個 {{provider}} 模型。",
+    "modelNotFoundBody": "找不到這個 {{provider}} 模型。它可能已經不能用了。",
+    "providerErrorTitle": "{{provider}} 沒辦法回覆"
   },
   "chat": {
     "loading": "正在載入聊天…",
