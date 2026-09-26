@@ -1,24 +1,20 @@
 /**
  * Onboarding lesson copy and ordering. Bodies are keyed by expertise level.
- * When src/onboarding/types.ts exists, profile types can move there; lessons import stays stable.
  */
 
-export type OnboardingExpertise = 'new' | 'comfortable' | 'experienced';
+import type {
+  ExpertiseLevel,
+  OnboardingIntentId,
+  OnboardingProfile as FullOnboardingProfile,
+} from './types';
 
-export type OnboardingIntent =
-  | 'chat'
-  | 'coding'
-  | 'reasoning'
-  | 'photos'
-  | 'voice'
-  | 'files'
-  | 'api'
-  | 'explore';
+export type OnboardingExpertise = ExpertiseLevel;
+export type OnboardingIntent = OnboardingIntentId;
 
-export type OnboardingProfile = {
-  expertise: OnboardingExpertise;
-  intents: OnboardingIntent[];
-};
+export type OnboardingProfile = Pick<
+  FullOnboardingProfile,
+  'expertise' | 'intents'
+> & { expertise: ExpertiseLevel };
 
 export type LessonId =
   | 'glossary'
