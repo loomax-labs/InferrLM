@@ -1,0 +1,36 @@
+name: readme-versions
+
+on:
+  schedule:
+    - cron: '15 1 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - app.config.js
+
+permissions:
+  contents: write
+
+jobs:
+  badges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: refresh_version_badges
+        run: node scripts/update-readme-version-badges.mjs
+
+      - name: commit_badge_refresh
+        run: |
+          git add README.md README.zh-CN.md README.zh-TW.md README.ja.md README.ko.md README.de.md README.fr.md README.nl.md
+          git diff --cached --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(readme): refresh store version badges"
+          git push

@@ -43,6 +43,24 @@ jobs:
       - name: typecheck
         run: npx tsc --noEmit
 
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: install_deps
+        run: yarn install --frozen-lockfile
+
+      - name: test
+        run: yarn test:ci
+
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
