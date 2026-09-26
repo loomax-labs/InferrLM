@@ -1,0 +1,16 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Met de camera kun je in InferrLM foto's maken om te uploaden en tekst in afbeeldingen te lezen.",
+    "NSPhotoLibraryUsageDescription": "InferrLM heeft toegang tot je fotobibliotheek nodig zodat je afbeeldingen kunt kiezen om te analyseren en tekst erin te lezen.",
+    "NSPhotoLibraryAddUsageDescription": "InferrLM heeft toestemming nodig om gemaakte foto's en afbeeldingen die de app maakt in je bibliotheek op te slaan.",
+    "NSMicrophoneUsageDescription": "InferrLM gebruikt je microfoon om audio op te nemen voor tekst en vertaling op deze telefoon.",
+    "NSContactsUsageDescription": "InferrLM gebruikt contacten alleen als je een actie op je telefoon goedkeurt om een contact te maken of te wijzigen.",
+    "NSCalendarsUsageDescription": "InferrLM gebruikt de agenda alleen als je een actie op je telefoon goedkeurt om een afspraak te maken.",
+    "NSRemindersUsageDescription": "InferrLM gebruikt herinneringen alleen als je een agenda-actie goedkeurt die over herinneringen gaat.",
+    "NSUserNotificationsUsageDescription": "InferrLM gebruikt meldingen alleen als je een vaardigheid of een actie op je telefoon goedkeurt om een herinnering te plannen.",
+    "NSLocalNetworkUsageDescription": "InferrLM gebruikt het lokale netwerk om je AI-chat te delen met andere apparaten op je Wi-Fi. Zo open je je assistent in de browser op computers, tablets of andere telefoons."
+  },
+  "android": {
+    "app_name": "InferrLM"
+  }
+}
