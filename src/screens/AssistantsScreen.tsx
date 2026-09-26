@@ -17,13 +17,21 @@ import Dialog from '../components/Dialog';
 import ModelSelector from '../components/ModelSelector';
 import { theme } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import AssistantDeploymentToggle from '../components/assistants/AssistantDeploymentToggle';
 import {
   ASSISTANT_LIMITS,
   AssistantValidationError,
   assistantService,
 } from '../services/AssistantService';
+import {
+  createAssistantWithCloudSync,
+  removeAssistantFromCloud,
+  saveAssistantWithCloudSync,
+} from '../services/AssistantCloudSync';
+import { getMissingSkillIds } from '../services/assistantSkillAvailability';
+import { isAuthenticated } from '../services/AuthService';
 import { skillManager } from '../services/SkillManager';
-import type { Assistant, AssistantModelRef } from '../types/assistant';
+import type { Assistant, AssistantDeployment, AssistantModelRef } from '../types/assistant';
 import type { Skill } from '../types/skill';
 import type { ProviderType } from '../services/ModelManagementService';
 import { OnlineModelService } from '../services/OnlineModelService';
@@ -49,6 +57,7 @@ type EditorDraft = {
   systemPrompt: string;
   skillIds: string[];
   model?: AssistantModelRef;
+  deployment: AssistantDeployment;
 };
 
 const emptyDraft = (): EditorDraft => ({
@@ -57,6 +66,7 @@ const emptyDraft = (): EditorDraft => ({
   systemPrompt: '',
   skillIds: [],
   model: undefined,
+  deployment: 'local',
 });
 
 const draftFromAssistant = (assistant: Assistant): EditorDraft => ({
@@ -65,6 +75,7 @@ const draftFromAssistant = (assistant: Assistant): EditorDraft => ({
   systemPrompt: assistant.systemPrompt,
   skillIds: [...assistant.skillIds],
   model: assistant.model,
+  deployment: assistant.deployment,
 });
 
 export default function AssistantsScreen() {
@@ -80,6 +91,7 @@ export default function AssistantsScreen() {
   const [draft, setDraft] = useState<EditorDraft>(emptyDraft());
   const [deleteTarget, setDeleteTarget] = useState<Assistant | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,6 +102,7 @@ export default function AssistantsScreen() {
       ]);
       setAssistants(list);
       setSkills(allSkills);
+      setSignedIn(await isAuthenticated());
     } finally {
       setLoading(false);
     }
@@ -161,10 +174,29 @@ export default function AssistantsScreen() {
   const handleSave = async () => {
     try {
       setSaving(true);
+      const payload = {
+        name: draft.name,
+        task: draft.task,
+        systemPrompt: draft.systemPrompt,
+        skillIds: draft.skillIds,
+        model: draft.model,
+        deployment: draft.deployment,
+      };
       if (editingId) {
-        await assistantService.update(editingId, draft);
+        const prev = assistants.find(item => item.id === editingId);
+        const wasCloud = prev?.deployment === 'cloud';
+        if (payload.deployment === 'cloud') {
+          await saveAssistantWithCloudSync(editingId, payload);
+        } else {
+          await assistantService.update(editingId, payload);
+          if (wasCloud) {
+            await removeAssistantFromCloud(editingId);
+          }
+        }
+      } else if (payload.deployment === 'cloud') {
+        await createAssistantWithCloudSync(payload);
       } else {
-        await assistantService.create(draft);
+        await assistantService.create(payload);
       }
       await load();
       closeEditor();
@@ -173,7 +205,9 @@ export default function AssistantsScreen() {
         error instanceof AssistantValidationError
           ? error.message
           : error instanceof Error
-            ? error.message
+            ? error.message === 'assistants_cloud_session_required'
+              ? 'Sign in to save this assistant to your account.'
+              : error.message
             : 'Could not save assistant.';
       Alert.alert('Save failed', message);
     } finally {
@@ -187,6 +221,9 @@ export default function AssistantsScreen() {
     }
     try {
       setSaving(true);
+      if (deleteTarget.deployment === 'cloud') {
+        await removeAssistantFromCloud(deleteTarget.id);
+      }
       await assistantService.delete(deleteTarget.id);
       setDeleteTarget(null);
       if (editingId === deleteTarget.id) {
@@ -227,7 +264,7 @@ export default function AssistantsScreen() {
   const renderList = () => (
     <ScrollView style={styles.body} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
       <Text style={[styles.hint, { color: themeColors.secondaryText }]}>
-        Task-focused profiles with their own prompt, skills, and optional preferred model. Stored on this device.
+        Task-focused profiles with their own prompt, skills, and optional preferred model. Local copies stay on this device; account copies sync when signed in.
       </Text>
       {assistants.length === 0 ? (
         <View style={[styles.emptyCard, { backgroundColor: themeColors.cardBackground }]}>
@@ -258,6 +295,7 @@ export default function AssistantsScreen() {
                 {assistant.task}
               </Text>
               <Text style={[styles.rowMeta, { color: themeColors.secondaryText }]} numberOfLines={1}>
+                {assistant.deployment === 'cloud' ? 'Account · ' : 'Device · '}
                 {`${assistant.skillIds.length} skill${assistant.skillIds.length === 1 ? '' : 's'}`}
                 {assistant.model ? ` · ${formatModelLabel(assistant.model)}` : ''}
               </Text>
@@ -272,8 +310,17 @@ export default function AssistantsScreen() {
     </ScrollView>
   );
 
+  const missingSkillIds = getMissingSkillIds(draft.skillIds, skills);
+
   const renderEditor = () => (
     <ScrollView style={styles.body} contentContainerStyle={styles.editorContent} keyboardShouldPersistTaps="handled">
+      <AssistantDeploymentToggle
+        value={draft.deployment}
+        onChange={deployment => setDraft(prev => ({ ...prev, deployment }))}
+        cloudEnabled={signedIn}
+        themeColors={themeColors}
+      />
+
       <Field
         label="Name"
         value={draft.name}
@@ -320,6 +367,19 @@ export default function AssistantsScreen() {
       <Text style={[styles.fieldLabel, { color: themeColors.secondaryText }]}>
         {`Skills (${draft.skillIds.length} / ${ASSISTANT_LIMITS.maxSkills})`}
       </Text>
+      {missingSkillIds.length > 0 ? (
+        <View style={[styles.missingSkillsBox, { backgroundColor: themeColors.cardBackground }]}>
+          <Text style={[styles.missingSkillsTitle, { color: themeColors.text }]}>
+            Not installed on this device
+          </Text>
+          <Text style={[styles.missingSkillsBody, { color: themeColors.secondaryText }]}>
+            {missingSkillIds.join(', ')}
+          </Text>
+          <Text style={[styles.missingSkillsBody, { color: themeColors.secondaryText }]}>
+            Import these skills from the Skills lab. They will not run until installed.
+          </Text>
+        </View>
+      ) : null}
       <View style={[styles.skillList, { backgroundColor: themeColors.cardBackground }]}>
         {skills.length === 0 ? (
           <Text style={[styles.skillEmpty, { color: themeColors.secondaryText }]}>
@@ -637,5 +697,19 @@ const styles = StyleSheet.create({
   saveHeader: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  missingSkillsBox: {
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    gap: 4,
+  },
+  missingSkillsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  missingSkillsBody: {
+    fontSize: 12,
+    lineHeight: 17,
   },
 });
