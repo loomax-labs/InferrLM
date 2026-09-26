@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
+import { cjkTextStyle, useCjkChrome } from '../../i18n/chrome';
 
 type SettingsSectionProps = {
   title: string;
@@ -11,10 +12,11 @@ type SettingsSectionProps = {
 const SettingsSection = ({ title, children }: SettingsSectionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
+  const cjk = useCjkChrome();
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: themeColors.secondaryText }]}>
+      <Text style={[styles.sectionTitle, cjkTextStyle(cjk), { color: themeColors.secondaryText }]}>
         {title}
       </Text>
       <View style={[styles.sectionContent, { backgroundColor: themeColors.borderColor }]}>

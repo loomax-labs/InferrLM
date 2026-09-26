@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 
 import { AppleTranscription } from '@react-native-ai/apple';
+import { speechLocale } from '../../i18n';
 import { fs as FileSystem } from '../fs';
 
 const base64ToBuffer = (base64: string): ArrayBuffer => {
@@ -13,7 +14,7 @@ const base64ToBuffer = (base64: string): ArrayBuffer => {
 };
 
 class SttAdapterClass {
-  isReady(language = 'en-US'): boolean {
+  isReady(language = speechLocale()): boolean {
     if (Platform.OS !== 'ios') {
       console.log('stt_unavailable_platform');
       return false;
@@ -28,7 +29,7 @@ class SttAdapterClass {
     }
   }
 
-  async transcribe(uri: string, language = 'en-US'): Promise<string> {
+  async transcribe(uri: string, language = speechLocale()): Promise<string> {
     console.log('stt_start');
     if (!this.isReady(language)) {
       throw new Error('stt_unavailable');

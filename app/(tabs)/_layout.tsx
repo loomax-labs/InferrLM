@@ -5,8 +5,12 @@ import { theme } from '../../src/constants/theme';
 import { OpenSansFont } from '../../src/hooks/OpenSansFont';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import WideScreenLayout from '../../src/components/WideScreenLayout';
+import { useT } from '../../src/i18n';
+import { useCjkChrome } from '../../src/i18n/chrome';
 
 export default function TabLayout() {
+  const t = useT();
+  const cjk = useCjkChrome();
   const { isWideScreen } = useResponsiveLayout();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -32,8 +36,14 @@ export default function TabLayout() {
         selected: isIOS ? themeColors.primary : themeColors.tabBarActiveText,
       }}
       labelStyle={{
-        default: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.textSecondary : themeColors.tabBarInactiveText },
-        selected: { fontFamily: fonts.medium.fontFamily, color: isIOS ? themeColors.primary : themeColors.tabBarActiveText },
+        default: {
+          ...(cjk ? {} : { fontFamily: fonts.medium.fontFamily }),
+          color: isIOS ? themeColors.textSecondary : themeColors.tabBarInactiveText,
+        },
+        selected: {
+          ...(cjk ? {} : { fontFamily: fonts.medium.fontFamily }),
+          color: isIOS ? themeColors.primary : themeColors.tabBarActiveText,
+        },
       }}
     >
       <NativeTabs.Trigger
@@ -44,7 +54,7 @@ export default function TabLayout() {
           sf={{ default: 'house', selected: 'house.fill' }}
           md={{ default: 'home', selected: 'home_filled' }}
         />
-        <NativeTabs.Trigger.Label>Chat</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.chat')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="models" disableTransparentOnScrollEdge>
@@ -52,7 +62,7 @@ export default function TabLayout() {
           sf={{ default: 'cube', selected: 'cube.fill' }}
           md="deployed_code"
         />
-        <NativeTabs.Trigger.Label>Models</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.models')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="tools" disableTransparentOnScrollEdge>
@@ -60,7 +70,7 @@ export default function TabLayout() {
           sf={{ default: 'wrench.and.screwdriver', selected: 'wrench.and.screwdriver.fill' }}
           md="build"
         />
-        <NativeTabs.Trigger.Label>Tools</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.tools')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings" disableTransparentOnScrollEdge>
@@ -68,7 +78,7 @@ export default function TabLayout() {
           sf={{ default: 'gearshape', selected: 'gearshape.fill' }}
           md="settings"
         />
-        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.settings')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

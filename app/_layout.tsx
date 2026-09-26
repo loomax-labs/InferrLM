@@ -11,6 +11,8 @@ import * as BackgroundTask from 'expo-background-task';
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
+import { LocaleProvider } from '../src/i18n/LocaleProvider';
+import { getActiveLanguage, isCjkLanguage, useT } from '../src/i18n';
 import { RemoteModelProvider } from '../src/context/RemoteModelContext';
 import { theme } from '../src/constants/theme';
 import { llamaManager } from '../src/utils/LlamaManager';
@@ -95,6 +97,9 @@ function InnerLayout({ appReady }: { appReady: boolean }) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useT();
+  const tRef = useRef(t);
+  tRef.current = t;
   const appStateRef = useRef(AppState.currentState);
   const lastBackPressRef = useRef(0);
   const onboardingGateCheckedRef = useRef(false);
@@ -136,7 +141,7 @@ function InnerLayout({ appReady }: { appReady: boolean }) {
         return false;
       }
       lastBackPressRef.current = now;
-      ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+      ToastAndroid.show(tRef.current('common.pressBackToExit'), ToastAndroid.SHORT);
       return true;
     });
 
@@ -282,17 +287,21 @@ export default function RootLayout() {
       const oldTextRender = Text.render;
       const oldTextInputRender = TextInput.render;
 
+      const withFont = (style: unknown) => (
+        isCjkLanguage(getActiveLanguage()) ? style : [{ fontFamily: 'OpenSans-Regular' }, style]
+      );
+
       Text.render = function (props: any, ref: any) {
         return oldTextRender.call(this, {
           ...props,
-          style: [{ fontFamily: 'OpenSans-Regular' }, props.style],
+          style: withFont(props.style),
         }, ref);
       };
 
       TextInput.render = function (props: any, ref: any) {
         return oldTextInputRender.call(this, {
           ...props,
-          style: [{ fontFamily: 'OpenSans-Regular' }, props.style],
+          style: withFont(props.style),
         }, ref);
       };
     }
@@ -304,6 +313,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <LocaleProvider>
       <ThemeProvider>
         <ThemedPaper>
           <ModelProvider>
@@ -322,6 +332,7 @@ export default function RootLayout() {
           </ModelProvider>
         </ThemedPaper>
       </ThemeProvider>
+      </LocaleProvider>
     </SafeAreaProvider>
   );
 }

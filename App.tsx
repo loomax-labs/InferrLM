@@ -7,6 +7,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { getActiveLanguage, isCjkLanguage } from './src/i18n';
 import { RemoteModelProvider } from './src/context/RemoteModelContext';
 import { theme } from './src/constants/theme';
 import { llamaManager } from './src/utils/LlamaManager';
@@ -293,17 +294,21 @@ export default function App() {
       const oldTextRender = Text.render;
       const oldTextInputRender = TextInput.render;
 
+      const withFont = (style: unknown) => (
+        isCjkLanguage(getActiveLanguage()) ? style : [{ fontFamily: 'OpenSans-Regular' }, style]
+      );
+
       Text.render = function (props, ref) {
         return oldTextRender.call(this, {
           ...props,
-          style: [{ fontFamily: 'OpenSans-Regular' }, props.style],
+          style: withFont(props.style),
         }, ref);
       };
 
       TextInput.render = function (props, ref) {
         return oldTextInputRender.call(this, {
           ...props,
-          style: [{ fontFamily: 'OpenSans-Regular' }, props.style],
+          style: withFont(props.style),
         }, ref);
       };
     }

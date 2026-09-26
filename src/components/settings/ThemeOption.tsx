@@ -4,15 +4,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { theme } from '../../constants/theme';
 
-type ThemeOptionType = 'system' | 'light' | 'dark';
-
 type ThemeOptionProps = {
   title: string;
-  description: string;
-  value: ThemeOptionType;
+  description?: string;
+  value: string;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  onSelect: (value: ThemeOptionType) => void;
-  selectedTheme: ThemeOptionType;
+  onSelect: (value: string) => void;
+  selectedTheme: string;
+  showDivider?: boolean;
 };
 
 const ThemeOption = ({ 
@@ -21,7 +20,8 @@ const ThemeOption = ({
   value, 
   icon, 
   onSelect, 
-  selectedTheme 
+  selectedTheme,
+  showDivider = false,
 }: ThemeOptionProps) => {
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -31,7 +31,7 @@ const ThemeOption = ({
     <TouchableOpacity 
       style={[
         styles.settingItem,
-        value !== 'system' && styles.settingItemBorder
+        showDivider && styles.settingItemBorder
       ]}
       onPress={() => onSelect(value)}
     >
@@ -43,9 +43,11 @@ const ThemeOption = ({
           <Text style={[styles.settingText, { color: themeColors.text }]}>
             {title}
           </Text>
-          <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
-            {description}
-          </Text>
+          {description ? (
+            <Text style={[styles.settingDescription, { color: themeColors.secondaryText }]}>
+              {description}
+            </Text>
+          ) : null}
         </View>
       </View>
       <View style={[
@@ -93,6 +95,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 2,
+    flexShrink: 1,
   },
   settingDescription: {
     fontSize: 13,

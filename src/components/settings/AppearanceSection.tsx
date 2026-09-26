@@ -1,6 +1,9 @@
 import React from 'react';
 import SettingsSection from './SettingsSection';
 import ThemeOption from './ThemeOption';
+import { useT } from '../../i18n';
+import { useLocale } from '../../i18n/LocaleProvider';
+import { APP_LANGUAGES, LANGUAGE_ENDONYMS, LanguagePreference } from '../../i18n/languages';
 
 type ThemeOptionType = 'system' | 'light' | 'dark';
 
@@ -10,34 +13,59 @@ type AppearanceSectionProps = {
 };
 
 const AppearanceSection = ({ selectedTheme, onThemeChange }: AppearanceSectionProps) => {
+  const t = useT();
+  const { preference, setPreference } = useLocale();
+
   return (
-    <SettingsSection title="APPEARANCE">
+    <SettingsSection title={t('settings.appearance')}>
       <ThemeOption
-        title="System Default"
-        description="Follow system theme settings"
+        title={t('settings.languageSystem')}
+        description={t('settings.languageSystemDescription')}
+        value="system"
+        icon="translate"
+        onSelect={(value) => setPreference(value as LanguagePreference)}
+        selectedTheme={preference}
+      />
+      {APP_LANGUAGES.map((code) => (
+        <ThemeOption
+          key={code}
+          title={LANGUAGE_ENDONYMS[code]}
+          value={code}
+          icon="web"
+          showDivider
+          onSelect={(value) => setPreference(value as LanguagePreference)}
+          selectedTheme={preference}
+        />
+      ))}
+      <ThemeOption
+        title={t('settings.themeSystem')}
+        description={t('settings.themeSystemDescription')}
         value="system"
         icon="cellphone"
-        onSelect={onThemeChange}
+        showDivider
+        onSelect={(value) => onThemeChange(value as ThemeOptionType)}
         selectedTheme={selectedTheme}
       />
       <ThemeOption
-        title="Light Mode"
-        description="Classic light appearance"
+        title={t('settings.themeLight')}
+        description={t('settings.themeLightDescription')}
         value="light"
         icon="white-balance-sunny"
-        onSelect={onThemeChange}
+        showDivider
+        onSelect={(value) => onThemeChange(value as ThemeOptionType)}
         selectedTheme={selectedTheme}
       />
       <ThemeOption
-        title="Dark Mode"
-        description="Easier on the eyes in low light"
+        title={t('settings.themeDark')}
+        description={t('settings.themeDarkDescription')}
         value="dark"
         icon="moon-waning-crescent"
-        onSelect={onThemeChange}
+        showDivider
+        onSelect={(value) => onThemeChange(value as ThemeOptionType)}
         selectedTheme={selectedTheme}
       />
     </SettingsSection>
   );
 };
 
-export default AppearanceSection; 
+export default AppearanceSection;

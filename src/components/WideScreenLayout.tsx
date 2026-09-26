@@ -14,6 +14,7 @@ import { LayoutProvider } from '../context/LayoutContext';
 import { theme } from '../constants/theme';
 import { OpenSansFont } from '../hooks/OpenSansFont';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
+import { useT } from '../i18n';
 
 type TabType = 'models' | 'benchmark' | 'settings';
 
@@ -22,6 +23,7 @@ const TAB_BAR_W = 75;
 const MIN_SIDEBAR_WIDTH = 200;
 
 export default function WideScreenLayout() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
@@ -181,7 +183,7 @@ export default function WideScreenLayout() {
           style={[
             styles.verticalTabBar,
             {
-              width: TAB_BAR_W,
+              minWidth: TAB_BAR_W,
               backgroundColor: themeColors.background,
               paddingTop: insets.top + 12,
               paddingBottom: insets.bottom + 12,
@@ -192,19 +194,19 @@ export default function WideScreenLayout() {
             <TabButton
               tab="models"
               icon={activeTab === 'models' ? 'cube' : 'cube-outline'}
-              label="Models"
+              label={t('tabs.models')}
               isActive={activeTab === 'models'}
             />
             <TabButton
               tab="benchmark"
               icon="tools"
-              label="Tools"
+              label={t('tabs.tools')}
               isActive={activeTab === 'benchmark'}
             />
             <TabButton
               tab="settings"
               icon={activeTab === 'settings' ? 'cog' : 'cog-outline'}
-              label="Settings"
+              label={t('tabs.settings')}
               isActive={activeTab === 'settings'}
             />
           </View>
@@ -293,6 +295,8 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     marginTop: 4,
+    textAlign: 'center',
+    flexShrink: 1,
   },
   dragHandle: {
     position: 'absolute',

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { t } from '../i18n';
 
 type DialogContextType = {
   visible: boolean;
@@ -41,8 +42,8 @@ export const DialogProvider = ({ children }: DialogProviderProps) => {
   const [visible, setVisible] = useState(false);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [confirmText, setConfirmText] = useState('OK');
-  const [cancelText, setCancelText] = useState<string | null>('Cancel');
+  const [confirmText, setConfirmText] = useState(() => t('common.ok'));
+  const [cancelText, setCancelText] = useState<string | null>(() => t('common.cancel'));
   const [showLoading, setShowLoading] = useState(false);
   const [showTitle, setShowTitle] = useState(true);
   const [confirmCallback, setConfirmCallback] = useState<(() => void) | undefined>(() => {});
@@ -51,8 +52,8 @@ export const DialogProvider = ({ children }: DialogProviderProps) => {
   const showDialog = ({
     title = '',
     message,
-    confirmText = 'OK',
-    cancelText = 'Cancel',
+    confirmText = t('common.ok'),
+    cancelText = t('common.cancel'),
     showLoading = false,
     showTitle = true,
     onConfirm = () => {},
