@@ -1,0 +1,16 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "InferrLM では、カメラで撮ったファイルをそのまま送ることと、画像の文字を読み取る機能のために、カメラを使います。",
+    "NSPhotoLibraryUsageDescription": "InferrLM は、解析と文字の読み取りのために画像を選ぶため、写真ライブラリへのアクセスが必要です。",
+    "NSPhotoLibraryAddUsageDescription": "InferrLM は、撮った写真と作った画像をライブラリに保存する許可が必要です。",
+    "NSMicrophoneUsageDescription": "InferrLM は、このスマホで音声を文字にしたり翻訳したりするために、マイクで録音します。",
+    "NSContactsUsageDescription": "InferrLM は、連絡先を作る、または更新する操作をあなたが承認したときだけ、連絡先にアクセスします。",
+    "NSCalendarsUsageDescription": "InferrLM は、予定を作る操作をあなたが承認したときだけ、カレンダーにアクセスします。",
+    "NSRemindersUsageDescription": "InferrLM は、リマインダー向けの予定のような操作をあなたが承認したときだけ、リマインダーにアクセスします。",
+    "NSUserNotificationsUsageDescription": "InferrLM は、リマインダーを入れるスキル、または操作をあなたが承認したときだけ、通知を使います。",
+    "NSLocalNetworkUsageDescription": "InferrLM は、同じ Wi-Fi 上のほかの端末に AI のチャット画面を共有するため、ローカルネットワークを使います。パソコン、タブレット、ほかのスマホのブラウザからアシスタントを開けます。"
+  },
+  "android": {
+    "app_name": "InferrLM"
+  }
+}
