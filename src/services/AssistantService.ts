@@ -144,6 +144,23 @@ class AssistantService {
     return items.find(item => item.id === id) ?? null;
   }
 
+  async getLocalById(id: string): Promise<Assistant | null> {
+    const item = await this.getById(id);
+    if (!item || item.deployment !== 'local') {
+      return null;
+    }
+    return item;
+  }
+
+  async listLocalForApi(): Promise<
+    Array<Pick<Assistant, 'id' | 'name' | 'task' | 'model'>>
+  > {
+    const items = await this.list();
+    return items
+      .filter(item => item.deployment === 'local')
+      .map(({ id, name, task, model }) => ({ id, name, task, model }));
+  }
+
   async create(input: AssistantWriteInput): Promise<Assistant> {
     const list = await this.load();
     if (list.length >= ASSISTANT_LIMITS.maxAssistants) {
