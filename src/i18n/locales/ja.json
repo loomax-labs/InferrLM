@@ -129,6 +129,7 @@
     "audioAttachment": "音声の添付",
     "newChat": "新しいチャットを始める",
     "send": "送信",
+    "mode": "モード",
     "storingDocument": "検索用に文書を保存しています {{progress}}",
     "aiTermsTitle": "AI が作った内容の条件",
     "aiTermsAccept": "理解しました"
