@@ -235,9 +235,6 @@ class LiteRTManager implements InferenceManager {
     } else {
       delete config.tools;
     }
-    if (typeof settings?.validate === 'boolean') {
-      config.validate = settings.validate;
-    }
     if (typeof settings?.enableSpeculativeDecoding === 'boolean') {
       config.enableSpeculativeDecoding = settings.enableSpeculativeDecoding;
     }

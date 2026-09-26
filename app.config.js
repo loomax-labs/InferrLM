@@ -129,6 +129,7 @@ export default {
       },
     },
     plugins: [
+      "llama.rn",
       "react-native-litert-lm",
       "@react-native-ml-kit/text-recognition",
       "expo-sharing",
