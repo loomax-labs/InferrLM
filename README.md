@@ -1,10 +1,14 @@
-[English](README.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+[English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Nederlands](README.nl.md)
 
 ## InferrLM (Previously Inferra)
+<!-- version-badges:start -->
 <p>
-  <a href="" target="_blank"><img src="https://img.shields.io/badge/App_Version-0.8.7-6a1b9a" alt="App Version 0.8.7"></a>
-  <a href="https://opensource.org/licenses/AGPL-3.0" target="_blank"><img src="https://img.shields.io/badge/License-AGPL--3.0-orange" alt="License: AGPL-3.0"></a>
+  <a href="https://github.com/sbhjt-gr/InferrLM/blob/main/app.config.js"><img src="https://img.shields.io/badge/Codebase-0.9.0_%C2%B7_2026--09--27-6a1b9a" alt="Codebase 0.9.0, last commit 2026-09-27"></a>
+  <a href="https://play.google.com/store/apps/details?id=com.gorai.ragionare"><img src="https://img.shields.io/badge/Play_Store-0.8.6_%C2%B7_2026--03--29_%C2%B7_182d_behind-e05d44?logo=googleplay&logoColor=white" alt="Google Play 0.8.6, updated 2026-03-29, 182d behind the codebase"></a>
+  <a href="https://apps.apple.com/us/app/inferrlm/id6754396856"><img src="https://img.shields.io/badge/App_Store-0.8.7_%C2%B7_2026--03--30_%C2%B7_181d_behind-e05d44?logo=apple&logoColor=white" alt="App Store 0.8.7, released 2026-03-30, 181d behind the codebase"></a>
+  <a href="https://opensource.org/licenses/AGPL-3.0"><img src="https://img.shields.io/badge/License-AGPL--3.0-orange" alt="License: AGPL-3.0"></a>
 </p>
+<!-- version-badges:end -->
 <p>
   <img src="assets/source/InferrLM-header.jpg" alt="InferrLM Header" width="600">
 </p>
@@ -16,8 +20,27 @@ InferrLM is a mobile application that brings LLMs & SLMs directly to your Androi
   <a href="https://apps.apple.com/us/app/inferra/id6754396856"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" width="164" style="vertical-align:middle"></a>
 </p>
 
+## Contents
 
-If you want to support me and the development of this project, you can donate to me through [Ko-fi](https://ko-fi.com/subhajitgorai).
+- [Demo](#demo)
+- [Features](#features)
+  - [Core Inference](#core-inference)
+  - [Vision and Multimodal](#vision-and-multimodal)
+  - [Document Processing and RAG](#document-processing-and-rag)
+  - [Local Server](#local-server)
+  - [Model Management](#model-management)
+  - [Chat Experience](#chat-experience)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [REST API](#rest-api)
+  - [Starting the Server](#starting-the-server)
+- [Command Line Interface](#command-line-interface)
+  - [API Documentation](#api-documentation)
+- [License](#license)
+- [Contributing](#contributing)
+- [Tech Stack](#tech-stack)
+- [Acknowledgments](#acknowledgments)
+- [Star History](#star-history)
 
 ## Demo
 

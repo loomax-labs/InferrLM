@@ -1,10 +1,14 @@
-[English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md)
+[English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Nederlands](README.nl.md)
 
 ## InferrLM（以前叫 Inferra）
+<!-- version-badges:start -->
 <p>
-  <a href="" target="_blank"><img src="https://img.shields.io/badge/App_Version-0.8.7-6a1b9a" alt="App Version 0.8.7"></a>
-  <a href="https://opensource.org/licenses/AGPL-3.0" target="_blank"><img src="https://img.shields.io/badge/License-AGPL--3.0-orange" alt="License: AGPL-3.0"></a>
+  <a href="https://github.com/sbhjt-gr/InferrLM/blob/main/app.config.js"><img src="https://img.shields.io/badge/Codebase-0.9.0_%C2%B7_2026--09--27-6a1b9a" alt="Codebase 0.9.0, last commit 2026-09-27"></a>
+  <a href="https://play.google.com/store/apps/details?id=com.gorai.ragionare"><img src="https://img.shields.io/badge/Play_Store-0.8.6_%C2%B7_2026--03--29_%C2%B7_182d_behind-e05d44?logo=googleplay&logoColor=white" alt="Google Play 0.8.6, updated 2026-03-29, 182d behind the codebase"></a>
+  <a href="https://apps.apple.com/us/app/inferrlm/id6754396856"><img src="https://img.shields.io/badge/App_Store-0.8.7_%C2%B7_2026--03--30_%C2%B7_181d_behind-e05d44?logo=apple&logoColor=white" alt="App Store 0.8.7, released 2026-03-30, 181d behind the codebase"></a>
+  <a href="https://opensource.org/licenses/AGPL-3.0"><img src="https://img.shields.io/badge/License-AGPL--3.0-orange" alt="License: AGPL-3.0"></a>
 </p>
+<!-- version-badges:end -->
 <p>
   <img src="assets/source/InferrLM-header.jpg" alt="InferrLM Header" width="600">
 </p>
@@ -16,8 +20,27 @@ InferrLM 是一款手机软件，能把大模型和小模型直接放到你的 A
   <a href="https://apps.apple.com/us/app/inferra/id6754396856"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" width="164" style="vertical-align:middle"></a>
 </p>
 
+## 目录
 
-如果你想支持我和这个项目，可以通过 [Ko-fi](https://ko-fi.com/subhajitgorai) 捐助。
+- [演示](#演示)
+- [功能](#功能)
+  - [在手机上运行](#在手机上运行)
+  - [看图，以及文字和图片](#看图以及文字和图片)
+  - [文档处理和 RAG](#文档处理和-rag)
+  - [本地服务器](#本地服务器)
+  - [模型管理](#模型管理)
+  - [聊天](#聊天)
+  - [准备](#准备)
+  - [安装](#安装)
+- [REST API](#rest-api)
+  - [启动服务器](#启动服务器)
+- [命令行界面](#命令行界面)
+  - [API 文档](#api-文档)
+- [许可证](#许可证)
+- [参与贡献](#参与贡献)
+- [技术栈](#技术栈)
+- [致谢](#致谢)
+- [Star 记录](#star-记录)
 
 ## 演示
 
