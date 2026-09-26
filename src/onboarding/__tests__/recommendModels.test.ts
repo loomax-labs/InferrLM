@@ -4,8 +4,8 @@ import {
   getModelDownloadSizeBytes,
   modelFitsOnDevice,
   RecommendDeviceContext,
-  OnboardingProfile,
 } from '../recommendModels';
+import type { OnboardingProfile } from '../types';
 
 function device(overrides: Partial<RecommendDeviceContext> = {}): RecommendDeviceContext {
   return {
@@ -67,13 +67,13 @@ describe('recommendModels RAM bands', () => {
 describe('recommendModels vision intent', () => {
   it('prefers vision-capable models', () => {
     const names = recommendModels(
-      profile({ intents: ['vision'] }),
+      profile({ intents: ['photos'] }),
       device({ platform: 'ios' }),
     ).map((r) => r.model.name);
     expect(names.length).toBeGreaterThan(0);
     expect(
       names.every((name) => {
-        const rec = recommendModels(profile({ intents: ['vision'] }), device({ platform: 'ios' }))
+        const rec = recommendModels(profile({ intents: ['photos'] }), device({ platform: 'ios' }))
           .find((r) => r.model.name === name);
         return (
           rec?.model.tags?.includes('vision') ||
@@ -86,7 +86,7 @@ describe('recommendModels vision intent', () => {
 
   it('prefers LiteRT on Android for vision', () => {
     const results = recommendModels(
-      profile({ intents: ['vision'] }),
+      profile({ intents: ['photos'] }),
       device({ platform: 'android', totalMemoryBytes: 8 * 1024 ** 3 }),
     );
     const top = results[0]?.model.name ?? '';
@@ -110,7 +110,7 @@ describe('recommendModels coding intent', () => {
 describe('recommendModels audio intent', () => {
   it('prefers LiteRT models with audio capability on Android', () => {
     const results = recommendModels(
-      profile({ intents: ['audio'] }),
+      profile({ intents: ['voice'] }),
       device({ platform: 'android', totalMemoryBytes: 8 * 1024 ** 3 }),
     );
     expect(results.length).toBeGreaterThan(0);

@@ -1,28 +1,11 @@
 import { DOWNLOADABLE_MODELS } from '../constants/DownloadableModels';
 import { DownloadableModel } from '../components/model/DownloadableModelItem';
 import { ModelFormat, ModelType } from '../types/models';
-
-export type ExpertiseLevel = 'new' | 'comfortable' | 'experienced';
-
-export type OnboardingIntent =
-  | 'chat'
-  | 'coding'
-  | 'reasoning'
-  | 'vision'
-  | 'audio'
-  | 'files'
-  | 'api'
-  | 'explore';
-
-export interface OnboardingProfile {
-  completed: boolean;
-  skipped: boolean;
-  expertise: ExpertiseLevel;
-  intents: OnboardingIntent[];
-  selectedModelNames: string[];
-  lessonIds: string[];
-  completedAt?: string | null;
-}
+import type {
+  ExpertiseLevel,
+  OnboardingIntentId,
+  OnboardingProfile,
+} from './types';
 
 export interface RecommendDeviceContext {
   totalMemoryBytes: number;
@@ -157,31 +140,31 @@ function modelWithinRamBudget(
   return getModelDownloadSizeBytes(model) <= maxModelBytesForRam(totalMemoryBytes);
 }
 
-function intentsNeedVision(intents: OnboardingIntent[]): boolean {
-  return intents.includes('vision');
+function intentsNeedVision(intents: OnboardingIntentId[]): boolean {
+  return intents.includes('photos');
 }
 
-function intentsNeedAudio(intents: OnboardingIntent[]): boolean {
-  return intents.includes('audio');
+function intentsNeedAudio(intents: OnboardingIntentId[]): boolean {
+  return intents.includes('voice');
 }
 
-function intentsNeedCoding(intents: OnboardingIntent[]): boolean {
+function intentsNeedCoding(intents: OnboardingIntentId[]): boolean {
   return intents.includes('coding');
 }
 
-function intentsNeedReasoning(intents: OnboardingIntent[]): boolean {
+function intentsNeedReasoning(intents: OnboardingIntentId[]): boolean {
   return intents.includes('reasoning');
 }
 
-function hasSpecialIntentFilters(intents: OnboardingIntent[]): boolean {
+function hasSpecialIntentFilters(intents: OnboardingIntentId[]): boolean {
   return intents.some((id) =>
-    ['vision', 'audio', 'coding', 'reasoning'].includes(id),
+    ['photos', 'voice', 'coding', 'reasoning'].includes(id),
   );
 }
 
 function matchesIntentUnion(
   model: DownloadableModel,
-  intents: OnboardingIntent[],
+  intents: OnboardingIntentId[],
 ): boolean {
   if (!hasSpecialIntentFilters(intents)) {
     return true;
@@ -208,7 +191,7 @@ function matchesIntentUnion(
 function engineSortScore(
   model: DownloadableModel,
   device: RecommendDeviceContext,
-  intents: OnboardingIntent[],
+  intents: OnboardingIntentId[],
 ): number {
   if (device.platform === 'ios') {
     return isLiteRTModel(model) ? -100 : 0;
@@ -240,7 +223,7 @@ function tagScore(model: DownloadableModel): number {
 
 function intentRankScore(
   model: DownloadableModel,
-  intents: OnboardingIntent[],
+  intents: OnboardingIntentId[],
 ): number {
   let score = 0;
 
@@ -409,7 +392,7 @@ function pickFallbackModels(
 
 function reasonForModel(
   model: DownloadableModel,
-  intents: OnboardingIntent[],
+  intents: OnboardingIntentId[],
 ): RecommendationReason {
   if (intentsNeedVision(intents) && isVisionModel(model)) {
     return 'vision';
@@ -472,16 +455,18 @@ export function recommendModels(
   profile: Pick<OnboardingProfile, 'expertise' | 'intents'>,
   device: RecommendDeviceContext,
 ): RecommendedModel[] {
-  const intents =
-    profile.intents.length > 0 ? profile.intents : (['chat'] as OnboardingIntent[]);
+  const intents: OnboardingIntentId[] =
+    profile.intents.length > 0 ? profile.intents : ['chat'];
+  const expertise: ExpertiseLevel = profile.expertise ?? 'comfortable';
+  const rankedProfile = { expertise, intents };
 
   let candidates = filterCatalog(device).filter((model) =>
     matchesIntentUnion(model, intents),
   );
 
-  candidates.sort((a, b) => compareModels(a, b, { ...profile, intents }, device));
+  candidates.sort((a, b) => compareModels(a, b, rankedProfile, device));
 
-  if (profile.expertise === 'experienced') {
+  if (expertise === 'experienced') {
     candidates = expandForExperienced(candidates);
   } else {
     const seen = new Set<string>();
@@ -499,5 +484,5 @@ export function recommendModels(
     candidates = pickFallbackModels(device);
   }
 
-  return withPreselection(candidates, { ...profile, intents });
+  return withPreselection(candidates, rankedProfile);
 }
