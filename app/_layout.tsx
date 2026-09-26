@@ -5,7 +5,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import * as NavigationBar from 'expo-navigation-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundTask from 'expo-background-task';
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
@@ -32,6 +32,7 @@ import CapabilityHost from '../src/components/capabilities/CapabilityHost';
 import { updateService } from '../src/services/UpdateService';
 import { useResponsiveLayout } from '../src/hooks/useResponsiveLayout';
 import { StatusBarHost } from '../src/services/adapters/StatusBarAdapter';
+import { onboardingStore } from '../src/onboarding/OnboardingStore';
 
 SplashScreen.preventAutoHideAsync();
 initializeBindings().catch(() => {});
@@ -83,14 +84,43 @@ function ThemedPaper({ children }: { children: React.ReactNode }) {
   return <PaperProvider theme={paperTheme}>{children}</PaperProvider>;
 }
 
-function InnerLayout() {
+function InnerLayout({ appReady }: { appReady: boolean }) {
   const { theme: currentTheme } = useTheme();
   const { isWideScreen } = useResponsiveLayout();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const pathname = usePathname();
   const appStateRef = useRef(AppState.currentState);
   const lastBackPressRef = useRef(0);
+  const onboardingGateCheckedRef = useRef(false);
+
+  useEffect(() => {
+    if (!appReady || onboardingGateCheckedRef.current) {
+      return;
+    }
+    onboardingGateCheckedRef.current = true;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const complete = await onboardingStore.isComplete();
+        if (cancelled || complete) {
+          return;
+        }
+        if (pathname === '/onboarding') {
+          return;
+        }
+        router.replace('/onboarding');
+      } catch {
+        // If storage fails, do not block the main app.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [appReady, pathname, router]);
 
   useEffect(() => {
     const backSubscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -172,6 +202,7 @@ function InnerLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
         <Stack.Screen name="login" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="register" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="chat-history" options={{ animation: 'slide_from_right' }} />
@@ -211,6 +242,7 @@ export default function RootLayout() {
     'OpenSans-ExtraBold': require('../assets/fonts/OpenSans-ExtraBold.ttf'),
   });
   const [autoUpdated, setAutoUpdated] = useState(false);
+  const appReady = (fontsLoaded || !!fontError) && autoUpdated;
 
   useEffect(() => {
     async function handleAutoUpdate() {
@@ -274,7 +306,7 @@ export default function RootLayout() {
               <RemoteModelProvider>
                 <GestureHandlerRootView style={{ flex: 1 }}>
                   <DialogProvider>
-                    <InnerLayout />
+                    <InnerLayout appReady={appReady} />
                     <CapabilityHost />
                   </DialogProvider>
                   <SkillRuntimeHost />
