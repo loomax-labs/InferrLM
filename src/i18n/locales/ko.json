@@ -110,7 +110,17 @@
     "cacheClearFailed": "캐시를 지우지 못했어요",
     "modelsCleared": "모든 모델을 지웠어요",
     "modelsClearFailed": "모델을 지우지 못했어요",
-    "modelLoad": "모델을 불러오지 못했어요"
+    "modelLoad": "모델을 불러오지 못했어요",
+    "quotaTitle": "{{provider}} 한도에 도달했어요",
+    "quotaBody": "{{provider}} 한도에 도달했어요. 나중에 다시 시도하거나 요금제를 올려 주세요.",
+    "authTitle": "{{provider}} 로그인에 실패했어요",
+    "authBody": "{{provider}} API 키가 올바르지 않아 보여요. 설정에서 확인해 주세요.",
+    "serverTitle": "{{provider}}를 쓸 수 없어요",
+    "serverBody": "{{provider}}에 지금 문제가 있어요. 나중에 다시 시도해 주세요.",
+    "invalidRequestBody": "{{provider}}에 보낸 요청을 받아들이지 않았어요. 다른 메시지로 시도해 주세요.",
+    "permissionBody": "이 {{provider}} 모델을 사용할 권한이 없어요.",
+    "modelNotFoundBody": "그 {{provider}} 모델을 찾지 못했어요. 더 이상 없을 수 있어요.",
+    "providerErrorTitle": "{{provider}}에서 답변을 받지 못했어요"
   },
   "chat": {
     "loading": "채팅을 불러오는 중...",
