@@ -185,6 +185,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 12,
   },
+  // Latin keeps uppercase and letter spacing. CJK call sites pass cjkTextStyle.
   sectionHeaderText: {
     fontSize: 14,
     fontWeight: '600',

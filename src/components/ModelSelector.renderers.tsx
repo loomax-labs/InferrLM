@@ -14,6 +14,7 @@ import {
 } from './ModelSelector.types';
 import { formatBytes, getDisplayName, isLiteRTModel, isMLXModel } from './ModelSelector.utils';
 import { styles } from './ModelSelector.styles';
+import { cjkTextStyle } from '../i18n/chrome';
 
 export interface RenderContext {
   currentTheme: 'light' | 'dark';
@@ -25,6 +26,7 @@ export interface RenderContext {
   isOnlineModelsExpanded: boolean;
   isLocalModelsExpanded: boolean;
   isRefreshingLocalModels: boolean;
+  cjk: boolean;
   enableRemoteModels: boolean;
   isLoggedIn: boolean;
   handleModelSelect: (model: Model) => void;
@@ -39,7 +41,7 @@ export const renderAppleFoundationItem = (
   item: AppleFoundationModel,
   context: RenderContext
 ) => {
-  const { currentTheme, themeColors, selectedModelPath, isGenerating, handleModelSelect } = context;
+  const { currentTheme, themeColors, selectedModelPath, isGenerating, handleModelSelect, cjk } = context;
   const isSelected = selectedModelPath === item.id;
   const darkPurple = '#C060E0';
   const selectedColor = isSelected ? (currentTheme === 'dark' ? darkPurple : getThemeAwareColor('#4a0660', currentTheme)) : currentTheme === 'dark' ? '#fff' : themeColors.text;
@@ -82,6 +84,7 @@ export const renderAppleFoundationItem = (
             <Text
               style={[
                 styles.connectionTypeText,
+                cjkTextStyle(cjk),
                 { color: currentTheme === 'dark' ? '#fff' : '#4a0660' },
               ]}
             >
@@ -146,6 +149,7 @@ export const renderLocalModelItem = (
     expandedGroups,
     handleModelSelect,
     toggleGroup,
+    cjk,
   } = context;
 
   const isGroup = 'isMLXGroup' in item && item.isMLXGroup;
@@ -204,7 +208,8 @@ export const renderLocalModelItem = (
                   { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(74, 6, 96, 0.1)' },
                 ]}
               >
-                <Text style={[styles.connectionTypeText, { color: currentTheme === 'dark' ? '#fff' : '#4a0660' }]}>
+                <Text style={[styles.connectionTypeText,
+                cjkTextStyle(cjk), { color: currentTheme === 'dark' ? '#fff' : '#4a0660' }]}>
                   LOCAL
                 </Text>
               </View>
@@ -340,7 +345,8 @@ export const renderLocalModelItem = (
               { backgroundColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(74, 6, 96, 0.1)' },
             ]}
           >
-            <Text style={[styles.connectionTypeText, { color: currentTheme === 'dark' ? '#fff' : '#4a0660' }]}>
+            <Text style={[styles.connectionTypeText,
+                cjkTextStyle(cjk), { color: currentTheme === 'dark' ? '#fff' : '#4a0660' }]}>
               LOCAL
             </Text>
           </View>
@@ -392,6 +398,7 @@ export const renderOnlineModelItem = (
     enableRemoteModels,
     isLoggedIn,
     handleModelSelect,
+    cjk,
   } = context;
 
   const isSelected = selectedModelPath === item.id;
@@ -434,7 +441,8 @@ export const renderOnlineModelItem = (
             styles.connectionTypeBadge,
             { backgroundColor: currentTheme === 'dark' ? 'rgba(74, 180, 96, 0.25)' : 'rgba(74, 180, 96, 0.15)' }
           ]}>
-            <Text style={[styles.connectionTypeText, { color: currentTheme === 'dark' ? '#5FD584' : '#2a8c42' }]}>
+            <Text style={[styles.connectionTypeText,
+                cjkTextStyle(cjk), { color: currentTheme === 'dark' ? '#5FD584' : '#2a8c42' }]}>
               REMOTE
             </Text>
           </View>
@@ -492,6 +500,7 @@ export const renderSectionHeader = (
     toggleOnlineModelsDropdown,
     toggleLocalModelsDropdown,
     refreshStoredModels,
+    cjk,
     hasAnyApiKey,
   } = context;
 
@@ -514,7 +523,8 @@ export const renderSectionHeader = (
       >
         <View style={styles.sectionHeaderContent}>
           <Text style={[
-            styles.sectionHeaderText, 
+            styles.sectionHeaderText,
+            cjkTextStyle(cjk), 
             { color: currentTheme === 'dark' ? '#fff' : themeColors.secondaryText },
             currentTheme === 'dark' && { opacity: 0.9 }
           ]}>
@@ -552,6 +562,7 @@ export const renderSectionHeader = (
         <Text
           style={[
             styles.sectionHeaderText,
+            cjkTextStyle(cjk),
             { color: currentTheme === 'dark' ? '#fff' : themeColors.secondaryText },
             currentTheme === 'dark' && { opacity: 0.9 }
           ]}

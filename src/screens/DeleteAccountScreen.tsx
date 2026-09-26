@@ -10,7 +10,9 @@ import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { deleteAccount } from '../services/AuthService';
+import { formatLocaleDate, useT } from '../i18n';
 export default function DeleteAccountScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
@@ -26,21 +28,23 @@ export default function DeleteAccountScreen() {
 
   const formatRetryAt = (value?: string | null) => {
     if (!value) {
-      return 'You can delete this account again 48 hours after restoring it.';
+      return t('account.retryHours');
     }
 
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
-      return 'You can delete this account again 48 hours after restoring it.';
+      return t('account.retryHours');
     }
 
-    return `You can delete this account again after ${date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    })}.`;
+    return t('account.retryAfter', {
+      date: formatLocaleDate(date, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      }),
+    });
   };
 
   const handleDelete = async () => {

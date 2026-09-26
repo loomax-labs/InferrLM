@@ -17,6 +17,7 @@ import AppHeader from '../components/AppHeader';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { useTheme } from '../context/ThemeContext';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
 import type { ModelSettings, ModelSettingsConfig } from '../services/ModelSettingsService';
 import { modelSettingsService } from '../services/ModelSettingsService';
 import { benchmarkService } from '../services/BenchmarkService';
@@ -88,6 +89,7 @@ function Counter({
 
 export default function BenchmarkRunnerScreen() {
   const { theme: currentTheme } = useTheme();
+  const cjk = useCjkChrome();
   const themeColors = theme[currentTheme];
   const router = useRouter();
   const { modelName: routeModelName, modelPath: routeModelPath } = useLocalSearchParams<{ modelName?: string; modelPath?: string }>();
@@ -373,7 +375,7 @@ export default function BenchmarkRunnerScreen() {
                 { label: 'Decode', value: fmt(currentResult.metrics.decodeTokensPerSecond.avg) + ' tok/s' },
               ].map(m => (
                 <View key={m.label} style={styles.metricItem}>
-                  <Text style={[styles.metricLabel, { color: themeColors.secondaryText }]}>{m.label}</Text>
+                  <Text style={[styles.metricLabel, cjkTextStyle(cjk), { color: themeColors.secondaryText }]}>{m.label}</Text>
                   <Text style={[styles.metricValue, { color: themeColors.text }]}>{m.value}</Text>
                 </View>
               ))}

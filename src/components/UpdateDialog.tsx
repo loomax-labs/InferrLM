@@ -12,6 +12,7 @@ import Dialog from './Dialog';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
 import { updateService } from '../services/UpdateService';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
 
 export default function UpdateDialog() {
   const [visible, setVisible] = useState(false);
@@ -19,6 +20,7 @@ export default function UpdateDialog() {
   const [changelog, setChangelog] = useState<string[]>([]);
   const [updateId, setUpdateId] = useState('');
   const { theme: currentTheme } = useTheme();
+  const cjk = useCjkChrome();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
 
   useEffect(() => {
@@ -86,7 +88,7 @@ export default function UpdateDialog() {
 
       {changelog.length > 0 ? (
         <ScrollView style={styles.changelog} nestedScrollEnabled>
-          <Text style={[styles.label, { color: themeColors.secondaryText }]}>
+          <Text style={[styles.label, cjkTextStyle(cjk), { color: themeColors.secondaryText }]}>
             What's new
           </Text>
           {changelog.map((item, i) => (

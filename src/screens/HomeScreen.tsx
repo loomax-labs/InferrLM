@@ -26,6 +26,7 @@ import ChatView from '../components/chat/ChatView';
 import ChatInput from '../components/chat/ChatInput';
 import { onlineModelService, OnlineModelService } from '../services/OnlineModelService';
 import { useModel } from '../context/ModelContext';
+import { useT } from '../i18n';
 
 import Dialog from '../components/Dialog';
 import { useRemoteModel } from '../context/RemoteModelContext';
@@ -71,6 +72,7 @@ const isRemoteProvider = (provider: string | null): boolean => {
 };
 
 export default function HomeScreen() {
+  const t = useT();
   const { theme: currentTheme, selectedTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const { useIosHeader } = useResponsiveLayout();
@@ -384,8 +386,8 @@ export default function HomeScreen() {
       const success = await chatManager.addMessage(userMessage);
       if (!success) {
         showDialog(
-          'Error',
-          'Failed to add message to chat',
+          t('common.error'),
+          t('errors.addMessage'),
         );
         return;
       }
@@ -398,8 +400,8 @@ export default function HomeScreen() {
       await processMessage(effectiveProvider);
     } catch (error) {
       showDialog(
-        'Error',
-        'Failed to send message',
+        t('common.error'),
+        t('errors.sendMessage'),
       );
     } finally {
       setIsLoading(false);
@@ -514,80 +516,80 @@ export default function HomeScreen() {
     if (error instanceof Error) {
       if (error.message.startsWith('QUOTA_EXCEEDED:')) {
         showDialog(
-          `${provider} API Quota Exceeded`,
-          `Your ${provider} API quota has been exceeded. Please try again later or upgrade your API plan.`,
-          { label: 'Go to Settings', onPress: () => { hideDialog(); router.push('/(tabs)/settings'); } },
-          { label: 'OK', onPress: hideDialog }
+          t('errors.quotaTitle', { provider }),
+          t('errors.quotaBody', { provider }),
+          { label: t('errors.goToSettings'), onPress: () => { hideDialog(); router.push('/(tabs)/settings'); } },
+          { label: t('common.ok'), onPress: hideDialog }
         );
         return;
       }
       
       if (error.message.startsWith('AUTHENTICATION_ERROR:')) {
         showDialog(
-          `${provider} API Authentication Error`,
-          `Your ${provider} API key appears to be invalid. Please check your API key in Settings.`,
-          { label: 'Go to Settings', onPress: () => { hideDialog(); router.push('/(tabs)/settings'); } },
-          { label: 'OK', onPress: hideDialog }
+          t('errors.authTitle', { provider }),
+          t('errors.authBody', { provider }),
+          { label: t('errors.goToSettings'), onPress: () => { hideDialog(); router.push('/(tabs)/settings'); } },
+          { label: t('common.ok'), onPress: hideDialog }
         );
         return;
       }
       
       if (error.message.startsWith('CONTENT_FILTERED:')) {
         showDialog(
-          'Content Policy Violation',
-          'Your request was blocked due to content policy violations. Please modify your message and try again.',
+          t('errors.contentBlockedTitle'),
+          t('errors.contentBlockedBody'),
         );
         return;
       }
       
       if (error.message.startsWith('CONTEXT_LENGTH_EXCEEDED:')) {
         showDialog(
-          'Message Too Long',
-          'Your message is too long for the model\'s context window. Please shorten your input or start a new chat.',
+          t('errors.messageTooLongTitle'),
+          t('errors.messageTooLongBody'),
         );
         return;
       }
       
       if (error.message.startsWith('SERVER_ERROR:')) {
         showDialog(
-          `${provider} Server Error`,
-          `The ${provider} API is currently experiencing issues. Please try again later.`,
+          t('errors.serverTitle', { provider }),
+          t('errors.serverBody', { provider }),
         );
         return;
       }
       
       if (error.message.startsWith('INVALID_REQUEST:')) {
         showDialog(
-          'Invalid Request',
-          `The request to the ${provider} API was invalid. Please try again with different input.`,
+          t('errors.invalidRequestTitle'),
+          t('errors.invalidRequestBody', { provider }),
         );
         return;
       }
       
       if (error.message.startsWith('PERMISSION_DENIED:')) {
         showDialog(
-          'Permission Denied',
-          `You don't have permission to access this ${provider} model or feature.`,
+          t('errors.permissionDeniedTitle'),
+          t('errors.permissionBody', { provider }),
         );
         return;
       }
       
       if (error.message.startsWith('NOT_FOUND:')) {
         showDialog(
-          'Model Not Found',
-          `The requested ${provider} model was not found. It may be deprecated or unavailable.`,
+          t('errors.modelNotFoundTitle'),
+          t('errors.modelNotFoundBody', { provider }),
         );
         return;
       }
       
       showDialog(
-        `${provider} API Error`,
-        error.message,
+        t('errors.providerErrorTitle', { provider }),
+        t('errors.unknown'),
       );
     } else {
       showDialog(
-        `${provider} API Error`,
-        'Unknown error occurred',
+        t('errors.providerErrorTitle', { provider }),
+        t('errors.unknown'),
       );
     }
   };
@@ -634,18 +636,18 @@ export default function HomeScreen() {
       setTimeout(() => {
         if (msg === 'CONTEXT_LENGTH_EXCEEDED') {
           showDialog(
-            'Message Too Long',
-            'Your message is too long for the model\'s context window. Please increase the context window limit.',
+            t('errors.messageTooLongTitle'),
+            t('errors.messageTooLongLimitBody'),
           );
         } else if (msg === 'VISION_EVAL_FAILED') {
           showDialog(
-            'Vision Failed',
-            'Could not process the image with this model. Try a smaller image, OCR mode, or reload the projector.',
+            t('errors.pictureFailedTitle'),
+            t('errors.pictureFailedBody'),
           );
         } else {
           showDialog(
-            'Error',
-            'Failed to generate response. Model might not be supported.',
+            t('common.error'),
+            t('errors.generateFailed'),
           );
         }
       }, 100);
@@ -656,7 +658,7 @@ export default function HomeScreen() {
 
   const copyToClipboard = (text: string) => {
     Clipboard.setString(text);
-    showToast('Copied to clipboard');
+    showToast(t('common.copied'));
   };
 
   const handleEditingStateChange = useCallback((isEditing: boolean) => {
@@ -690,7 +692,7 @@ export default function HomeScreen() {
       const lastAssistantIdx = messages.length - 1;
       const fork = await chatManager.forkChat(lastAssistantIdx);
       if (!fork) {
-        showDialog('Error', 'Failed to regenerate response');
+        showDialog(t('common.error'), t('errors.regenerateFailed'));
         return;
       }
 
@@ -708,10 +710,10 @@ export default function HomeScreen() {
     } catch (error) {
       if (error instanceof Error) {
         showDialog(
-          'Error',
-          error.message === 'No valid model selected' 
-            ? 'Please select a model first to regenerate a response.'
-            : 'Failed to regenerate response',
+          t('common.error'),
+          error.message === 'No valid model selected'
+            ? t('errors.selectModelFirst')
+            : t('errors.regenerateFailed'),
         );
       }
     } finally {
@@ -739,8 +741,8 @@ export default function HomeScreen() {
       cancelGenerationRef.current = false;
     } catch (error) {
       showDialog(
-        'Error',
-        'Failed to create new chat',
+        t('common.error'),
+        t('errors.newChatFailed'),
       );
     }
   };
@@ -800,7 +802,7 @@ export default function HomeScreen() {
     return (
       <View style={[styles.container, styles.loadingContainer, { backgroundColor: themeColors.background }]}>
         <ActivityIndicator size="large" color={themeColors.primary} />
-        <Text style={{marginTop: 10, color: themeColors.text}}>Loading Chat...</Text>
+        <Text style={{marginTop: 10, color: themeColors.text}}>{t('chat.loading')}</Text>
       </View>
     );
   }

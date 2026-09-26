@@ -29,8 +29,10 @@ import { registerWithEmail, signInWithGoogle, signInWithApple } from '../service
 import { isEmailFromTrustedProvider } from '../services/SecurityUtils';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { logger } from '../utils/logger';
+import { formatLocaleDate, useT } from '../i18n';
 
 export default function RegisterScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const { checkLoginStatus } = useRemoteModel();
   const themeColors = theme[currentTheme];
@@ -62,26 +64,28 @@ export default function RegisterScreen() {
 
   const pendingDeletionMessage = (value?: string | null) => {
     if (!value) {
-      return 'This account is scheduled for deletion. Please try again after 30 days.';
+      return t('auth.pendingDeletionDays');
     }
 
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
-      return 'This account is scheduled for deletion. Please try again after 30 days.';
+      return t('auth.pendingDeletionDays');
     }
 
-    return `This account is scheduled for deletion. Please try again after ${date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })}.`;
+    return t('auth.pendingDeletion', {
+      date: formatLocaleDate(date, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }),
+    });
   };
 
   const handleOpenTerms = async () => {
     try {
       await WebBrowser.openBrowserAsync('https://inferrlm.app/terms-conditions');
     } catch (error) {
-      setError('Failed to open Terms & Conditions. Please try again.');
+      setError(t('auth.openTermsFailed'));
     }
   };
 
@@ -89,7 +93,7 @@ export default function RegisterScreen() {
     try {
       await WebBrowser.openBrowserAsync('https://inferrlm.app/privacy-policy');
     } catch (error) {
-      setError('Failed to open Privacy Policy. Please try again.');
+      setError(t('auth.openPrivacyFailed'));
     }
   };
 

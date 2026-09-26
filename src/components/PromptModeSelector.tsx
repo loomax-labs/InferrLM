@@ -17,6 +17,8 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeColors } from '../types/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { styles as modelStyles } from './ModelSelector.styles';
+import { useT } from '../i18n';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
 import { PROMPT_TEMPLATES, type PromptTemplate } from '../screens/promptLabTemplates';
 
 type Props = {
@@ -28,6 +30,8 @@ type Props = {
 const getScreenH = () => Dimensions.get('window').height;
 
 export default function PromptModeSelector({ templateId, onSelect, disabled }: Props) {
+  const t = useT();
+  const cjk = useCjkChrome();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as ThemeColors];
   const [open, setOpen] = useState(false);
@@ -124,10 +128,10 @@ export default function PromptModeSelector({ templateId, onSelect, disabled }: P
             <View style={modelStyles.modelNameContainer}>
               <Text style={[modelStyles.selectorText, { color: valueColor }]}>{active.label}</Text>
               <View style={[modelStyles.connectionTypeBadge, { backgroundColor: accent + '22' }]}>
-                <Text style={[modelStyles.connectionTypeText, { color: accent }]}>MODE</Text>
+                <Text style={[modelStyles.connectionTypeText, cjkTextStyle(cjk), { color: accent }]}>{t('chat.mode')}</Text>
               </View>
             </View>
-            <Text style={[modelStyles.projectorLabel, { color: labelColor }]} numberOfLines={1}>
+            <Text style={[modelStyles.projectorLabel, cjkTextStyle(cjk), { color: labelColor }]}>
               {active.hint}
             </Text>
           </View>

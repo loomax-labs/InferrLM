@@ -33,6 +33,7 @@ import { modelSettingsService } from '../services/ModelSettingsService';
 import { appleFoundationService } from '../services/AppleFoundationService';
 import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { headerBtn, headerTint } from '../utils/headerChrome';
+import { useT } from '../i18n';
 
 type ThemeOption = 'system' | 'light' | 'dark';
 
@@ -69,6 +70,7 @@ const pickActiveEngine = (enabled: Record<EngineId, boolean>): EngineId => {
 };
 
 export default function SettingsScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const { theme: currentTheme, selectedTheme, toggleTheme } = useTheme();
   const themeColors = theme[currentTheme];
@@ -257,7 +259,7 @@ export default function SettingsScreen() {
   const handleRuntimeToggle = async (engine: EngineId, enabled: boolean) => {
     const next = { ...engineEnabled, [engine]: enabled };
     if (!next.llama && !next.mlx && !next.litert) {
-      showDialog('Engine Required', 'At least one inference engine must remain enabled.');
+      showDialog(t('errors.engineRequiredTitle'), t('errors.engineRequiredBody'));
       return;
     }
 
@@ -273,7 +275,7 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       setEngineEnabled(prev => ({ ...prev, [engine]: previous }));
-      showDialog('Error', 'Failed to update inference engine preference');
+      showDialog(t('common.error'), t('errors.engineUpdateFailed'));
     }
   };
 
@@ -291,7 +293,7 @@ export default function SettingsScreen() {
       setModelSettings(updatedSettings);
       await llamaManager.updateSettings(updatedSettings);
     } catch (error) {
-      showDialog('Error', 'Failed to save settings');
+      showDialog(t('common.error'), t('errors.saveSettingsFailed'));
     }
   };
 
@@ -304,7 +306,7 @@ export default function SettingsScreen() {
       }
       await Linking.openURL(normalizedUrl);
     } catch (error) {
-      showDialog('Error', 'Failed to open link');
+      showDialog(t('common.error'), t('errors.openLinkFailed'));
     }
   };
 
@@ -406,9 +408,9 @@ export default function SettingsScreen() {
       }
       await clearDirectory(tempDir);
       await loadStorageInfo();
-      showDialog('Success', 'Cache cleared successfully');
+      showDialog(t('common.success'), t('errors.cacheCleared'));
     } catch (error) {
-      showDialog('Error', 'Failed to clear cache');
+      showDialog(t('common.error'), t('errors.cacheClearFailed'));
     } finally {
       setClearingType(null);
     }
@@ -444,9 +446,9 @@ export default function SettingsScreen() {
               await modelDownloader.clearAllModels();
               await modelSettingsService.clearAllSettings();
               await loadStorageInfo();
-              showDialog('Success', 'All models cleared successfully');
+              showDialog(t('common.success'), t('errors.modelsCleared'));
             } catch (error) {
-              showDialog('Error', 'Failed to clear models');
+              showDialog(t('common.error'), t('errors.modelsClearFailed'));
             } finally {
               setClearingType(null);
             }
@@ -461,7 +463,7 @@ export default function SettingsScreen() {
       );
     } catch (error) {
       setClearingType(null);
-      showDialog('Error', 'Failed to clear models');
+      showDialog(t('common.error'), t('errors.modelsClearFailed'));
     }
   };
 
@@ -582,7 +584,7 @@ export default function SettingsScreen() {
       <View style={[styles.container, { backgroundColor: theme[currentTheme].background }]}>
       <GradientBg />
       <AppHeader 
-        title="Settings"
+        title={t('settings.title')}
         rightButtons={
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <ProfileButton />

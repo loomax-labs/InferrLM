@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { theme } from '../constants/theme';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
+import { formatLocaleDate, useT } from '../i18n';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -21,6 +23,8 @@ import { useDialog } from '../hooks/useDialog';
 const PAGE_SIZE = 15;
 
 export default function ChatHistoryScreen() {
+  const t = useT();
+  const cjk = useCjkChrome();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as 'light' | 'dark'];
   const router = useRouter();
@@ -159,7 +163,7 @@ export default function ChatHistoryScreen() {
           {item.title || getPreviewText(item)}
         </Text>
         <Text style={[styles.chatDate, { color: themeColors.secondaryText }]}>
-          {new Date(item.timestamp).toLocaleDateString()} • 
+          {formatLocaleDate(new Date(item.timestamp))} • 
           {item.messages.length} messages
         </Text>
         {lastResponderModel ? (
@@ -251,7 +255,7 @@ export default function ChatHistoryScreen() {
             sections={sections}
             renderItem={renderItem}
             renderSectionHeader={({ section }) => (
-              <Text style={[styles.sectionHeader, { color: themeColors.secondaryText }]}>
+              <Text style={[styles.sectionHeader, cjkTextStyle(cjk), { color: themeColors.secondaryText }]}>
                 {section.title}
               </Text>
             )}
@@ -276,7 +280,7 @@ export default function ChatHistoryScreen() {
                   onPress={handleCreateNewChat}
                 >
                   <MaterialCommunityIcons name="plus" size={20} color={Platform.OS === 'ios' && currentTheme === 'light' ? themeColors.primary : themeColors.headerText} style={styles.newChatIcon} />
-                  <Text style={styles.newChatText}>Start a new chat</Text>
+                  <Text style={styles.newChatText}>{t('chat.newChat')}</Text>
                 </TouchableOpacity>
               </View>
             )}

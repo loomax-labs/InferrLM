@@ -18,6 +18,7 @@ import ModelSettingsModals from '../components/settings/ModelSettingsModals';
 import ModelSettingsPenalties from '../components/settings/ModelSettingsPenalties';
 import ModelSettingsSampling from '../components/settings/ModelSettingsSampling';
 import { DEFAULT_SETTINGS } from '../config/llamaConfig';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
 import { getEngineSettingsMeta } from '../config/engineSettings';
 import { theme } from '../constants/theme';
 import { GradientBg } from '../services/adapters/GradientBgAdapter';
@@ -59,6 +60,7 @@ const cleanModelName = (value?: string): string =>
 
 function EngineSettingsView({ engine }: EngineSettingsProps) {
   const { theme: currentTheme } = useTheme();
+  const cjk = useCjkChrome();
   const themeColors = theme[currentTheme];
   const meta = getEngineSettingsMeta(engine);
   const { modelName: rawModelName, modelPath } = useLocalSearchParams<{ modelName?: string; modelPath?: string }>();
@@ -375,7 +377,7 @@ function EngineSettingsView({ engine }: EngineSettingsProps) {
             <View style={styles.noticeHeader}>
               <Text style={[styles.noticeTitle, { color: themeColors.text }]}>{meta.entryLabel}</Text>
               <View style={[styles.noticeBadge, { backgroundColor: currentTheme === 'dark' ? 'rgba(255,255,255,0.16)' : (meta.accentColor ?? themeColors.primary) + '20' }]}>
-                <Text style={[styles.noticeBadgeText, { color: currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary) }]}>{meta.badgeLabel}</Text>
+                <Text style={[styles.noticeBadgeText, cjkTextStyle(cjk), { color: currentTheme === 'dark' ? '#FFFFFF' : (meta.accentColor ?? themeColors.primary) }]}>{meta.badgeLabel}</Text>
               </View>
             </View>
             {modelName ? (

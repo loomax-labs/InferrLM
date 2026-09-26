@@ -8,6 +8,7 @@ import { EngineId } from '../../managers/inference-manager';
 import SettingSlider from '../SettingSlider';
 import { getThemeAwareColor } from '../../utils/ColorUtils';
 import { featureCaps } from '../../services/feature-availability';
+import { cjkTextStyle, useCjkChrome } from '../../i18n/chrome';
 
 type ModelSettings = {
   maxTokens: number;
@@ -68,6 +69,7 @@ const CustomModelSettingsSection = ({
   selectedRuntime,
 }: CustomModelSettingsSectionProps) => {
   const { theme: currentTheme } = useTheme();
+  const cjk = useCjkChrome();
   const themeColors = theme[currentTheme];
   const engineKey: EngineId = selectedRuntime === 'mlx'
     ? 'mlx'
@@ -242,7 +244,7 @@ const CustomModelSettingsSection = ({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.sectionHeader, { color: themeColors.text }]}>Essential Settings</Text>
+      <Text style={[styles.sectionHeader, cjkTextStyle(cjk), { color: themeColors.text }]}>Essential Settings</Text>
       
       <SettingItem
         icon="text"
@@ -300,7 +302,7 @@ const CustomModelSettingsSection = ({
         onReset={() => onSettingsChange({ stopWords: defaultSettings.stopWords || [] })}
       />
 
-      <Text style={[styles.sectionHeader, { color: themeColors.text }]}>Advanced Settings</Text>
+      <Text style={[styles.sectionHeader, cjkTextStyle(cjk), { color: themeColors.text }]}>Advanced Settings</Text>
 
       <SliderItem
         icon="minus"

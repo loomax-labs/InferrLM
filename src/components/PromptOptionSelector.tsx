@@ -17,6 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ThemeColors } from '../types/theme';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { styles as modelStyles } from './ModelSelector.styles';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
 import type { TemplateOption } from '../screens/promptLabTemplates';
 
 type Props = {
@@ -45,6 +46,7 @@ const pickIcon = (key: string) =>
   (optionIcons[key] ?? 'tune') as React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export default function PromptOptionSelector({ option, value, onSelect, disabled }: Props) {
+  const cjk = useCjkChrome();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme as ThemeColors];
   const [open, setOpen] = useState(false);
@@ -135,12 +137,12 @@ export default function PromptOptionSelector({ option, value, onSelect, disabled
                 {value}
               </Text>
               <View style={[modelStyles.connectionTypeBadge, { backgroundColor: accent + '22' }]}>
-                <Text style={[modelStyles.connectionTypeText, { color: accent }]}>
+                <Text style={[modelStyles.connectionTypeText, cjkTextStyle(cjk), { color: accent }]}>
                   {option.label.toUpperCase()}
                 </Text>
               </View>
             </View>
-            <Text style={[modelStyles.projectorLabel, { color: labelColor }]} numberOfLines={1}>
+            <Text style={[modelStyles.projectorLabel, cjkTextStyle(cjk), { color: labelColor }]}>
               {option.choices.length} choices available
             </Text>
           </View>

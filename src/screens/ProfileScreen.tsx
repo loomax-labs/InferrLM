@@ -11,8 +11,10 @@ import { getUserFromSecureStorage } from '../services/AuthStorage';
 import { useRemoteModel } from '../context/RemoteModelContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDialog } from '../context/DialogContext';
+import { formatLocaleDate, useT } from '../i18n';
 
 export default function ProfileScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const themeColors = theme[currentTheme];
   const insets = useSafeAreaInsets();
@@ -190,7 +192,7 @@ export default function ProfileScreen() {
       const stored = await getUserFromSecureStorage();
       if (stored) {
         setUserData({
-          displayName: stored.displayName || 'User',
+          displayName: stored.displayName || t('account.user'),
           email: stored.email || '',
           emailVerified: stored.emailVerified ?? false,
           creationTime: toDateStr(stored.createdAt),
@@ -206,14 +208,14 @@ export default function ProfileScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('common.na');
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return formatLocaleDate(date, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 

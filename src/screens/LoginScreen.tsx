@@ -26,8 +26,10 @@ import Dialog from '../components/Dialog';
 import { loginWithEmail, restorePendingAccount, signInWithGoogle, signInWithApple, type AuthResult } from '../services/AuthService';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { logger } from '../utils/logger';
+import { formatLocaleDate, useT } from '../i18n';
 
 export default function LoginScreen() {
+  const t = useT();
   const { theme: currentTheme } = useTheme();
   const { checkLoginStatus } = useRemoteModel();
   const themeColors = theme[currentTheme];
@@ -58,19 +60,21 @@ export default function LoginScreen() {
 
   const formatDeletionDate = (value?: string | null) => {
     if (!value) {
-      return 'within the 30-day recovery window';
+      return t('auth.deletionWindow');
     }
 
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
-      return 'within the 30-day recovery window';
+      return t('auth.deletionWindow');
     }
 
-    return `until ${date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })}`;
+    return t('auth.deletionUntil', {
+      date: formatLocaleDate(date, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }),
+    });
   };
 
   const resetRestoreDialog = () => {

@@ -18,6 +18,7 @@ import { modelDownloader } from '../services/ModelDownloader';
 import { ThemeColors } from '../types/theme';
 import { useModel } from '../context/ModelContext';
 import { useRemoteModel } from '../context/RemoteModelContext';
+import { cjkTextStyle, useCjkChrome } from '../i18n/chrome';
 import { getThemeAwareColor } from '../utils/ColorUtils';
 import { onlineModelService } from '../services/OnlineModelService';
 import { engineLabels } from '../managers/inference-manager';
@@ -110,6 +111,7 @@ const hasCompleteMlxPackage = (files: StoredModel[]) => {
 const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorProps>(
   ({ isOpen, onClose, preselectedModelPath, isGenerating, onModelSelect }, ref) => {
     const { theme: currentTheme } = useTheme();
+    const cjk = useCjkChrome();
     const themeColors = theme[currentTheme as ThemeColors];
     const { enableRemoteModels, isLoggedIn } = useRemoteModel();
     const router = useRouter();
@@ -725,7 +727,8 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
       isLocalModelsExpanded,
       toggleLocalModelsDropdown,
       refreshStoredModels,
-      isRefreshingLocalModels
+      isRefreshingLocalModels,
+      cjk,
     };
 
     useEffect(() => {
@@ -886,6 +889,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
                   ]}>
                     <Text style={[
                       styles.connectionTypeText,
+                      cjkTextStyle(cjk),
                       { color: badgeConfig.textColor }
                     ]}>
                       {badgeConfig.label}
@@ -895,7 +899,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
               </View>
               {selectedProjectorPath && !isModelLoading && (
                 <>
-                  <Text style={[styles.projectorLabel, { color: currentTheme === 'dark' ? '#ccc' : themeColors.secondaryText }]}>
+                  <Text style={[styles.projectorLabel, cjkTextStyle(cjk), { color: currentTheme === 'dark' ? '#ccc' : themeColors.secondaryText }]}>
                     Vision Projector
                   </Text>
                   <View style={styles.projectorNameContainer}>
@@ -911,7 +915,7 @@ const ModelSelector = forwardRef<{ refreshModels: () => void }, ModelSelectorPro
                       styles.connectionTypeBadge,
                       { backgroundColor: 'rgba(95, 213, 132, 0.15)' }
                     ]}>
-                      <Text style={[styles.connectionTypeText, { color: currentTheme === 'dark' ? '#5FD584' : '#2a8c42' }]}>
+                      <Text style={[styles.connectionTypeText, cjkTextStyle(cjk), { color: currentTheme === 'dark' ? '#5FD584' : '#2a8c42' }]}>
                         VISION
                       </Text>
                     </View>
