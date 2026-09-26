@@ -1,3 +1,5 @@
+[English](CONTRIBUTING.md) | [简体中文](CONTRIBUTING.zh-CN.md) | [日本語](CONTRIBUTING.ja.md)
+
 # Contributing to InferrLM
 
 Thank you for your interest in contributing to InferrLM! This guide will help you understand how to contribute effectively to the project.

@@ -1,3 +1,5 @@
+[English](REST_APIs.md) | [简体中文](REST_APIs.zh-CN.md) | [日本語](REST_APIs.ja.md)
+
 # InferrLM REST API Documentation
 
 Complete API reference for InferrLM's local HTTP server that exposes AI inference capabilities over your local network.
