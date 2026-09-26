@@ -7,7 +7,8 @@ import {
   OnboardingProfile,
 } from './types';
 
-const STORAGE_KEY = '@inferra/onboarding';
+const STORAGE_KEY = '@inferrlm/onboarding';
+const LEGACY_STORAGE_KEY = '@inferra/onboarding';
 
 const INTENT_IDS = new Set<string>([
   'chat',
@@ -65,7 +66,21 @@ function normalizeProfile(raw: unknown): OnboardingProfile {
 
 async function readRaw(): Promise<string | null> {
   try {
-    return await AsyncStorage.getItem(STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (raw != null) {
+      return raw;
+    }
+    const legacy = await AsyncStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy != null) {
+      await AsyncStorage.setItem(STORAGE_KEY, legacy);
+      try {
+        await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
+      } catch {
+        // no-op
+      }
+      return legacy;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -91,6 +106,7 @@ export const onboardingStore = {
   async reset(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
+      await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
     } catch {
       // no-op
     }
