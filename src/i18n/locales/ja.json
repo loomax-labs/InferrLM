@@ -110,7 +110,17 @@
     "cacheClearFailed": "キャッシュを消せませんでした",
     "modelsCleared": "モデルをすべて消しました",
     "modelsClearFailed": "モデルを消せませんでした",
-    "modelLoad": "モデルを読み込めませんでした"
+    "modelLoad": "モデルを読み込めませんでした",
+    "quotaTitle": "{{provider}} の上限に達しました",
+    "quotaBody": "{{provider}} の上限に達しました。あとでもう一度試すか、プランを上げてください。",
+    "authTitle": "{{provider}} へのサインインに失敗しました",
+    "authBody": "{{provider}} の API キーが正しくないようです。設定で確認してください。",
+    "serverTitle": "{{provider}} は使えません",
+    "serverBody": "{{provider}} はいま調子が悪いです。あとでもう一度試してください。",
+    "invalidRequestBody": "{{provider}} への依頼は受け付けられませんでした。別のメッセージで試してください。",
+    "permissionBody": "この {{provider}} のモデルを使う許可がありません。",
+    "modelNotFoundBody": "その {{provider}} のモデルは見つかりませんでした。もう使えないことがあります。",
+    "providerErrorTitle": "{{provider}} は返事を書けませんでした"
   },
   "chat": {
     "loading": "チャットを読み込み中...",
