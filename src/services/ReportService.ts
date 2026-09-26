@@ -112,7 +112,8 @@ export const submitReport = async (reportData: ReportData): Promise<void> => {
 
     form.append('messageContent', String(reportData.messageContent));
     form.append('provider', String(reportData.provider));
-    form.append('modelName', reportData.modelName ? String(reportData.modelName) : '');
+    const modelName = reportData.modelName?.trim();
+    form.append('modelName', modelName && modelName.length > 0 ? modelName : 'unknown');
     form.append('category', String(reportData.category));
     form.append('description', String(reportData.description || ''));
     form.append('email', String(reportData.email));
@@ -140,9 +141,17 @@ export const submitReport = async (reportData: ReportData): Promise<void> => {
       formData: true,
       auth: true,
     });
-  } catch (error: any) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to submit report';
-    throw new Error(errorMessage);
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'message' in error && typeof (error as Error).message === 'string') {
+      const msg = (error as Error).message;
+      if (msg === 'request_failed' || msg.startsWith('request_failed_') || msg === 'api_not_configured') {
+        throw new Error('Failed to submit report. Please try again.');
+      }
+      if (msg.includes('exceeds') || msg.includes('not allowed') || msg.includes('compress')) {
+        throw new Error(msg);
+      }
+    }
+    throw new Error('Failed to submit report. Please try again.');
   }
 };
 
