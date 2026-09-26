@@ -22,19 +22,33 @@ type PendingTask = {
 };
 
 export const sanitizeSkillHtml = (html: string): string => {
-  let previous = '';
   let current = html;
-  while (current !== previous) {
-    previous = current;
-    current = current
-      .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '')
-      .replace(/<iframe\b[^>]*\/?>/gi, '')
-      .replace(/<embed\b[\s\S]*?<\/embed>/gi, '')
-      .replace(/<embed\b[^>]*\/?>/gi, '')
-      .replace(/<object\b[\s\S]*?<\/object>/gi, '')
-      .replace(/<object\b[^>]*\/?>/gi, '');
+  for (const tag of ['iframe', 'embed', 'object'] as const) {
+    current = stripHtmlTag(current, tag);
   }
   return current;
+};
+
+const stripHtmlTag = (html: string, tag: string): string => {
+  const open = `<${tag}`;
+  const close = `</${tag}`;
+  let out = html;
+  for (;;) {
+    const lower = out.toLowerCase();
+    const start = lower.indexOf(open);
+    if (start === -1) {
+      return out;
+    }
+    const closeAt = lower.indexOf(close, start);
+    if (closeAt === -1) {
+      return out.slice(0, start);
+    }
+    const end = lower.indexOf('>', closeAt);
+    if (end === -1) {
+      return out.slice(0, start);
+    }
+    out = out.slice(0, start) + out.slice(end + 1);
+  }
 };
 
 export const buildSkillBridge = (taskId: string, input: SkillRunInput): string => {
